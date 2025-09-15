@@ -1,7 +1,7 @@
 <script setup>
-import PandaNavigation from '@/components/PandaNavigation.vue'
-import PandaDefaultContent from '@/components/PandaDefaultContent.vue'
-import PandaFooter from '@/components/PandaFooter.vue'
+import PandaNavigation from '@/components/widgets/PandaNavigation.vue'
+import PandaDefaultContent from '@/components/widgets/PandaDefaultContent.vue'
+import PandaFooter from '@/components/widgets/PandaFooter.vue'
 </script>
 
 <template>

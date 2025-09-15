@@ -8,27 +8,14 @@
             <h6 class="mb-0">Repositories</h6>
             <div class="workspace-toggle">
               <button
-                class="btn btn-sm workspace-action"
-                v-if="showActions"
-                @click="openRepository"
-              >
-                <i class="fa-solid fa-plus"></i>
-              </button>
-              <button
                 class="btn btn-sm workspace-action search"
                 v-if="showActions"
                 @click="showSearchRepository = !showSearchRepository"
               >
                 <i class="fa-solid fa-magnifying-glass"></i>
               </button>
-              <button
-                class="btn btn-sm workspace-action"
-                v-if="showActions"
-              >
-                <i class="fa-solid fa-ellipsis-vertical"></i>
-              </button>
               <button class="btn btn-sm workspace-action" @click="toggleWorkspacePanel">
-                <i :class="['fas', isWorkspaceCollapsed ? 'fa-solid fa-layer-group' : 'fa-solid fa-minus']"></i>
+                <i :class="['fas', isWorkspaceCollapsed ? 'fa-solid fa-layer-group' : 'fa-solid fa-layer-group']"></i>
               </button>
             </div>
           </div>
@@ -91,12 +78,6 @@
           <div class="branch-workspace-header">
             <h6 class="mb-0">Branches</h6>
             <div class="workspace-toggle">
-              <button
-                class="btn btn-sm workspace-action"
-                v-if="showActions"
-              >
-                <i class="fa-solid fa-plus"></i>
-              </button>
               <button
                 class="btn btn-sm workspace-action search"
                 v-if="showActions"
@@ -196,13 +177,11 @@
     <div class="resizer-horizontal" @mousedown="startResizeContainer" v-if="!isWorkspaceCollapsed"></div>
   </div>
   <!--  Modal-->
-  <panda-open-repository-form ref="openModal"/>
   <branch-context-menu ref="contextMenu" @action="handleContextAction"/>
 </template>
 <script setup>
 // Props
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import PandaOpenRepositoryForm from '@/components/modals/PandaOpenRepositoryForm.vue'
 import BranchContextMenu from '@/components/modals/BranchContextMenu.vue'
 import mitter from '@/plugins/mitter.js'
 import api from '@/plugins/api.js'
@@ -402,10 +381,6 @@ const stopResizeContainer = () => {
   window.removeEventListener('mousemove', resizeContainer);
   window.removeEventListener('mouseup', stopResizeContainer);
 };
-
-const openRepository = () => {
-  openModal.value?.openModal()
-}
 
 const getStatusIcon = (status) => {
   switch (status) {

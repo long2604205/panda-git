@@ -49,7 +49,7 @@
 </template>
 
 <script setup>
-import PandaMenuDropdown from './PandaMenuDropdown.vue'
+import PandaMenuDropdown from '../PandaMenuDropdown.vue'
 import { defineAsyncComponent, onMounted, ref } from 'vue'
 import { showPageInModal } from '@/services/modals.js'
 

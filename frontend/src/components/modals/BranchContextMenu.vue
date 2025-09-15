@@ -67,7 +67,7 @@ defineExpose({ open })
   margin: 0;
   list-style: none;
   z-index: 9999;
-  width: 300px;
+  width: 280px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 .context-menu li {
