@@ -2,3 +2,5 @@
 .vscode/*
 !.vscode/extensions.json
 .idea
+package-lock.json
+.xml
