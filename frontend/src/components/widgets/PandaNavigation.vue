@@ -3,6 +3,13 @@
     <div class="container-fluid px-2">
       <!-- left menu -->
       <div class="navbar-nav flex-row">
+        <div class="nav-item d-flex align-items-center">
+          <img
+            src="@/assets/logo.svg"
+            alt="Logo"
+            class="app-logo"
+          />
+        </div>
         <panda-menu-dropdown
           label="File"
           :items="fileMenu"
@@ -229,5 +236,12 @@ function openRepository () {
 
 .navbar-nav {
   -webkit-app-region: no-drag;
+}
+
+.app-logo {
+  height: 18px;
+  width: auto;
+  object-fit: contain;
+  display: block;
 }
 </style>
