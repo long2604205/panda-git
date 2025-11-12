@@ -108,7 +108,7 @@
           </transition>
           <div class="workspace-content branch-tree-scroll">
             <div class="branch-tree" id="branch-tree">
-              <div v-if="!activeRepository" class="no-repo-message text-center py-4">
+              <div v-if="!activeRepository" class="no-repos-message text-center py-4">
                 <i class="fas fa-code-branch fa-2x mb-2"></i>
                 <p>No repository selected</p>
                 <small>Open a repository to view branches</small>
@@ -193,7 +193,7 @@ const showSearchRepository = ref(false);
 const showSearchBranch = ref(false);
 const reposHeight = ref(0);
 const containerHeight = ref(0);
-const containerWidth = ref(300);
+const containerWidth = ref(325);
 const previousWidth = ref(300)
 let isResizing = false;
 let isResizingContainer = false;
@@ -209,60 +209,7 @@ const isWorkspaceCollapsed = ref(false)
 const branchSearchInput = ref(null)
 const repositorySearchInput = ref(null)
 const activeRepository = ref(null)
-const repositories = ref([
-  {
-    id: 'repo1',
-    name: 'Core API',
-    path: 'C:/Users/zhilo/OneDrive/Documents/Project/Training/auto_verse',
-    status: 'clean',
-    currentBranch: 'main',
-    branches: {
-      local: ['main', 'dev', 'release/v1.0', 'feature/auth-module', 'bugfix/token-refresh', 'hotfix/login-timeout'],
-      remote: ['origin/main', 'origin/dev', 'origin/release/v1.0', 'origin/feature/auth-module']
-    },
-    changes: [
-      {
-        id: 1,
-        name: 'base.css',
-        path: 'src\\assets',
-        type: 'css'
-      },
-      {
-        id: 2,
-        name: 'PandaDefaultContent.vue',
-        path: 'src\\components',
-        type: 'vue'
-      }
-    ]
-  },
-  {
-    id: 'repo2',
-    name: 'Admin Dashboard',
-    path: '/projects/admin-dashboard',
-    status: 'dirty',
-    currentBranch: 'dev',
-    branches: {
-      local: ['main', 'dev', 'feature/user-management', 'feature/role-settings', 'bugfix/sidebar-collapse', 'refactor/table-component'],
-      remote: ['origin/main', 'origin/dev', 'origin/feature/user-management']
-    },
-    changes: [
-      {
-        id: 1,
-        name: 'main.css',
-        path: 'src\\assets',
-        type: 'css',
-        selected: false
-      },
-      {
-        id: 2,
-        name: 'UserController.php',
-        path: 'src\\components',
-        type: 'vue',
-        selected: false
-      }
-    ]
-  }
-])
+const repositories = ref([])
 const loading = useLoadingStore()
 /*----Mounted----*/
 onMounted(() => {
@@ -277,6 +224,19 @@ onMounted(() => {
   }
 
   mitter.on('open-repository', (repo) => {
+    const existing = repositories.value.find(r => r.path === repo.path);
+
+    if (existing) {
+      activeRepository.value = existing;
+
+      mitter.emit('alert', {
+        message: `📁 Repository "${repo.name}" is already open`,
+        type: 'success'
+      });
+      return;
+    }
+
+    // Nếu chưa có -> push mới và active
     repositories.value.push(repo);
     activeRepository.value = repo;
   })
@@ -583,7 +543,7 @@ function toggleWorkspacePanel() {
 .horizontal-resize-wrapper {
   display: flex;
   flex-direction: row;
-  width: 300px;
+  width: 325px;
   min-width: 60px;
   max-width: 500px;
   height: 100%;
@@ -719,7 +679,7 @@ function toggleWorkspacePanel() {
 /* Utility Classes */
 .no-repos-message{
   text-align: center;
-  color: var(--text-muted);
+  color: var(--text-primary);
   padding: 32px 16px;
 }
 
@@ -727,6 +687,10 @@ function toggleWorkspacePanel() {
   display: block;
   margin-bottom: 12px;
   opacity: 0.5;
+}
+
+.no-repos-message p{
+  margin-bottom: 5px;
 }
 
 .repo-item {
@@ -833,12 +797,12 @@ function toggleWorkspacePanel() {
 
 /* Branch Tree */
 .workspace-content.branch-tree-scroll {
-  max-height: 100%;
+  height: calc(100% - 38px);
   overflow-y: scroll;
 }
 
 .branch-tree {
-  margin: 10px;
+  margin: 10px 10px 35px 10px;
 }
 
 .tree-item {

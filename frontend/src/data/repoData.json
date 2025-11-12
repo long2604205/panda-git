@@ -1,0 +1,77 @@
+[
+  {
+    "id": "repo1",
+    "name": "Core API",
+    "path": "C:/Users/zhilo/OneDrive/Documents/Project/Training/auto_verse",
+    "status": "clean",
+    "currentBranch": "main",
+    "branches": {
+      "local": [
+        "main",
+        "dev",
+        "release/v1.0",
+        "feature/auth-module",
+        "bugfix/token-refresh",
+        "hotfix/login-timeout"
+      ],
+      "remote": [
+        "origin/main",
+        "origin/dev",
+        "origin/release/v1.0",
+        "origin/feature/auth-module"
+      ]
+    },
+    "changes": [
+      {
+        "id": 1,
+        "name": "base.css",
+        "path": "src\\assets",
+        "type": "css"
+      },
+      {
+        "id": 2,
+        "name": "PandaDefaultContent.vue",
+        "path": "src\\components",
+        "type": "vue"
+      }
+    ]
+  },
+  {
+    "id": "repo2",
+    "name": "Admin Dashboard",
+    "path": "/projects/admin-dashboard",
+    "status": "dirty",
+    "currentBranch": "dev",
+    "branches": {
+      "local": [
+        "main",
+        "dev",
+        "feature/user-management",
+        "feature/role-settings",
+        "bugfix/sidebar-collapse",
+        "refactor/table-component"
+      ],
+      "remote": [
+        "origin/main",
+        "origin/dev",
+        "origin/feature/user-management"
+      ]
+    },
+    "changes": [
+      {
+        "id": 1,
+        "name": "main.css",
+        "path": "src\\assets",
+        "type": "css",
+        "selected": false
+      },
+      {
+        "id": 2,
+        "name": "UserController.php",
+        "path": "src\\components",
+        "type": "vue",
+        "selected": false
+      }
+    ]
+  }
+]

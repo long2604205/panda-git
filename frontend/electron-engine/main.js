@@ -13,6 +13,7 @@ function createWindow() {
     height: 800,
     frame: false,
     show: false,
+    icon: join(__dirname, 'assets/panda-logo.ico'),
     webPreferences: {
       preload: join(__dirname, 'preload.cjs'),
       contextIsolation: true,
