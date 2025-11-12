@@ -1,6 +1,6 @@
 <template>
   <div class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle px-3" href="#" data-bs-toggle="dropdown">{{ label }}</a>
+    <a class="nav-link dropdown-toggle px-2" href="#" data-bs-toggle="dropdown">{{ label }}</a>
     <ul class="dropdown-menu dropdown-menu-dark mt-0">
       <template v-for="(item, index) in items" :key="index">
         <li v-if="item === 'divider'"><hr class="dropdown-divider" /></li>

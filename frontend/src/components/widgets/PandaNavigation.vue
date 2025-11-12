@@ -5,7 +5,7 @@
       <div class="navbar-nav flex-row">
         <div class="nav-item d-flex align-items-center">
           <img
-            src="@/assets/logo.svg"
+            src="@/assets/cool.png"
             alt="Logo"
             class="app-logo"
           />
@@ -239,8 +239,9 @@ function openRepository () {
 }
 
 .app-logo {
-  height: 18px;
+  height: 22px;
   width: auto;
+  margin-right: 0.5rem;
   object-fit: contain;
   display: block;
 }
