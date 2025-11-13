@@ -7,21 +7,21 @@
       <div class="col main-content">
         <!--Toolbar-->
 <!--        <button class="btn-primary" @click="showAlert">Hiện thông báo</button>-->
-        <panda-toolbar/>
+<!--        <panda-toolbar/>-->
 
-        <!--Commit Panel-->
-        <panda-commit-panel/>
+<!--        &lt;!&ndash;Commit Panel&ndash;&gt;-->
+<!--        <panda-commit-panel/>-->
 
-        <!--Git Graph-->
-        <panda-git-log-panel/>
+<!--        &lt;!&ndash;Git Graph&ndash;&gt;-->
+<!--        <panda-git-log-panel/>-->
       </div>
 
       <!--Panda-right-panel-->
-      <panda-right-panel
-        :commit="commitSample"
-        :is-collapsed="isCollapsedSample"
-        @toggle="togglePanel"
-      />
+<!--      <panda-right-panel-->
+<!--        :commit="commitSample"-->
+<!--        :is-collapsed="isCollapsedSample"-->
+<!--        @toggle="togglePanel"-->
+<!--      />-->
     </div>
   </div>
   <alert-notification

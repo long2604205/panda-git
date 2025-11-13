@@ -19,6 +19,8 @@
               </button>
             </div>
           </div>
+          <div class="toolbar-line"/>
+
           <transition name="fade-search">
             <div class="search-workspace" v-if="showSearchRepository">
               <div class="symbol-search">
@@ -178,6 +180,7 @@
   </div>
   <!--  Modal-->
   <branch-context-menu ref="contextMenu" @action="handleContextAction"/>
+  <repository-context-menu ref="repoContextMenu" @action="handleReposContextAction"/>
 </template>
 <script setup>
 // Props
@@ -186,6 +189,7 @@ import BranchContextMenu from '@/components/modals/BranchContextMenu.vue'
 import mitter from '@/plugins/mitter.js'
 import api from '@/plugins/api.js'
 import { useLoadingStore } from '@/stores/loadingStore.js'
+import RepositoryContextMenu from '@/components/modals/RepositoryContextMenu.vue'
 
 /*----Data----*/
 const showActions = ref(true);
@@ -197,8 +201,8 @@ const containerWidth = ref(325);
 const previousWidth = ref(300)
 let isResizing = false;
 let isResizingContainer = false;
-const openModal = ref(null);
 const contextMenu = ref(null)
+const repoContextMenu = ref(null)
 const branchKeyword = ref('')
 const repositoryKeyword = ref('')
 const collapsedTree = ref({
@@ -282,6 +286,8 @@ watch(() => isWorkspaceCollapsed.value, (newVal) => {
     showActions.value = false;
     previousWidth.value = containerWidth.value;
     containerWidth.value = 55;
+    showSearchRepository.value = false
+    showSearchBranch.value = false
   }
 });
 
@@ -394,6 +400,12 @@ function handleContextAction({ action, branch }) {
   }
   if (action === 'merge-branch') {
     mergeBranch(branch)
+  }
+}
+
+function handleReposContextAction (action, url) {
+  if (action === 'checkout') {
+    console.log('checkout', url)
   }
 }
 
@@ -539,326 +551,5 @@ function toggleWorkspacePanel() {
   isWorkspaceCollapsed.value = !isWorkspaceCollapsed.value
 }
 </script>
-<style scoped>
-.horizontal-resize-wrapper {
-  display: flex;
-  flex-direction: row;
-  width: 325px;
-  min-width: 60px;
-  max-width: 500px;
-  height: 100%;
-  overflow: hidden;
-  position: relative;
-  padding-right: 0;
-}
-
-.resizer-horizontal {
-  width: 5px;
-  background-color: var(--border-color);
-  cursor: col-resize;
-  user-select: none;
-}
-
-.workspace-container {
-  width: 100%;
-  height: 100%;
-  background-color: var(--bg-secondary);
-  border-right: 1px solid var(--border-color);
-  overflow: hidden;
-  padding-right: 0;
-}
-
-.workspace-container.collapsed {
-  width: 0;
-  overflow: hidden;
-}
-
-.workspace-panel {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.workspace-header {
-  position: relative;
-  display: flex;
-  align-items: center;
-  padding: 8px 12px;
-  background-color: var(--bg-tertiary);
-  border-bottom: 1px solid var(--border-color);
-  min-height: 36px;
-}
-
-.workspace-header h6 {
-  font-size: 14px;
-  font-weight: 500;
-  margin: 0;
-}
-
-.workspace-toggle {
-  position: absolute;
-  right: 4px;
-  top: 50%;
-  transform: translateY(-50%);
-  border: none;
-  font-size: 14px;
-  z-index: 10;
-}
-
-.workspace-toggle:hover {
-  color: var(--text-primary);
-}
-
-.workspace-content {
-  flex: 1;
-  overflow-y: auto;
-}
-
-.workspace-repos {
-  padding: 8px;
-}
-
-.workspace-container.collapsed {
-  width: 50px;
-}
-
-.workspace-container.collapsed .workspace-toggle {
-  right: 50%;
-  transform: translate(50%, -50%);
-}
-
-.workspace-container.collapsed .workspace-header h6,
-.workspace-container.collapsed .workspace-content {
-  opacity: 0;
-  visibility: hidden;
-  height: 0;
-  pointer-events: none;
-}
-
-.workspace-container.collapsed .branch-workspace-header{
-  opacity: 0;
-  visibility: hidden;
-  height: 0;
-  pointer-events: none;
-}
-
-.workspace-action {
-  margin: 0;
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-}
-.repositories-workspace {
-  height: 50%;
-  min-height: 20%;
-  max-height: 80%;
-  display: flex;
-  flex-direction: column;
-}
-.branch-workspace{
-  height: 50%;
-  min-height: 20%;
-  max-height: 80%;
-}
-
-.branch-workspace-header{
-  position: relative;
-  display: flex;
-  align-items: center;
-  padding: 8px 12px;
-  background-color: var(--bg-tertiary);
-  border-bottom: 1px solid var(--border-color);
-  min-height: 36px;
-}
-
-.branch-workspace-header h6{
-  font-size: 14px;
-  font-weight: 500;
-  margin: 0;
-}
-/* Utility Classes */
-.no-repos-message{
-  text-align: center;
-  color: var(--text-primary);
-  padding: 32px 16px;
-}
-
-.no-repos-message i{
-  display: block;
-  margin-bottom: 12px;
-  opacity: 0.5;
-}
-
-.no-repos-message p{
-  margin-bottom: 5px;
-}
-
-.repo-item {
-  display: flex;
-  align-items: center;
-  padding: 8px 12px;
-  margin-bottom: 4px;
-  border-radius: 4px;
-  cursor: pointer;
-  border: 1px solid transparent;
-}
-
-.repo-item:hover {
-  background-color: var(--bg-hover);
-  border-radius: 10px;
-}
-
-.repo-item.active {
-  background-color: var(--bg-hover);
-  border-radius: 10px;
-}
-
-.repo-icon {
-  width: 20px;
-  margin-right: 8px;
-  text-align: center;
-}
-
-.repo-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.repo-name {
-  font-size: 14px;
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.repo-path {
-  font-size: 12px;
-  color: var(--text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.search-workspace{
-  position: sticky;
-  top: 0;
-  padding: 8px;
-  margin: 5px;
-  display: flex;
-  align-items: center;
-  border-radius: 8px;
-  border: solid 1px var(--border-color);
-  font-size: 12px;
-  background-color: var(--bg-secondary);
-}
-
-.search-branch {
-  width: 100%;
-  background-color: var(--bg-secondary);
-  color: var(--text-secondary);
-  border: none;
-}
-
-.search-branch:focus-visible {
-  outline: none;
-}
-
-.symbol-search {
-  margin-right: 5px;
-  color: var(--text-secondary);
-}
-
-.workspace-split {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.resizer {
-  height: 5px;
-  background-color: var(--bg-secondary);
-  cursor: row-resize;
-  user-select: none;
-}
-
-.fade-search-enter-active, .fade-search-leave-active {
-  transition: all 0.3s ease;
-}
-.fade-search-enter-from, .fade-search-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-.fade-search-enter-to, .fade-search-leave-from {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* Branch Tree */
-.workspace-content.branch-tree-scroll {
-  height: calc(100% - 38px);
-  overflow-y: scroll;
-}
-
-.branch-tree {
-  margin: 10px 10px 35px 10px;
-}
-
-.tree-item {
-  display: flex;
-  align-items: center;
-  padding: 4px 0;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  border-radius: 5px;
-  user-select: none;
-}
-
-.tree-item:hover {
-  background-color: var(--bg-hover);
-}
-
-.tree-item.active {
-  background-color: var(--bg-hover);
-  color: var(--text-primary);
-}
-
-.tree-item.nested {
-  padding-left: 20px;
-}
-
-.tree-item.nested-2 {
-  padding-left: 40px;
-}
-
-.tree-toggle {
-  width: 12px;
-  margin-right: 4px;
-  font-size: 10px;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-.tree-toggle.collapsed {
-  transform: rotate(-90deg);
-}
-
-.tree-toggle.collapsed {
-  transform: rotate(-90deg);
-}
-
-.tree-header {
-  cursor: pointer;
-}
-
-.tree-item.tree-header:hover {
-  background-color: transparent;
-}
-
-::v-deep(.highlight) {
-  background-color: #ff9700;
-  color: black;
-}
+<style scoped src="@/assets/styles/PandaRepositoryWorkspace.css">
 </style>
