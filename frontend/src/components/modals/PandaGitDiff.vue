@@ -37,7 +37,7 @@
 </template>
 
 <script setup lang="js">
-import BaseForm from '@/components/modals/BaseForm.vue'
+import BaseForm from '@/components/common/BaseForm.vue'
 import { originalCode, modifiedCode } from '@/data/datasample.js'
 import '@/monaco-worker-loader.js'
 import * as monaco from 'monaco-editor'

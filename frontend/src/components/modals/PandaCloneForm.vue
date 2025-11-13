@@ -47,7 +47,7 @@
 </template>
 
 <script setup>
-import BaseForm from '@/components/modals/BaseForm.vue'
+import BaseForm from '@/components/common/BaseForm.vue'
 import { ref } from 'vue'
 import api from '@/plugins/api.js'
 import mitter from '@/plugins/mitter.js'

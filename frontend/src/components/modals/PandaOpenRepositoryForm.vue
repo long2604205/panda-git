@@ -39,7 +39,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import BaseForm from '@/components/modals/BaseForm.vue'
+import BaseForm from '@/components/common/BaseForm.vue'
 import api from '@/plugins/api.js'
 import mitter from '@/plugins/mitter.js'
 import { useLoadingStore } from '@/stores/loadingStore.js'

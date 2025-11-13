@@ -190,6 +190,7 @@ import mitter from '@/plugins/mitter.js'
 import api from '@/plugins/api.js'
 import { useLoadingStore } from '@/stores/loadingStore.js'
 import RepositoryContextMenu from '@/components/modals/RepositoryContextMenu.vue'
+import { saveRepos, loadRepos } from '@/plugins/indexedDB.js'
 
 /*----Data----*/
 const showActions = ref(true);
@@ -215,6 +216,7 @@ const repositorySearchInput = ref(null)
 const activeRepository = ref(null)
 const repositories = ref([])
 const loading = useLoadingStore()
+const isLoadingRepos = ref(true)
 /*----Mounted----*/
 onMounted(() => {
   const container = document.querySelector('.workspace-split')
@@ -244,6 +246,21 @@ onMounted(() => {
     repositories.value.push(repo);
     activeRepository.value = repo;
   })
+});
+
+onMounted(async () => {
+  isLoadingRepos.value = true
+  try {
+    const savedRepos = await loadRepos();
+    repositories.value = savedRepos;
+
+    if (savedRepos.length) {
+      // Active repo đầu tiên: gọi API backend để load chi tiết
+      await setActiveRepository(savedRepos[0]);
+    }
+  } finally {
+    isLoadingRepos.value = false
+  }
 });
 
 onBeforeUnmount(() => {
@@ -306,6 +323,17 @@ watch(showSearchRepository, (newVal) => {
     })
   }
 })
+
+// Watch repositories để tự động lưu khi có thay đổi
+watch(repositories, async (newVal) => {
+  const basicRepos = newVal.map(r => ({
+    id: r.id,
+    path: r.path,
+    name: r.name,
+    status: r.status || 'clean'
+  }));
+  await saveRepos(basicRepos);
+}, { deep: true });
 
 /*----Method----*/
 const resizePanel = (e) => {
