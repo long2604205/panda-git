@@ -251,8 +251,8 @@ async function setActiveRepository(repo) {
     if (!result) return
 
     // === SET ACTIVE ===
-    repositories.value.forEach(r => r.active = false)   // clear all
-    result.active = true                                 // set active repo
+    repositories.value.forEach(r => r.active = false)
+    result.active = true
 
     // 2. Replace/update in list
     const index = repositories.value.findIndex(r => r.path === repo.path)
@@ -265,6 +265,11 @@ async function setActiveRepository(repo) {
     // 4. Emit
     mitter.emit('set-active-repository', result)
     mitter.emit('push-repository', result.path)
+
+    mitter.emit('alert', {
+      message: `Open repository for ${repo.name}`,
+      type: 'success',
+    })
 
   } catch (error) {
     mitter.emit('alert', {
