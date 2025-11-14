@@ -31,7 +31,8 @@ export async function saveRepos(repos) {
       id: repo.id,
       path: repo.path,
       name: repo.name,
-      status: repo.status || 'clean' // mặc định clean nếu không có
+      status: repo.status || 'clean',
+      active: repo.active || false
     });
   }
 
