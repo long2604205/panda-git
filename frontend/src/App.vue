@@ -14,7 +14,7 @@ onMounted(async () => {
   window.__savedRepos = await loadRepos() // lưu tạm global để các component dùng
 
   // Khoảng delay giả lập backend load
-  await new Promise((resolve) => setTimeout(resolve, 1700))
+  await new Promise((resolve) => setTimeout(resolve, 2000))
 
   isLoadingPage.value = false
 })

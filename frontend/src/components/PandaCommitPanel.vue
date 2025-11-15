@@ -2,9 +2,7 @@
   <div class="commit-panel">
     <!-- Header -->
     <div class="panel-header">
-      <h6 class="mb-0">
-        <i class="fa-solid fa-code-commit me-2"></i>Commit
-      </h6>
+      <h6 class="mb-0"><i class="fa-solid fa-code-commit me-2"></i>Commit</h6>
       <div class="panel-actions">
         <button class="btn btn-sm panel-action-btn" title="Refresh" @click="$emit('refresh')">
           <i class="fas fa-sync"></i>
@@ -22,10 +20,7 @@
       <div class="changes-list col-6">
         <div class="file-tree">
           <!-- Changes Section -->
-          <div
-            class="section-header"
-            :class="{ collapsed: !changesSectionExpanded }"
-          >
+          <div class="section-header" :class="{ collapsed: !changesSectionExpanded }">
             <i
               class="fas fa-caret-down collapse-icon"
               :class="{ collapsed: !changesSectionExpanded }"
@@ -36,7 +31,7 @@
               class="file-checkbox"
               :checked="areAllFilesChecked"
               @change="setAllChecked($event.target.checked)"
-            >
+            />
             <span class="section-title">Changes {{ changes.length }} files</span>
           </div>
           <transition name="collapse">
@@ -55,7 +50,7 @@
                     v-model="file.checked"
                     @click="toggleFileSelection(file, $event)"
                     @click.stop
-                  >
+                  />
                   <i :class="getFileIconClass(file)"></i>
                   <span class="file-name">{{ file.name }}</span>
                   <span v-if="file.path" class="file-path">{{ file.path }}</span>
@@ -76,12 +71,7 @@
           <!-- Left: Checkbox -->
           <div>
             <div class="form-check form-check-inline">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                v-model="amend"
-                id="amend-checkbox"
-              />
+              <input class="form-check-input" type="checkbox" v-model="amend" id="amend-checkbox" />
               <label class="form-check-label text-light" for="amend-checkbox">Amend</label>
             </div>
             <div class="form-check form-check-inline">
@@ -123,21 +113,21 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import mitter from '@/plugins/mitter.js'
 import api from '@/plugins/api.js'
 import { useLoadingStore } from '@/stores/loadingStore.js'
 import { showPageInModal } from '@/services/modals.js'
-import CompareCode from '@/components/modals/CompareCode.vue'
 /*----Data----*/
 const amend = ref(false)
 const signOff = ref(false)
-const commitMessage = ref("")
+const commitMessage = ref('')
 const changes = ref([])
 const changesSectionExpanded = ref(true)
 const areAllFilesChecked = ref(false)
 const activeRepository = ref(null)
 const loading = useLoadingStore()
+const compareCode = defineAsyncComponent(() => import('@/components/modals/CompareCode.vue'))
 
 /*----Mounted----*/
 onMounted(() => {
@@ -151,16 +141,15 @@ onBeforeUnmount(() => {
   mitter.off('set-active-repository', handleSetActive)
 })
 
-
 /*----Computed----*/
-const canCommit = computed(() =>
-  commitMessage.value.trim() !== "" && changes.value.some(c => c.checked)
+const canCommit = computed(
+  () => commitMessage.value.trim() !== '' && changes.value.some((c) => c.checked),
 )
 
 const selectedFilePaths = computed(() => {
   return changes.value
-    .filter(file => file.checked && file.path && file.name)
-    .map(file => `${file.path}/${file.name}`)
+    .filter((file) => file.checked && file.path && file.name)
+    .map((file) => `${file.path}/${file.name}`)
 })
 
 /*----Watch----*/
@@ -168,17 +157,20 @@ watch(
   () => activeRepository.value,
   (newRepo) => {
     if (newRepo?.changes && Array.isArray(newRepo.changes)) {
-      changes.value = newRepo.changes.map(c => ({ ...c, checked: false }))
+      changes.value = newRepo.changes.map((c) => ({ ...c, checked: false }))
     }
   },
-  { immediate: true }
+  { immediate: true },
 )
 
-watch(changes, () => {
-  areAllFilesChecked.value =
-    changes.value.length > 0 &&
-    changes.value.every(file => file.checked)
-}, { deep: true })
+watch(
+  changes,
+  () => {
+    areAllFilesChecked.value =
+      changes.value.length > 0 && changes.value.every((file) => file.checked)
+  },
+  { deep: true },
+)
 
 /*----Method----*/
 async function handleCommit(push = false) {
@@ -190,8 +182,8 @@ async function handleCommit(push = false) {
       files: selectedFilePaths.value,
       amend: amend.value,
       signoff: signOff.value,
-      push: push
-    });
+      push: push,
+    })
     mitter.emit('alert', {
       message: res.data.message || 'Commit thành công!',
       type: 'success',
@@ -210,7 +202,7 @@ async function handleCommit(push = false) {
 
 function setAllChecked(checked) {
   areAllFilesChecked.value = checked
-  changes.value.forEach(file => {
+  changes.value.forEach((file) => {
     file.checked = checked
   })
 }
@@ -254,9 +246,9 @@ function handleSetActive(repo) {
   activeRepository.value = repo
 }
 
-function showDiffFile (file) {
+function showDiffFile(file) {
   console.log('showDiffFile', file)
-  showPageInModal(CompareCode, {}, {width: '90%'})
+  showPageInModal(compareCode, {}, { width: '90%' })
 }
 </script>
 
@@ -375,14 +367,18 @@ function showDiffFile (file) {
   align-items: center;
 }
 
-.btn-commit, .btn-commit-push, .btn-commit:disabled, .btn-commit-push:disabled  {
+.btn-commit,
+.btn-commit-push,
+.btn-commit:disabled,
+.btn-commit-push:disabled {
   background: var(--bg-tertiary);
   color: var(--text-secondary);
   border: var(--bg-tertiary);
   font-size: 14px;
   font-weight: 500;
 }
-.btn-commit:hover,.btn-commit-push:hover {
+.btn-commit:hover,
+.btn-commit-push:hover {
   background: var(--bg-hover);
   color: var(--text-primary);
 }
@@ -471,7 +467,7 @@ function showDiffFile (file) {
   list-style: none;
 }
 
-.file-list ul li{
+.file-list ul li {
   border-radius: 10px;
 }
 

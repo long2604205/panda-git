@@ -89,7 +89,9 @@
         Rename
       </span>
     </div>
-    <div class="menu-item" @click="() => choose('delete')">
+    <div
+      :class="{ disabled: repo.active}"
+      class="menu-item" @click="() => choose('delete')">
       <span style="color: #e3504d" class="icon">
         <i class="fa-solid fa-trash-can"/>
       </span>

@@ -3,36 +3,25 @@
     <div class="row">
       <div class="col-md-12 d-flex">
         <div class="toolbar-buttons">
-          <button class="btn btn-toolbar"
-                  @click="cloneRepository"
-          >
+          <button class="btn btn-toolbar" @click="cloneRepository">
             <i class="fas fa-clone"></i>
             <span class="label-toolbar">Clone</span>
           </button>
         </div>
         <div class="toolbar-buttons">
-          <button
-            class="btn btn-toolbar"
-            @click="pushRepository"
-          >
+          <button class="btn btn-toolbar" @click="pushRepository">
             <i class="fas fa-upload"></i>
             <span class="label-toolbar">Push</span>
           </button>
         </div>
         <div class="toolbar-buttons">
-          <button
-            class="btn btn-toolbar"
-            @click="pullRepository"
-          >
+          <button class="btn btn-toolbar" @click="pullRepository">
             <i class="fas fa-download"></i>
             <span class="label-toolbar">Pull</span>
           </button>
         </div>
         <div class="toolbar-buttons">
-          <button
-            class="btn btn-toolbar"
-            @click="CompareCodeDiff"
-          >
+          <button class="btn btn-toolbar" @click="CompareCodeDiff">
             <i class="fa-solid fa-code-compare"></i>
             <span class="label-toolbar">Fetch</span>
           </button>
@@ -44,24 +33,24 @@
 </template>
 <script setup>
 import { showPageInModal } from '@/services/modals.js'
-import PandaCloneForm from '@/components/modals/PandaCloneForm.vue'
 import api from '@/plugins/api.js'
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { defineAsyncComponent, onBeforeUnmount, onMounted, ref } from 'vue'
 import mitter from '@/plugins/mitter.js'
 import { useLoadingStore } from '@/stores/loadingStore.js'
-import CompareCode from '@/components/modals/CompareCode.vue'
 const repoPath = ref('')
 const loading = useLoadingStore()
+const pandaCloneForm = defineAsyncComponent(() => import('@/components/modals/PandaCloneForm.vue'))
+const compareCode = defineAsyncComponent(() => import('@/components/modals/CompareCode.vue'))
 
 const cloneRepository = () => {
-  showPageInModal(PandaCloneForm, {}, { width: '30%' })
+  showPageInModal(pandaCloneForm, {}, { width: '30%' })
 }
 
 onMounted(() => {
   mitter.on('push-repository', (path) => {
     repoPath.value = path
   })
-});
+})
 
 onBeforeUnmount(() => {
   mitter.off('push-repository')
@@ -71,16 +60,16 @@ async function pushRepository() {
   try {
     loading.show('Pushing...')
     const res = await api.post('/push', {
-      repo_path: repoPath.value
-    });
+      repo_path: repoPath.value,
+    })
     mitter.emit('alert', {
       message: res.data.message || 'Push successfully!',
-      type: 'success'
+      type: 'success',
     })
   } catch (error) {
     mitter.emit('alert', {
       message: error.response?.data?.message || 'Push failed!',
-      type: 'error'
+      type: 'error',
     })
   } finally {
     loading.hide()
@@ -91,16 +80,16 @@ async function pullRepository() {
   try {
     loading.show('Pulling...')
     const res = await api.post('/pull', {
-      repo_path: repoPath.value
-    });
+      repo_path: repoPath.value,
+    })
     mitter.emit('alert', {
       message: res.data.message || 'Pull successfully!',
-      type: 'success'
+      type: 'success',
     })
   } catch (error) {
     mitter.emit('alert', {
       message: error.response?.data?.message || 'Pull failed!',
-      type: 'error'
+      type: 'error',
     })
     console.error(error)
   } finally {
@@ -109,7 +98,7 @@ async function pullRepository() {
 }
 
 function CompareCodeDiff() {
-  showPageInModal(CompareCode, {}, {width: '90%'})
+  showPageInModal(compareCode, {}, { width: '90%' })
 }
 </script>
 <style scoped>
@@ -127,7 +116,7 @@ function CompareCodeDiff() {
   font-size: 14px;
 }
 
-.label-toolbar{
+.label-toolbar {
   margin-left: 5px;
 }
 

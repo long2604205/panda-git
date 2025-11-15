@@ -13,5 +13,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   selectFolder: () => ipcRenderer.invoke('dialog:select-folder'),
   openInExplorer: (folderPath) => ipcRenderer.invoke('open-in-explorer', folderPath),
   openTerminal: (folderPath) => ipcRenderer.invoke('open-terminal', folderPath),
-  renameRepository: (repoPath, newName) => ipcRenderer.invoke('rename-repository', repoPath, newName)
+  openDevtools: () => ipcRenderer.invoke('open-devtools'),
+
+
 })

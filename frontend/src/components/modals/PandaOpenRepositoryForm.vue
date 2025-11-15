@@ -43,11 +43,13 @@ import BaseForm from '@/components/common/BaseForm.vue'
 import api from '@/plugins/api.js'
 import mitter from '@/plugins/mitter.js'
 import { useLoadingStore } from '@/stores/loadingStore.js'
+import { useRepositoryStore } from '@/stores/repositoryStore.js'
 
 const openRepositoryForm = ref(null)
 const visible = ref(false)
 const pathRepositories = ref('')
 const loading = useLoadingStore()
+const repositoryStore = useRepositoryStore()
 const chooseFolder = async () => {
   const selected = await window.electronAPI?.selectFolder()
   if (selected) {
@@ -70,6 +72,8 @@ async function handleOpenRepo(repoPath) {
     const result = response.data.data
 
     if (result) {
+      repositoryStore.setActiveRepo(result)
+
       mitter.emit('open-repository', result)
       mitter.emit('alert', {
         message: 'Open repository successfully',

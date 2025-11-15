@@ -1,5 +1,6 @@
-from git import Repo, InvalidGitRepositoryError, GitCommandError, FetchInfo
 import os
+from git import Repo, InvalidGitRepositoryError, GitCommandError, FetchInfo
+from app.repositories.git_repository import GitRepository
 
 class GitService:
     @staticmethod
@@ -54,8 +55,16 @@ class GitService:
                 })
                 file_id += 1
 
+            repo_manager = GitRepository()
+            repo_id = repo_manager.add_repo(
+                name=name,
+                path=os.path.abspath(repo_path),
+                status=status,
+                active=False
+            )
+
             return {
-                "id": name,
+                "id": repo_id,
                 "name": name,
                 "path": os.path.abspath(repo_path),
                 "status": status,
@@ -274,3 +283,42 @@ class GitService:
 
         except Exception as e:
             raise Exception(f"Merge error: {str(e)}")
+
+    @staticmethod
+    def rename_repo(id, old_path, new_name):
+        """
+        Đổi tên repo trên filesystem và cập nhật DB.
+        Trả về tên mới nếu thành công.
+        """
+        if not os.path.isdir(old_path):
+            raise Exception(f"Repo path does not exist: {old_path}")
+
+        parent_dir = os.path.dirname(old_path)
+        new_path = os.path.join(parent_dir, new_name)
+
+        print(f"[DEBUG] old_path: {old_path}")
+        print(f"[DEBUG] parent_dir: {parent_dir}")
+        print(f"[DEBUG] new_path: {new_path}")
+
+        if os.path.exists(new_path):
+            raise Exception(f"Target path already exists: {new_path}")
+
+        # Đổi tên folder trên filesystem
+        os.rename(old_path, new_path)
+
+        # Cập nhật trong DB
+        repo_manager = GitRepository()
+        repo_id = id
+        updated = repo_manager.update_repo(
+            repo_id=repo_id,
+            name=new_name,
+            path=new_path
+        )
+        print(f"[DEBUG] updated: {updated}")
+        if updated:
+            return {
+                "name": new_name,
+                "path": new_path
+            }
+        else:
+            raise Exception(f"Failed to update repo in DB: {repo_id}")

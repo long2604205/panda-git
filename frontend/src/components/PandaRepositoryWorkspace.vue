@@ -107,7 +107,6 @@ import { saveRepos, loadRepos } from '@/plugins/indexedDB.js'
 import RepositoryContextMenu from '@/components/modals/RepositoryContextMenu.vue'
 import { useRepositoryStore } from '@/stores/repositoryStore.js'
 import { showPageInModal } from '@/services/modals.js'
-import RenameForm from '@/components/modals/RenameForm.vue'
 
 /*----Data----*/
 const repoContextMenu = ref(null)
@@ -126,9 +125,8 @@ const repositories = ref([])
 const loading = useLoadingStore()
 const isLoadingRepos = ref(true)
 const repositoryStore = useRepositoryStore()
-const renameForm = defineAsyncComponent(
-  () => import('@/components/modals/RenameForm.vue'),
-)
+const renameForm = defineAsyncComponent(() => import('@/components/modals/RenameForm.vue'),)
+const confirmDialog = defineAsyncComponent(() => import('@/components/common/ConfirmDialog.vue'),)
 
 /*----Mounted----*/
 onMounted(() => {
@@ -145,12 +143,16 @@ onMounted(() => {
   mitter.on('open-repository', (repo) => {
     const existing = repositories.value.find((r) => r.path === repo.path)
 
+    repositories.value.forEach(r => r.active = false)
+
     if (existing) {
+      existing.active = true
       activeRepository.value = existing
       return
     }
 
     // Nếu chưa có -> push mới và active
+    repo.active = true
     repositories.value.push(repo)
     activeRepository.value = repo
   })
@@ -439,13 +441,20 @@ function onRepoAction({ action, repo }) {
       break
     }
     case 'delete':
-      if (confirm(`Delete repo ${repo.name}?`)) {
-        const index = repositories.value.findIndex((r) => r.id === repo.id)
-        if (index !== -1) repositories.value.splice(index, 1)
-        if (activeRepository.value?.id === repo.id) {
-          activeRepository.value = repositories.value[0] || null
+      showPageInModal(
+        confirmDialog,
+        {
+          title: "Confirm delete",
+          message: `Are you sure you want to delete ${repo.name}?`,
+          onConfirm() {
+              const index = repositories.value.findIndex((r) => r.id === repo.id)
+              if (index !== -1) repositories.value.splice(index, 1)
+              if (activeRepository.value?.id === repo.id) {
+                activeRepository.value = repositories.value[0] || null
+              }
+          }
         }
-      }
+      )
       break
   }
 }

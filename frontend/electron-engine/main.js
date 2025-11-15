@@ -36,7 +36,7 @@ function createWindow() {
   })
 
   win.loadFile(join(__dirname, '../dist/index.html'))
-  win.webContents.openDevTools()
+  // win.webContents.openDevTools()
 
   ipcMain.on('close-app', () => win.close())
   ipcMain.on('minimize', () => win.minimize())
@@ -116,26 +116,12 @@ ipcMain.handle('open-terminal', async (event, folderPath) => {
   }
 });
 
-async function renameLocalFolder(repoPath, newName) {
-  const parentDir = path.dirname(repoPath)
-  const newPath = path.join(parentDir, newName)
-
-  if (fs.existsSync(newPath)) {
-    throw new Error('Folder with this name already exists')
+ipcMain.handle('open-devtools', () => {
+  if (win) {
+    win.webContents.openDevTools()
+    return true
   }
-
-  await fs.promises.rename(repoPath, newPath)
-  return newPath
-}
-
-ipcMain.handle('rename-repository', async (event, repoPath, newName) => {
-  if (!repoPath || !newName) throw new Error('Invalid parameters')
-  // eslint-disable-next-line no-useless-catch
-  try {
-    return await renameLocalFolder(repoPath, newName)
-  } catch (err) {
-    throw err
-  }
+  return false
 })
 
 app.whenReady().then(createWindow)

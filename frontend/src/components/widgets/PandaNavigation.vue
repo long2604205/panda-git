@@ -44,6 +44,7 @@ const minimize = () => window.electronAPI?.minimize()
 const maximize = () => window.electronAPI?.maximize()
 const toggleMaximize = () => window.electronAPI?.toggleMaximize()
 const closeApp = () => window.electronAPI?.closeApp()
+const openDevtools = () => window.electronAPI?.openDevtools()
 
 onMounted(() => {
   window.electronAPI?.onMaximize(() => (isMaximized.value = true))
@@ -82,6 +83,7 @@ const windowMenu = [
   { icon: 'fas fa-window-minimize', label: 'Minimize', action: 'minimize' },
   { icon: 'fas fa-window-maximize', label: 'Maximize', action: 'toggle-maximize' },
   { icon: 'fas fa-window-close', label: 'Close', action: 'close' },
+  { icon: 'fa-solid fa-screwdriver-wrench', label: 'Developer Tools', action: 'open-devtools' },
 ]
 
 const helpMenu = [
@@ -102,6 +104,9 @@ const handleMenuAction = (action) => {
       break
     case 'close':
       closeApp()
+      break
+    case 'open-devtools':
+      openDevtools()
       break
     default:
       console.log('Action:', action)

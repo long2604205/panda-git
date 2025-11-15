@@ -42,6 +42,8 @@ import BaseForm from '@/components/common/BaseForm.vue'
 import { ref } from 'vue'
 import { updateRepoInDB } from '@/plugins/indexedDB.js'
 import mitter from '@/plugins/mitter.js'
+import api from '@/plugins/api.js'
+import { useLoadingStore } from '@/stores/loadingStore.js'
 
 const props = defineProps({
   data: Object
@@ -50,38 +52,44 @@ const props = defineProps({
 const openForm = ref(null)
 const visible = ref(false)
 const newName = ref(props.data.name)
+const loading = useLoadingStore()
 
-function refactorRepository(repo) {
+async function refactorRepository(repo) {
   if (newName.value && newName.value !== repo.name) {
-    window.electronAPI
-      .renameRepository(repo.path, newName.value)
-      .then((newPath) => {
-        repo.name = newName.value
-        repo.path = newPath
+    try {
+      loading.show(`Renaming "${repo.name}"...`)
 
-        // Update IndexDB
-        updateRepoInDB(repo)
-          .then(() => {
-            // Thông báo thành công bằng alert component
-            mitter.emit('alert', {
-              message: `Repository renamed to "${repo.name}" successfully!`,
-              type: 'success',
-            })
-          })
-          .catch(err => {
-            console.error('Failed to update IndexedDB', err)
-            mitter.emit('alert', {
-              message: `Repository renamed but failed to update DB: ${err}`,
-              type: 'warning',
-            })
-          })
+      // Gọi backend rename
+      const res = await api.post('/rename', {
+        id: repo.id,
+        repo_path: repo.path,
+        new_name: newName.value
       })
-      .catch((err) => {
-        mitter.emit('alert', {
-          message: `Rename failed: ${err}`,
-          type: 'danger',
-        })
+
+      if (res?.data?.data) {
+        repo.name = res.data.data.name
+        repo.path = res.data.data.path
+        await updateRepoInDB(repo)
+      }
+
+      mitter.emit('alert', {
+        message: res?.data?.message || 'Rename failed!',
+        type: 'info',
       })
+
+      openForm.value?.close()
+    } catch (err) {
+      openForm.value?.close()
+      mitter.emit('alert', {
+        message: err.res?.data?.message || err.message || 'Rename failed!',
+        type: 'danger',
+      })
+      console.error(err)
+      throw err
+    } finally {
+      openForm.value?.close()
+      loading.hide()
+    }
   }
 }
 </script>

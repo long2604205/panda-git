@@ -33,3 +33,7 @@ def register_git_routes(app):
     @app.route("/merge", methods=["POST"])
     def merge():
         return GitController.merge_repo(request)
+
+    @app.route("/rename", methods=["POST"])
+    def rename():
+        return GitController.rename_repo(request)
