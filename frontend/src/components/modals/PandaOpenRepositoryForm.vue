@@ -78,14 +78,14 @@ async function handleOpenRepo(repoPath) {
     } else {
       mitter.emit('alert', {
         message: `Can not open repository for ${repoPath}`,
-        type: 'error'
+        type: 'danger'
       })
     }
 
   } catch (error) {
     mitter.emit('alert', {
       message: `Error: ${error.message}`,
-      type: 'error'
+      type: 'danger'
     })
   } finally {
     loading.hide()

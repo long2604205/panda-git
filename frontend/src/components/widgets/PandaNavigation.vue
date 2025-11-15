@@ -4,49 +4,25 @@
       <!-- left menu -->
       <div class="navbar-nav flex-row">
         <div class="nav-item d-flex align-items-center">
-          <img
-            src="@/assets/cool.png"
-            alt="Logo"
-            class="app-logo"
-          />
+          <img src="@/assets/cool.png" alt="Logo" class="app-logo" />
         </div>
-        <panda-menu-dropdown
-          label="File"
-          :items="fileMenu"
-          @action="handleMenuAction"
-        />
+        <panda-menu-dropdown label="File" :items="fileMenu" @action="handleMenuAction" />
         <panda-menu-dropdown label="View" :items="viewMenu" />
         <panda-menu-dropdown label="Git" :items="gitMenu" />
-        <panda-menu-dropdown
-          label="Window"
-          :items="windowMenu"
-          @action="handleMenuAction"
-        />
+        <panda-menu-dropdown label="Window" :items="windowMenu" @action="handleMenuAction" />
         <panda-menu-dropdown label="Help" :items="helpMenu" />
       </div>
 
       <!-- window controls-->
       <div class="ms-auto d-flex align-items-center">
-        <div class="project-info me-3">
-          <span class="current-repo-info" id="current-repo-info">
-            <i class="fas fa-code-branch text-warning me-1"></i>
-            <span class="text-warning">No repository selected</span>
-          </span>
-        </div>
         <div class="window-controls">
-          <button class="btn btn-sm window-btn" id="minimize-btn"
-                  @click="minimize"
-          >
+          <button class="btn btn-sm window-btn" id="minimize-btn" @click="minimize">
             <i class="fas fa-minus"></i>
           </button>
-          <button class="btn btn-sm window-btn" id="maximize-btn"
-                  @click="toggleMaximize"
-          >
+          <button class="btn btn-sm window-btn" id="maximize-btn" @click="toggleMaximize">
             <i :class="isMaximized ? 'fas fa-clone' : 'fas fa-square'"></i>
           </button>
-          <button class="btn btn-sm window-btn close-btn" id="close-btn"
-                  @click="closeApp"
-          >
+          <button class="btn btn-sm window-btn close-btn" id="close-btn" @click="closeApp">
             <i class="fas fa-times"></i>
           </button>
         </div>
@@ -57,11 +33,12 @@
 
 <script setup>
 import PandaMenuDropdown from '../PandaMenuDropdown.vue'
-import { defineAsyncComponent, onMounted, ref } from 'vue'
+import { computed, defineAsyncComponent, onMounted, ref } from 'vue'
 import { showPageInModal } from '@/services/modals.js'
 
-const openRepositoryForm = defineAsyncComponent(() => import('@/components/modals/PandaOpenRepositoryForm.vue'))
-
+const openRepositoryForm = defineAsyncComponent(
+  () => import('@/components/modals/PandaOpenRepositoryForm.vue'),
+)
 const isMaximized = ref(false)
 const minimize = () => window.electronAPI?.minimize()
 const maximize = () => window.electronAPI?.maximize()
@@ -79,14 +56,14 @@ const fileMenu = [
   { icon: 'fas fa-code-branch', label: 'Open Repository', action: 'open-repository' },
   'divider',
   { icon: 'fas fa-times', label: 'Close Project', action: 'close-project' },
-  { icon: 'fas fa-sign-out-alt', label: 'Exit', action: 'exit' }
+  { icon: 'fas fa-sign-out-alt', label: 'Exit', action: 'exit' },
 ]
 
 const viewMenu = [
   { icon: 'fas fa-sidebar', label: 'Toggle Sidebar', action: 'toggle-sidebar' },
   { icon: 'fas fa-th-large', label: 'Toggle Workspace', action: 'toggle-workspace' },
   'divider',
-  { icon: 'fas fa-expand', label: 'Full Screen' }
+  { icon: 'fas fa-expand', label: 'Full Screen' },
 ]
 
 const gitMenu = [
@@ -98,18 +75,18 @@ const gitMenu = [
   { icon: 'fas fa-download', label: 'Pull', action: 'git-pull' },
   'divider',
   { icon: 'fas fa-code-branch', label: 'Branches', action: 'git-branches' },
-  { icon: 'fas fa-code-merge', label: 'Merge', action: 'git-merge' }
+  { icon: 'fas fa-code-merge', label: 'Merge', action: 'git-merge' },
 ]
 
 const windowMenu = [
-  { icon: 'fas fa-window-minimize', label: 'Minimize', action: "minimize" },
-  { icon: 'fas fa-window-maximize', label: 'Maximize', action: "toggle-maximize" },
-  { icon: 'fas fa-window-close', label: 'Close', action: "close" }
+  { icon: 'fas fa-window-minimize', label: 'Minimize', action: 'minimize' },
+  { icon: 'fas fa-window-maximize', label: 'Maximize', action: 'toggle-maximize' },
+  { icon: 'fas fa-window-close', label: 'Close', action: 'close' },
 ]
 
 const helpMenu = [
   { icon: 'fas fa-question-circle', label: 'Help Topics' },
-  { icon: 'fas fa-info-circle', label: 'About' }
+  { icon: 'fas fa-info-circle', label: 'About' },
 ]
 
 const handleMenuAction = (action) => {
@@ -131,8 +108,8 @@ const handleMenuAction = (action) => {
   }
 }
 
-function openRepository () {
-  showPageInModal(openRepositoryForm, {}, {width: '30%'})
+function openRepository() {
+  showPageInModal(openRepositoryForm, {}, { width: '30%' })
 }
 </script>
 <style scoped>

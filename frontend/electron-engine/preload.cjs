@@ -11,4 +11,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onUnmaximize: (cb) => ipcRenderer.on('is-unmaximized', cb),
   getMemoryInfo: () => ipcRenderer.invoke('get-memory-info'),
   selectFolder: () => ipcRenderer.invoke('dialog:select-folder'),
+  openInExplorer: (folderPath) => ipcRenderer.invoke('open-in-explorer', folderPath),
+  openTerminal: (folderPath) => ipcRenderer.invoke('open-terminal', folderPath),
+  renameRepository: (repoPath, newName) => ipcRenderer.invoke('rename-repository', repoPath, newName)
 })

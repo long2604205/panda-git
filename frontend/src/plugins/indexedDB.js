@@ -51,3 +51,24 @@ export async function loadRepos() {
     request.onerror = () => reject(request.error);
   });
 }
+
+// Cập nhật repo trong IndexedDB
+export async function updateRepoInDB(repo) {
+  const db = await openDB();
+  const tx = db.transaction(STORE_NAME, 'readwrite');
+  const store = tx.objectStore(STORE_NAME);
+
+  return new Promise((resolve, reject) => {
+    const request = store.put({
+      id: repo.id,
+      name: repo.name,
+      path: repo.path,
+      status: repo.status || 'clean',
+      active: repo.active || false
+    });
+
+    request.onsuccess = () => resolve(true);
+    request.onerror = () => reject(request.error);
+  });
+}
+

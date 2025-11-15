@@ -90,14 +90,14 @@ async function handleCloneRepo(repoPath, localPath) {
     } else {
       mitter.emit('alert', {
         message: 'Failed to open repository: No data returned',
-        type: 'error'
+        type: 'danger'
       })
     }
 
   } catch (error) {
     mitter.emit('alert', {
       message: `Error opening repository: ${error.message}`,
-      type: 'error'
+      type: 'danger'
     })
   } finally {
     loading.hide()

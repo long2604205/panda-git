@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="visible"
-    class="context-menu"
+    class="context-menu no-select"
     :style="{ top: y + 'px', left: x + 'px' }"
     @click.stop
   >
@@ -13,7 +13,7 @@
         Open repository
       </span>
     </div>
-    <div class="menu-item" @click="() => choose('open')">
+    <div class="menu-item" @click="() => choose('open-in-explorer')">
       <span style="color: #6aa39d" class="icon">
         <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" class="bi bi-folder-symlink" viewBox="0 0 10 10">
           <path d="m11.798 8.271-3.182 1.97c-.27.166-.616-.036-.616-.372V9.1s-2.571-.3-4 2.4c.571-4.8 3.143-4.8 4-4.8v-.769c0-.336.346-.538.616-.371l3.182 1.969c.27.166.27.576 0 .742"/>
@@ -24,7 +24,7 @@
         Open in Explorer
       </span>
     </div>
-    <div class="menu-item" @click="() => choose('open')">
+    <div class="menu-item" @click="() => choose('open-terminal')">
       <span style="color: #6aa39d" class="icon">
         <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" fill="currentColor" class="bi bi-terminal-fill" viewBox="0 0 10 10">
           <path d="M0 3a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm9.5 5.5h-3a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1m-6.354-.354a.5.5 0 1 0 .708.708l2-2a.5.5 0 0 0 0-.708l-2-2a.5.5 0 1 0-.708.708L4.793 6.5z"/>
@@ -37,7 +37,11 @@
 
     <div class="divider"></div>
 
-    <div class="menu-item" @click="() => choose('copy')">
+    <div
+      v-if="repo?.active"
+      class="menu-item"
+      @click="() => choose('pull-repository')"
+    >
       <span style="color: #c792ea" class="icon">
         <i class="fa-solid fa-download"/>
       </span>
@@ -45,7 +49,12 @@
         Pull
       </span>
     </div>
-    <div class="menu-item" @click="() => choose('copy')">
+    <div
+      v-if="repo?.active"
+      class="menu-item"
+      :class="{ disabled: repo.status !== 'clean' }"
+      @click="() => choose('push-repository')"
+    >
       <span style="color: #c792ea" class="icon">
         <i class="fa-solid fa-upload"/>
       </span>
@@ -54,9 +63,13 @@
       </span>
     </div>
 
-    <div class="divider"></div>
+    <div v-if="repo?.active" class="divider"/>
 
-    <div class="menu-item" @click="() => choose('archive')">
+    <div
+      v-if="repo?.active"
+      class="menu-item"
+      @click="() => choose('refresh-repository')"
+    >
       <span style="color: #81c784" class="icon">
         <i class="fa-solid fa-arrows-rotate"/>
       </span>
@@ -66,9 +79,9 @@
       <span class="shortcut">F5</span>
     </div>
 
-    <div class="divider"></div>
+    <div v-if="repo?.active" class="divider"/>
 
-    <div class="menu-item" @click="() => choose('archive')">
+    <div class="menu-item" @click="() => choose('rename')">
       <span style="color: #7597e1" class="icon">
         <i class="fa-solid fa-pen-to-square"/>
       </span>
@@ -76,7 +89,7 @@
         Rename
       </span>
     </div>
-    <div class="menu-item" @click="() => choose('archive')">
+    <div class="menu-item" @click="() => choose('delete')">
       <span style="color: #e3504d" class="icon">
         <i class="fa-solid fa-trash-can"/>
       </span>
@@ -212,4 +225,11 @@ onBeforeUnmount(() => {
   background: var(--border-color);
   margin: 4px 0;
 }
+
+.menu-item.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 </style>

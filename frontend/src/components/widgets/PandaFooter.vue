@@ -1,43 +1,48 @@
 <template>
   <div class="status-bar">
-    <div class="d-flex align-items-center justify-content-between px-3">
-      <div class="status-left">
+    <div class="status-left">
         <span class="status-item" id="current-repo-status">
-          <i class="fas fa-folder me-1"></i>No repository
+          <i class="fas fa-folder me-1"></i>{{ currentRepo }}
         </span>
-        <span class="status-item" id="current-branch-status">
-          <i class="fas fa-code-branch me-1"></i>-
+      <span class="status-item" id="current-branch-status">
+          <i class="fas fa-code-branch me-1" style="color: #4fc3f7"></i>
+          {{ currentBranch }}
         </span>
-        <span class="status-item" id="git-status">
-          <i class="fas fa-circle text-success me-1"></i>Clean
+      <span class="status-item" id="git-status">
+        <i
+          class="fas"
+          :class="[getStatusIcon(gitStatus), getStatusColor(gitStatus)]"
+          :title="gitStatus"
+        />
+          {{ capitalize(gitStatus) }}
         </span>
-      </div>
-      <div class="status-right">
+    </div>
+    <div class="status-right">
         <span class="status-item">
-          <inline-loading :visible="loading.isLoading" :message="loading.message"/>
+          <inline-loading :visible="loading.isLoading" :message="loading.message" />
         </span>
-        <span class="status-item">
-          <i class="fas fa-palette me-1"></i>Material Darker
-        </span>
-        <span class="status-item">
-          <i class="fas fa-memory me-1"></i>{{ memoryUsed }}
-        </span>
-        <span class="status-item">
-          <i class="fas fa-clock me-1"></i>{{ currentTime }}
-        </span>
-      </div>
+      <span class="status-item"> <i class="fas fa-palette me-1"></i>Material Darker </span>
+      <span class="status-item"> <i class="fas fa-memory me-1"></i>{{ memoryUsed }} </span>
+      <span class="status-item"> <i class="fas fa-clock me-1"></i>{{ currentTime }} </span>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import InlineLoading from '@/components/Loading/InlineLoading.vue'
 import { useLoadingStore } from '@/stores/loadingStore.js'
+import { useRepositoryStore } from '@/stores/repositoryStore.js'
 
 const loading = useLoadingStore()
+const repositoryStore = useRepositoryStore()
+
 const memoryUsed = ref('Loading...')
 const currentTime = ref('--:--:--')
+
+const currentRepo = computed(() => repositoryStore.activeRepo?.name || 'No repository')
+const currentBranch = computed(() => repositoryStore.activeRepo?.branch || '-')
+const gitStatus = computed(() => repositoryStore.activeRepo?.status || '-')
 
 function formatMemory(kb) {
   if (!kb || isNaN(kb)) return 'N/A'
@@ -49,9 +54,7 @@ async function fetchMemory() {
     if (window.electronAPI?.getMemoryInfo) {
       const info = await window.electronAPI.getMemoryInfo()
       console.log('Memory info:', info)
-      memoryUsed.value = info?.ramKB
-        ? formatMemory(info.ramKB)
-        : 'N/A'
+      memoryUsed.value = info?.ramKB ? formatMemory(info.ramKB) : 'N/A'
     } else {
       memoryUsed.value = 'N/A'
     }
@@ -74,21 +77,64 @@ onMounted(() => {
   setInterval(fetchMemory, 5000)
   setInterval(updateClock, 1000)
 })
+
+const getStatusIcon = (status) => {
+  switch (status) {
+    case 'clean':
+      return 'fa-check-circle'
+    case 'dirty':
+      return 'fa-exclamation-circle'
+    case 'untracked':
+      return 'fa-question-circle'
+    default:
+      return 'fa-circle'
+  }
+}
+
+const getStatusColor = (status) => {
+  switch (status) {
+    case 'clean':
+      return 'text-success'
+    case 'dirty':
+      return 'text-warning'
+    case 'untracked':
+      return 'text-secondary'
+    default:
+      return 'text-muted'
+  }
+}
+
+function capitalize(str) {
+  if (!str) return ''
+  return str.charAt(0).toUpperCase() + str.slice(1)
+}
 </script>
 
 <style scoped>
 .status-bar {
   background-color: var(--bg-tertiary);
   border-top: 1px solid var(--border-color);
-  min-height: 24px;
-  font-size: 11px;
+  min-height: 34px;
+  font-size: 12px;
   color: var(--text-secondary);
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+}
+
+.status-left,
+.status-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
 .status-item {
-  margin-right: 16px;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 4px;
+  padding-bottom: 5px;
 }
 </style>

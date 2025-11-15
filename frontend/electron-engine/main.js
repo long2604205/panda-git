@@ -1,6 +1,9 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron'
-import { dirname, join } from 'path'
+import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
+import path, { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
+import { spawn } from 'child_process'
+import os from 'os'
+import fs from 'fs'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -33,7 +36,7 @@ function createWindow() {
   })
 
   win.loadFile(join(__dirname, '../dist/index.html'))
-  // win.webContents.openDevTools()
+  win.webContents.openDevTools()
 
   ipcMain.on('close-app', () => win.close())
   ipcMain.on('minimize', () => win.minimize())
@@ -73,5 +76,66 @@ function createWindow() {
     win.webContents.send('is-unmaximized')
   })
 }
+
+ipcMain.handle('open-in-explorer', async (event, folderPath) => {
+  try {
+    await shell.openPath(folderPath);
+    return { success: true };
+  } catch (err) {
+    console.error('Failed to open folder:', err);
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('open-terminal', async (event, folderPath) => {
+  try {
+    const platform = os.platform();
+
+    if (platform === 'win32') {
+      // Windows Terminal
+      spawn('wt', ['-d', folderPath], { detached: true });
+
+      // Nếu máy không có Windows Terminal thì fallback CMD
+      // spawn('cmd.exe', ['/K', `cd /d "${folderPath}"`], { detached: true });
+    }
+    else if (platform === 'darwin') {
+      // macOS - mở Terminal và cd vào
+      spawn('open', ['-a', 'Terminal', folderPath]);
+    }
+    else {
+      // Linux - mở terminal mặc định
+      spawn('x-terminal-emulator', ['--working-directory', folderPath], {
+        detached: true
+      });
+    }
+
+    return { success: true };
+  } catch (err) {
+    console.error(err);
+    return { success: false, error: err.message };
+  }
+});
+
+async function renameLocalFolder(repoPath, newName) {
+  const parentDir = path.dirname(repoPath)
+  const newPath = path.join(parentDir, newName)
+
+  if (fs.existsSync(newPath)) {
+    throw new Error('Folder with this name already exists')
+  }
+
+  await fs.promises.rename(repoPath, newPath)
+  return newPath
+}
+
+ipcMain.handle('rename-repository', async (event, repoPath, newName) => {
+  if (!repoPath || !newName) throw new Error('Invalid parameters')
+  // eslint-disable-next-line no-useless-catch
+  try {
+    return await renameLocalFolder(repoPath, newName)
+  } catch (err) {
+    throw err
+  }
+})
 
 app.whenReady().then(createWindow)

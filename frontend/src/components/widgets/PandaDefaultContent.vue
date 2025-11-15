@@ -24,30 +24,42 @@
 <!--      />-->
     </div>
   </div>
-  <alert-notification
-    v-if="showAlert"
-    :message="alertMessage"
-    :type="alertType"
-    @close="showAlert = false"
-  />
+  <div class="alert-container">
+    <transition-group name="alert-list" tag="div">
+      <alert-notification
+        v-for="alert in alerts"
+        :key="alert.id"
+        :title="alert.title"
+        :message="alert.message"
+        :type="alert.type"
+        :duration="alert.duration"
+        @close="removeAlert(alert.id)"
+      />
+    </transition-group>
+  </div>
 </template>
 <script setup>
 import PandaRepositoryWorkspace from '@/components/PandaRepositoryWorkspace.vue'
-import PandaToolbar from '@/components/PandaToolbar.vue'
+import PandaToolbar from '@/components/widgets/PandaToolbar.vue'
 import PandaCommitPanel from '@/components/PandaCommitPanel.vue'
 import { ref } from 'vue'
 import AlertNotification from '@/components/modals/AlertNotification.vue'
 import PandaRightPanel from '@/components/PandaRightPanel.vue'
 import PandaGitLogPanel from '@/components/PandaGitLogPanel.vue'
 import mitter from '@/plugins/mitter.js'
-const showAlert = ref(false)
-const alertMessage = ref('')
-const alertType = ref('info')
+const alerts = ref([])
 
-mitter.on('alert', ({ message, type = 'info' }) => {
-  alertMessage.value = message
-  alertType.value = type
-  showAlert.value = true
+function addAlert({ title, message, type = 'info', duration = 5000 }) {
+  const id = Date.now() + Math.random()
+  alerts.value.unshift({ id, title, message, type, duration })
+}
+
+function removeAlert(id) {
+  alerts.value = alerts.value.filter(a => a.id !== id)
+}
+
+mitter.on('alert', ({ title, message, type = 'info', duration = 5000 }) => {
+  addAlert({ title, message, type, duration })
 })
 
 const commitSample = {
@@ -78,7 +90,7 @@ function togglePanel() {
 <style scoped>
 .main-container {
   background: var(--bg-primary);
-  height: calc(100vh - 56px);
+  height: calc(100vh - 66px);
   padding: 0;
 }
 
@@ -92,5 +104,27 @@ function togglePanel() {
   height: 100%;
   overflow: hidden;
   padding: 0;
+}
+
+.alert-container {
+  position: fixed;
+  bottom: 45px;
+  right: 10px;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 10px;
+  z-index: 9999;
+}
+
+.alert-list-enter-from,
+.alert-list-leave-to {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.alert-list-enter-active,
+.alert-list-leave-active,
+.alert-list-move {
+  transition: all 0.3s ease;
 }
 </style>

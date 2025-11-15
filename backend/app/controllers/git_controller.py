@@ -92,7 +92,7 @@ class GitController:
 
         try:
             result = GitService.pull_changes(repo_path)
-            return JsonResponse.success(result, message="Pull successful")
+            return JsonResponse.success(result, message="All files are up to date")
         except Exception as e:
             return JsonResponse.error(str(e), status_code=500)
 
