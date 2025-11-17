@@ -1,7 +1,4 @@
 from app import create_app
-from app.database.migrations import migrate
-
-migrate()
 
 app = create_app()
 
