@@ -61,7 +61,6 @@ async function refactorRepository(repo) {
 
       // Gọi backend rename
       const res = await api.post('/rename', {
-        id: repo.id,
         repo_path: repo.path,
         new_name: newName.value
       })

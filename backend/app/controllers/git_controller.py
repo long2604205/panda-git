@@ -131,19 +131,15 @@ class GitController:
 
     @staticmethod
     def rename_repo(request):
-        """
-        Rename a repository folder and update DB.
-        """
         data = request.get_json()
         if not data or "repo_path" not in data or "new_name" not in data:
             return JsonResponse.error("Missing required fields: 'repo_path' and 'new_name'", status_code=400)
 
-        id = data["id"]
         repo_path = data["repo_path"]
         new_name = data["new_name"]
 
         try:
-            data = GitService.rename_repo(id, repo_path, new_name)
+            data = GitService.rename_repo(repo_path, new_name)
             return JsonResponse.success({
                 "name": data["name"],
                 "path": data["path"],
