@@ -1,0 +1,71 @@
+/* Material Darker Theme Variables */
+:root {
+  --bg-primary: #212121;
+  --bg-secondary: #212121;
+  --bg-tertiary: #3c3c3c;
+  --bg-quaternary: #424242;
+  --bg-hover: #404040;
+  --bg-active: #4a4a4a;
+  --text-primary: #ffffff;
+  --text-secondary: #b0b0b0;
+  --text-muted: #757575;
+  --text-disabled: #616161;
+  --accent-primary: #ffb74d;
+  --accent-secondary: #4fc3f7;
+  --accent-success: #81c784;
+  --accent-warning: #ffb74d;
+  --accent-danger: #e57373;
+  --accent-info: #64b5f6;
+  --border-color: #404040;
+  --border-light: #555555;
+  --scrollbar-track: #2d2d2d;
+  --scrollbar-thumb: #555555;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Global Styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 14px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  line-height: 1.4;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #666666;
+}
+
+::-webkit-scrollbar-corner {
+  /*background: var(--scrollbar-track);*/
+  background: transparent;
+}
+
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
