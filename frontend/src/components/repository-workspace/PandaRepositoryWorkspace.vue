@@ -108,6 +108,7 @@ import RepositoryContextMenu from '@/components/repository-workspace/RepositoryC
 import { useRepositoryStore } from '@/stores/repositoryStore.js'
 import { showPageInModal } from '@/services/modals.js'
 import commonApi from '@/services/api/common.js'
+import notify from '@/plugins/notify.js'
 
 /*----Data----*/
 const repoContextMenu = ref(null)
@@ -311,15 +312,9 @@ async function setActiveRepository(repo) {
     mitter.emit('set-active-repository', result)
     mitter.emit('push-repository', result.path)
 
-    mitter.emit('alert', {
-      message: `Open repository for ${repo.name}`,
-      type: 'success',
-    })
+    // notify.success(`Open repository for ${repo.name}`)
   } catch (error) {
-    mitter.emit('alert', {
-      message: `❌ Failed: ${error.message}`,
-      type: 'danger',
-    })
+    notify.error(`❌ Failed: ${error.message}`)
   } finally {
     loading.hide()
   }
@@ -391,15 +386,16 @@ async function refreshRepository(repo) {
   try {
     loading.show(`Refreshing "${repo.name}"...`)
 
-    // ① Fetch
-    await fetchRepository(repo.path)
+    const data = {
+      repo_path: repo.path,
+    }
+
+    await commonApi.fetch(data)
 
     await setActiveRepository(repo)
 
-    mitter.emit('alert', {
-      message: `Repository "${repo.name}" refreshed!`,
-      type: 'success',
-    })
+    notify.success(`Repository "${repo.name}" refreshed!`)
+
   } catch (err) {
     mitter.emit('alert', {
       message: err.response?.data?.message || err.message || 'Refresh failed!',

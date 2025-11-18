@@ -36,6 +36,7 @@ import mitter from '@/plugins/mitter.js'
 import { useLoadingStore } from '@/stores/loadingStore.js'
 import { useRepositoryStore } from '@/stores/repositoryStore.js'
 import commonApi from '@/services/api/common.js'
+import notify from '@/plugins/notify.js'
 
 const openRepositoryForm = ref(null)
 const visible = ref(false)
@@ -57,12 +58,8 @@ function openRepository() {
 async function handleOpenRepo(repoPath) {
   try {
     loading.show('Opening repository')
-    // const response = await api.post('/open-repository', {
-    //   repo_path: repoPath
-    // });
-    const response = await commonApi.open({
-      repo_path: repoPath
-    })
+
+    const response = await commonApi.open({ repo_path: repoPath })
 
     const result = response.data
 
@@ -70,21 +67,14 @@ async function handleOpenRepo(repoPath) {
       repositoryStore.setActiveRepo(result)
 
       mitter.emit('open-repository', result)
-      mitter.emit('alert', {
-        message: 'Open repository successfully',
-        type: 'success',
-      })
+
+      notify.success('Open repository successfully')
+
     } else {
-      mitter.emit('alert', {
-        message: `Can not open repository for ${repoPath}`,
-        type: 'danger',
-      })
+      notify.error(`Can not open repository for ${repoPath}`)
     }
   } catch (error) {
-    mitter.emit('alert', {
-      message: `Error: ${error.message}`,
-      type: 'danger',
-    })
+    notify.error(`Error: ${error.message}`)
   } finally {
     loading.hide()
   }

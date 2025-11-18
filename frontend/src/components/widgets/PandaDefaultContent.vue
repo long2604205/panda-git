@@ -47,6 +47,7 @@ import AlertNotification from '@/components/common/AlertNotification.vue'
 import PandaRightPanel from '@/components/draft/PandaRightPanel.vue'
 import PandaGitLogPanel from '@/components/draft/PandaGitLogPanel.vue'
 import mitter from '@/plugins/mitter.js'
+import notify from '@/plugins/notify.js'
 const alerts = ref([])
 
 function addAlert({ title, message, type = 'info', duration = 5000 }) {
@@ -58,9 +59,12 @@ function removeAlert(id) {
   alerts.value = alerts.value.filter(a => a.id !== id)
 }
 
-mitter.on('alert', ({ title, message, type = 'info', duration = 5000 }) => {
-  addAlert({ title, message, type, duration })
-})
+notify.on("alert", ({ title, message, type, duration }) => {
+  addAlert({ title, message, type, duration });
+});
+// mitter.on('alert', ({ title, message, type = 'info', duration = 5000 }) => {
+//   addAlert({ title, message, type, duration })
+// })
 
 const commitSample = {
   message: "Fix login issue on mobile view",
