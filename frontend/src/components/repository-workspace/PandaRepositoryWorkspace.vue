@@ -104,7 +104,7 @@ import mitter from '@/plugins/mitter.js'
 import api from '@/plugins/api.js'
 import { useLoadingStore } from '@/stores/loadingStore.js'
 import { saveRepos, loadRepos } from '@/plugins/indexedDB.js'
-import RepositoryContextMenu from '@/components/modals/RepositoryContextMenu.vue'
+import RepositoryContextMenu from '@/components/repository-workspace/RepositoryContextMenu.vue'
 import { useRepositoryStore } from '@/stores/repositoryStore.js'
 import { showPageInModal } from '@/services/modals.js'
 
@@ -125,7 +125,7 @@ const repositories = ref([])
 const loading = useLoadingStore()
 const isLoadingRepos = ref(true)
 const repositoryStore = useRepositoryStore()
-const renameForm = defineAsyncComponent(() => import('@/components/modals/RenameForm.vue'),)
+const renameForm = defineAsyncComponent(() => import('@/components/repository-workspace/RenameForm.vue'),)
 const confirmDialog = defineAsyncComponent(() => import('@/components/common/ConfirmDialog.vue'),)
 
 /*----Mounted----*/

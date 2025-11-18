@@ -4,7 +4,7 @@ import PandaDefaultContent from '@/components/widgets/PandaDefaultContent.vue'
 import PandaFooter from '@/components/widgets/PandaFooter.vue'
 import { onMounted, ref } from 'vue'
 import { loadRepos } from '@/plugins/indexedDB.js'
-import FullLoadingPage from '@/components/FullLoadingPage.vue'
+import FullLoadingPage from '@/components/common/FullLoadingPage.vue'
 
 const isLoadingPage = ref(true)
 

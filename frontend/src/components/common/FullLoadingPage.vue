@@ -1,7 +1,7 @@
 <template>
   <div v-if="isLoading" class="loader-overlay">
     <div class="panda-container">
-      <img src="@/assets/cool.png">
+      <img src="../../assets/cool.png">
     </div>
     <div class="panda-loader">
       <div class="panda-progress" data-percentage="100%"></div>

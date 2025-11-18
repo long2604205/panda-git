@@ -39,13 +39,13 @@
   </div>
 </template>
 <script setup>
-import PandaRepositoryWorkspace from '@/components/PandaRepositoryWorkspace.vue'
+import PandaRepositoryWorkspace from '@/components/repository-workspace/PandaRepositoryWorkspace.vue'
 import PandaToolbar from '@/components/widgets/PandaToolbar.vue'
-import PandaCommitPanel from '@/components/PandaCommitPanel.vue'
+import PandaCommitPanel from '@/components/draft/PandaCommitPanel.vue'
 import { ref } from 'vue'
-import AlertNotification from '@/components/modals/AlertNotification.vue'
-import PandaRightPanel from '@/components/PandaRightPanel.vue'
-import PandaGitLogPanel from '@/components/PandaGitLogPanel.vue'
+import AlertNotification from '@/components/common/AlertNotification.vue'
+import PandaRightPanel from '@/components/draft/PandaRightPanel.vue'
+import PandaGitLogPanel from '@/components/draft/PandaGitLogPanel.vue'
 import mitter from '@/plugins/mitter.js'
 const alerts = ref([])
 

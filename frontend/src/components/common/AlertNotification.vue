@@ -39,11 +39,11 @@ const props = defineProps({
   message: String,
   type: {
     type: String,
-    default: 'info', // success | error | warning
+    default: 'info',
   },
   duration: {
     type: Number,
-    default: 5000, // milliseconds
+    default: 5000,
   },
 })
 
