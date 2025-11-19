@@ -79,6 +79,12 @@
             </div>
           </div>
         </div>
+
+        <div class="resizer" @mousedown="startResizing"></div>
+
+        <div class="branch-workspace" :style="{ height: 'calc(100% - ' + reposHeight + 'px - 5px)' }">
+          <h1>Branches</h1>
+        </div>
       </div>
     </div>
     <div
@@ -101,7 +107,6 @@ import {
   watch,
 } from 'vue'
 import mitter from '@/plugins/mitter.js'
-import api from '@/plugins/api.js'
 import { useLoadingStore } from '@/stores/loadingStore.js'
 import { saveRepos, loadRepos } from '@/plugins/indexedDB.js'
 import RepositoryContextMenu from '@/components/repository-workspace/RepositoryContextMenu.vue'
@@ -113,6 +118,7 @@ import { getStatusColor, getStatusIcon } from '@/composable/attributes.js'
 
 /*----Data----*/
 let isResizingContainer = false
+let isResizing = false;
 const reposHeight = ref(0)
 const containerHeight = ref(0)
 const containerWidth = ref(325)
@@ -397,5 +403,35 @@ async function refreshRepository(repo) {
 function openRenameForm(repo) {
   showPageInModal(renameForm, { data: repo }, { width: '20%' })
 }
+
+const startResizing = () => {
+  const container = document.querySelector('.workspace-split');
+  if (!container) return;
+
+  containerHeight.value = container.clientHeight;
+  isResizing = true;
+
+  window.addEventListener('mousemove', resizePanel);
+  window.addEventListener('mouseup', stopResizing);
+};
+
+const resizePanel = (e) => {
+  if (!isResizing) return;
+
+  const container = document.querySelector('.workspace-split');
+  const containerTop = container.getBoundingClientRect().top;
+  const newHeight = e.clientY - containerTop;
+
+  const minHeight = containerHeight.value * 0.2;
+  const maxHeight = containerHeight.value * 0.8;
+
+  reposHeight.value = Math.min(Math.max(newHeight, minHeight), maxHeight)
+};
+
+const stopResizing = () => {
+  isResizing = false;
+  window.removeEventListener('mousemove', resizePanel)
+  window.removeEventListener('mouseup', stopResizing)
+};
 </script>
 <style scoped src="@/assets/styles/PandaRepositoryWorkspace.css"></style>

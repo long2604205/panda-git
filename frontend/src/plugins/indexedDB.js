@@ -1,5 +1,4 @@
-// src/plugins/indexedDB.js
-const DB_NAME = 'gitUI';
+const DB_NAME = 'panda-git';
 const STORE_NAME = 'repositories';
 const DB_VERSION = 1;
 
