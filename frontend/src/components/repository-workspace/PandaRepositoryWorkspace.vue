@@ -82,8 +82,81 @@
 
         <div class="resizer" @mousedown="startResizing"></div>
 
-        <div class="branch-workspace" :style="{ height: 'calc(100% - ' + reposHeight + 'px - 5px)' }">
-          <h1>Branches</h1>
+        <div
+          class="branch-workspace"
+          :style="{ height: 'calc(100% - ' + reposHeight + 'px - 5px)' }"
+        >
+          <div class="branch-workspace-header">
+            <h6 class="mb-0">Branches</h6>
+            <div class="workspace-toggle">
+              <button
+                class="btn btn-sm workspace-action search"
+                v-if="showActions"
+                @click="showSearchBranch = !showSearchBranch"
+              >
+                <i class="fa-solid fa-magnifying-glass"></i>
+              </button>
+              <button class="btn btn-sm workspace-action" v-if="showActions">
+                <i class="fa-solid fa-ellipsis-vertical"></i>
+              </button>
+            </div>
+          </div>
+          <transition name="fade-search">
+            <div class="search-workspace" v-if="showSearchBranch">
+              <div class="symbol-search">
+                <i class="fa-solid fa-magnifying-glass"></i>
+              </div>
+              <input
+                ref="branchSearchInput"
+                class="search-branch"
+                placeholder="search branch"
+                v-model="branchKeyword"
+              />
+            </div>
+          </transition>
+          <div class="workspace-content branch-tree-scroll">
+            <div class="branch-tree" id="branch-tree">
+              <div v-if="!activeRepository" class="no-repos-message text-center py-4">
+                <i class="fas fa-code-branch fa-2x mb-2"></i>
+                <p>No repository selected</p>
+                <small>Open a repository to view branches</small>
+              </div>
+
+              <template v-else>
+                <!-- HEAD -->
+                <div class="tree-item tree-header">
+                  <i class="fas fa-laptop text-info me-1"></i>
+                  <span>HEAD (Current Branch)</span>
+                </div>
+                <div class="tree-item nested active">
+                  <i class="fas fa-solid fa-tag text-info me-1"/>
+                  <span>{{ getDisplayHeadBranchName(activeRepository.currentBranch)}}</span>
+                </div>
+
+                <!-- Local -->
+                <div class="tree-item tree-header" @click="toggle('local')">
+                  <i
+                    class="fas fa-chevron-down tree-toggle"
+                    :class="{ collapsed: collapsedTree.local }"
+                  />
+                  <i class="fas fa-folder text-warning me-1"></i>
+                  <span>Local</span>
+                </div>
+                <template v-if="!collapsedTree.local || branchKeyword">
+                  <branch-tree-verion
+                    :node="tree"
+                    path=""
+                    :collapsed-groups="collapsedGroups"
+                    :toggle-group="toggleGroup"
+                    :active-branch="activeBranch"
+                    :open-context-menu="openContextMenu"
+                    :search-term="branchKeyword"
+                    :level="1"
+                  />
+                </template>
+              </template>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -94,6 +167,7 @@
     ></div>
   </div>
   <repository-context-menu ref="repoContextMenu" @action="onRepoAction" />
+  <branch-context-menu ref="branchContextMenu" @action="onBranchAction"/>
 </template>
 <script setup>
 // Props
@@ -105,6 +179,7 @@ import {
   onMounted,
   ref,
   watch,
+  watchEffect,
 } from 'vue'
 import mitter from '@/plugins/mitter.js'
 import { useLoadingStore } from '@/stores/loadingStore.js'
@@ -115,10 +190,12 @@ import { showPageInModal } from '@/services/modals.js'
 import commonApi from '@/services/api/common.js'
 import notify from '@/plugins/notify.js'
 import { getStatusColor, getStatusIcon } from '@/composable/attributes.js'
+import BranchTreeVerion from '@/components/draft/BranchTreeVerion.vue'
+import BranchContextMenu from '@/components/repository-workspace/BranchContextMenu.vue'
 
 /*----Data----*/
 let isResizingContainer = false
-let isResizing = false;
+let isResizing = false
 const reposHeight = ref(0)
 const containerHeight = ref(0)
 const containerWidth = ref(325)
@@ -134,8 +211,18 @@ const repositories = ref([])
 const loading = useLoadingStore()
 const isLoadingRepos = ref(true)
 const repositoryStore = useRepositoryStore()
-const renameForm = defineAsyncComponent(() => import('@/components/repository-workspace/RenameForm.vue'),)
+const renameForm = defineAsyncComponent(
+  () => import('@/components/repository-workspace/RenameForm.vue'),
+)
 const confirmDialog = defineAsyncComponent(() => import('@/components/common/ConfirmDialog.vue'))
+
+const showSearchBranch = ref(false)
+const branchKeyword = ref('')
+const collapsedTree = ref({
+  local: false,
+  remote: false,
+})
+const branchContextMenu = ref(null)
 
 /*----Mounted----*/
 onMounted(() => {
@@ -201,7 +288,9 @@ const filteredRepositories = computed(() => {
 })
 
 /*----Watch----*/
-watch(() => isWorkspaceCollapsed.value, (newVal) => {
+watch(
+  () => isWorkspaceCollapsed.value,
+  (newVal) => {
     if (!newVal) {
       showActions.value = true
       containerWidth.value = previousWidth.value
@@ -222,7 +311,9 @@ watch(showSearchRepository, (newVal) => {
   }
 })
 
-watch(repositories, async (newVal) => {
+watch(
+  repositories,
+  async (newVal) => {
     const basicRepos = newVal.map((r) => ({
       id: r.id,
       path: r.path,
@@ -405,33 +496,194 @@ function openRenameForm(repo) {
 }
 
 const startResizing = () => {
-  const container = document.querySelector('.workspace-split');
-  if (!container) return;
+  const container = document.querySelector('.workspace-split')
+  if (!container) return
 
-  containerHeight.value = container.clientHeight;
-  isResizing = true;
+  containerHeight.value = container.clientHeight
+  isResizing = true
 
-  window.addEventListener('mousemove', resizePanel);
-  window.addEventListener('mouseup', stopResizing);
-};
+  window.addEventListener('mousemove', resizePanel)
+  window.addEventListener('mouseup', stopResizing)
+}
 
 const resizePanel = (e) => {
-  if (!isResizing) return;
+  if (!isResizing) return
 
-  const container = document.querySelector('.workspace-split');
-  const containerTop = container.getBoundingClientRect().top;
-  const newHeight = e.clientY - containerTop;
+  const container = document.querySelector('.workspace-split')
+  const containerTop = container.getBoundingClientRect().top
+  const newHeight = e.clientY - containerTop
 
-  const minHeight = containerHeight.value * 0.2;
-  const maxHeight = containerHeight.value * 0.8;
+  const minHeight = containerHeight.value * 0.2
+  const maxHeight = containerHeight.value * 0.8
 
   reposHeight.value = Math.min(Math.max(newHeight, minHeight), maxHeight)
-};
+}
 
 const stopResizing = () => {
-  isResizing = false;
+  isResizing = false
   window.removeEventListener('mousemove', resizePanel)
   window.removeEventListener('mouseup', stopResizing)
+}
+
+function toggle(section) {
+  collapsedTree.value[section] = !collapsedTree.value[section]
+}
+
+// __________________________________________
+const activeBranch = ref('')
+const collapsedGroups = ref({})
+
+// Build tree
+const buildTree = (branches) => {
+  const tree = {}
+  branches.forEach((branch) => {
+    const parts = branch.split('/')
+    let current = tree
+    parts.forEach((part, index) => {
+      if (!current[part]) current[part] = index === parts.length - 1 ? null : {}
+      current = current[part] ?? {}
+    })
+  })
+  return tree
+}
+
+// Tree filtered by search
+const tree = computed(() => {
+  const repo = activeRepository.value
+  if (!repo || !repo.branches || !repo.branches.local) return
+  let localBranches = activeRepository.value.branches.local
+  if (!repo || !repo.branches || !repo.branches.local) return {}
+  if (!branchKeyword.value) return buildTree(localBranches)
+  const normalizedTerm = branchKeyword.value.toLowerCase()
+  const filtered = localBranches.filter((b) => b.toLowerCase().includes(normalizedTerm))
+  return buildTree(filtered)
+})
+
+// Check folder
+const hasChildren = (node) =>
+  node !== null && node !== undefined && Object.keys(node || {}).length > 0
+
+// Toggle collapse
+const toggleGroup = (path) => {
+  collapsedGroups.value[path] = !collapsedGroups.value[path]
+}
+
+// Right click
+const openContextMenu = (branchName, event) => {
+  branchContextMenu.value.open(event, branchName)
+}
+
+// Toggle collapse for search matches
+const toggleCollapseForMatches = (treeNode, pathPrefix = '', currentCollapsedGroups) => {
+  const normalizedTerm = branchKeyword.value.toLowerCase()
+  for (const key in treeNode) {
+    const fullPathKey = pathPrefix + key
+    const isMatch =
+      branchKeyword.value &&
+      (key.toLowerCase().includes(normalizedTerm) ||
+        fullPathKey.toLowerCase().includes(normalizedTerm))
+    if (hasChildren(treeNode[key]))
+      toggleCollapseForMatches(treeNode[key], fullPathKey + '/', currentCollapsedGroups)
+    if (isMatch) {
+      const parts = fullPathKey.split('/')
+      let ancestorPath = ''
+      for (let i = 0; i < parts.length - 1; i++) {
+        ancestorPath += (i > 0 ? '/' : '') + parts[i]
+        currentCollapsedGroups[ancestorPath] = false
+      }
+      if (hasChildren(treeNode[key])) currentCollapsedGroups[fullPathKey] = false
+    }
+  }
+}
+
+// Watch branchKeyword
+watchEffect(() => {
+  const newCollapsedGroups = {}
+  const initCollapsed = (subTree, pathPrefix = '') => {
+    for (const key in subTree) {
+      const fullPathKey = pathPrefix + key
+      if (hasChildren(subTree[key])) {
+        newCollapsedGroups[fullPathKey] = true
+        initCollapsed(subTree[key], fullPathKey + '/')
+      }
+    }
+  }
+  initCollapsed(tree.value)
+  if (branchKeyword.value) toggleCollapseForMatches(tree.value, '', newCollapsedGroups)
+  collapsedGroups.value = newCollapsedGroups
+})
+
+function onBranchAction({ action, branch}) {
+  console.log(action, branch )
+  switch (action) {
+    case 'checkout':
+      switchBranch(branch)
+      break
+  }
+}
+
+function switchBranch(branchName) {
+  if (branchName.includes("origin/")) {
+    branchName = branchName.replace("origin/", "");
+  }
+  if (activeRepository.value) {
+    checkoutBranch(activeRepository.value, branchName)
+  }
+}
+
+async function checkoutBranch(repoPath, branchName) {
+  try {
+    loading.show(`Switching to branch "${branchName}"...`)
+
+    const data = {
+      repo_path: activeRepository.value.path,
+      branch_name: branchName
+    }
+
+    const response = await commonApi.checkout(data)
+
+    const result = response.data
+
+    if (result) {
+      activeRepository.value.currentBranch = result.currentBranch
+      if (!activeRepository.value.branches.local.includes(result.currentBranch)) {
+        activeRepository.value.branches.local.push(result.currentBranch)
+      }
+      mitter.emit('alert', {
+        message: `✅ Switched to branch "${result.currentBranch}"`,
+        type: 'success'
+      })
+    } else {
+      mitter.emit('alert', {
+        message: '❌ Failed to open repository: No data returned',
+        type: 'error'
+      })
+    }
+
+  } catch (error) {
+    mitter.emit('alert', {
+      message: `Checkout error: ${error.message}`,
+      type: 'error'
+    })
+  } finally {
+    loading.hide()
+  }
+}
+const getDisplayHeadBranchName = (branch) => {
+  const parts = branch.split('/');
+
+  // Nếu chuỗi chỉ có 1 phần (không có slash)
+  if (parts.length === 1) return parts[0];
+
+  const last = parts[parts.length - 1];
+
+  // Nếu cuối là main hoặc master → lấy phần đứng trước nó
+  if (last === 'main' || last === 'master') {
+    return parts[parts.length - 2];
+  }
+
+  // Còn lại → lấy phần cuối
+  return last;
 };
 </script>
 <style scoped src="@/assets/styles/PandaRepositoryWorkspace.css"></style>

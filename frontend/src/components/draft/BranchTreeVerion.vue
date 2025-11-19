@@ -3,10 +3,9 @@
     <!-- Group Header -->
     <div
       class="tree-item tree-header"
-      :class="{ active: fullPath(name) === activeBranch }"
-      :style="{ '--level': level }"
-      @click="onItemClick(name, subNode)"
-      @contextmenu.prevent="openContextMenu(fullPath(name))"
+      :class="{ active: fullPath(name) === activeBranch, 'computed-level': computedLevel(subNode) > props.level }"
+      :style="{ '--level': computedLevel(subNode) }"
+      @contextmenu.prevent="openContextMenu(fullPath(name), $event)"
     >
       <!-- Toggle icon -->
       <i
@@ -23,7 +22,7 @@
       ></i>
       <i
         v-else
-        class="fas fa-code-branch text-info me-1"
+        :class="['me-1','fas',isMainBranch(name) && props.level === 1 ? 'fa-star text-warning': 'fa-code-branch text-info']"
         style="width: 1rem; display: inline-block;"
       ></i>
 
@@ -32,14 +31,13 @@
     </div>
 
     <!-- Nested Children -->
-    <div v-if="isFolder(subNode) && !collapsedGroups[fullPath(name)]" class="nested">
-      <branch-tree-verion
+    <div v-if="isFolder(subNode) && shouldShowChildren(subNode, fullPath(name))" class="nested">
+    <branch-tree-verion
         :node="subNode"
         :path="fullPath(name) + '/'"
         :collapsed-groups="collapsedGroups"
         :toggle-group="toggleGroup"
         :active-branch="activeBranch"
-        :set-active-branch="setActiveBranch"
         :open-context-menu="openContextMenu"
         :search-term="searchTerm"
         :level="level + 1"
@@ -57,10 +55,9 @@ const props = defineProps({
   collapsedGroups: { type: Object, required: true },
   toggleGroup: { type: Function, required: true },
   activeBranch: { type: String, required: true },
-  setActiveBranch: { type: Function, required: true },
   openContextMenu: { type: Function, required: true },
   searchTerm: { type: String, default: '' },
-  level: { type: Number, default: 0 }
+  level: { type: Number, default: 1 }
 });
 
 // Kiểm tra folder
@@ -68,7 +65,16 @@ const isFolder = (subNode) => subNode && Object.keys(subNode).length > 0;
 
 // full path
 const fullPath = (name) => props.path + name;
-
+const computedLevel = (subNode) => {
+  // Nếu là root (level === 1) mà không có con => tăng thêm 1
+  if (props.level === 1 && !isFolder(subNode)) {
+    return props.level + 1;
+  }
+  return props.level;
+}
+const isMainBranch = (name) => {
+  return name === 'master' || name === 'main';
+}
 // Highlight theo search
 const highlightedName = (name, path) => {
   if (!props.searchTerm) return name;
@@ -80,12 +86,28 @@ const highlightedName = (name, path) => {
   }
   return name;
 };
-
-// Click item
-const onItemClick = (name, subNode) => {
-  if (isFolder(subNode)) props.toggleGroup(fullPath(name));
-  else props.setActiveBranch(fullPath(name));
+const shouldShowChildren = (subNode, path) => {
+  if (!props.searchTerm) {
+    return !props.collapsedGroups[path];
+  }
+  return hasSearchMatch(subNode, path);
 };
+
+const hasSearchMatch = (node, basePath) => {
+  for (const key in node) {
+    const currentPath = basePath + '/' + key;
+
+    if (key.toLowerCase().includes(props.searchTerm.toLowerCase())) {
+      return true;
+    }
+
+    if (isFolder(node[key]) && hasSearchMatch(node[key], currentPath)) {
+      return true;
+    }
+  }
+  return false;
+};
+
 </script>
 
 <style scoped>
@@ -97,7 +119,11 @@ const onItemClick = (name, subNode) => {
   border-radius: 5px;
   user-select: none;
   transition: background-color 0.2s ease;
-  padding: 4px 0 4px calc(var(--level, 0) * 20px);
+  padding: 4px 0 4px calc(var(--level) * 20px);
+}
+
+.tree-item.computed-level {
+  padding-left: calc(var(--level) * 18px);
 }
 
 .tree-item:hover {
