@@ -1,169 +1,91 @@
 <template>
-  <div v-for="(subNode, name) in node" :key="path + name" class="tree-group">
+  <div v-for="(subNode, name) in node" :key="fullPath(name)" class="tree-group">
     <!-- Group Header -->
     <div
       class="tree-item tree-header"
-      @click="toggleGroup(path + name)"
+      :class="{ active: fullPath(name) === activeBranch }"
       :style="{ '--level': level }"
+      @click="onItemClick(name, subNode)"
+      @contextmenu.prevent="openContextMenu(fullPath(name))"
     >
-      <!-- Chỉ hiển thị toggle + folder nếu có children thật -->
+      <!-- Toggle icon -->
       <i
-        v-if="hasChildren(subNode)"
-        class="fas fa-chevron-down tree-toggle"
-        :class="{ collapsed: collapsedGroups[path + name] }"
+        v-if="isFolder(subNode)"
+        class="tree-toggle fas fa-chevron-down"
+        :class="{ collapsed: collapsedGroups[fullPath(name)] }"
+        @click.stop="toggleGroup(fullPath(name))"
       ></i>
 
+      <!-- Folder / File icon -->
       <i
-        v-if="hasChildren(subNode)"
-        :class="icon"
-        class="me-1"
+        v-if="isFolder(subNode)"
+        class="fas fa-folder text-warning me-1"
       ></i>
-
-      <!-- Leaf hoặc nhánh cuối cùng: chỉ show leafIcon -->
       <i
         v-else
-        :class="leafIcon"
-        class="me-1"
+        class="fas fa-code-branch text-info me-1"
+        style="width: 1rem; display: inline-block;"
       ></i>
 
-      <span v-html="highlightedName(name, path + name)"></span>
+      <!-- Highlighted Name -->
+      <span v-html="highlightedName(name, fullPath(name))"></span>
     </div>
 
     <!-- Nested Children -->
-    <div v-if="hasChildren(subNode) && !collapsedGroups[path + name]" class="nested">
-      <!-- Leaf -->
-      <template v-if="subNode === null">
-        <div
-          class="tree-item nested"
-          :class="{ active: path + name === props.activeBranch }"
-          @click.stop="setActiveBranch(path + name)"
-          @contextmenu.prevent="props.openContextMenu(path + name)"
-          :style="{ '--level': level + 1 }"
-        >
-          <i :class="leafIcon" class="me-1"></i>
-          <span v-html="highlightedName(name, path + name)"></span>
-        </div>
-      </template>
-
-      <!-- Recursive Branch -->
-      <template v-else>
-        <BranchTreeNode
-          :node="subNode"
-          :path="path + name + '/'"
-          :collapsedGroups="collapsedGroups"
-          :toggleGroup="toggleGroup"
-          :activeBranch="props.activeBranch"
-          @update:activeBranch="$emit('update:activeBranch', $event)"
-          :openContextMenu="props.openContextMenu"
-          :icon="icon"
-          :leafIcon="leafIcon"
-          :level="level + 1"
-          :searchTerm="props.searchTerm"
-        />
-      </template>
+    <div v-if="isFolder(subNode) && !collapsedGroups[fullPath(name)]" class="nested">
+      <branch-tree-verion
+        :node="subNode"
+        :path="fullPath(name) + '/'"
+        :collapsed-groups="collapsedGroups"
+        :toggle-group="toggleGroup"
+        :active-branch="activeBranch"
+        :set-active-branch="setActiveBranch"
+        :open-context-menu="openContextMenu"
+        :search-term="searchTerm"
+        :level="level + 1"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
-import { watch, onMounted } from 'vue'
-import BranchTreeNode from './BranchTreeNode.vue'
+import { defineProps } from 'vue';
 
 const props = defineProps({
-  node: Object,
+  node: { type: Object, required: true },
   path: { type: String, default: '' },
-  collapsedGroups: Object,
-  toggleGroup: Function,
-  activeBranch: String,
-  openContextMenu: Function,
-  icon: { type: String, default: 'fas fa-folder text-warning' },
-  leafIcon: { type: String, default: 'fas fa-code-branch text-success' },
-  level: { type: Number, default: 0 },
-  searchTerm: { type: String, default: '' }
-})
+  collapsedGroups: { type: Object, required: true },
+  toggleGroup: { type: Function, required: true },
+  activeBranch: { type: String, required: true },
+  setActiveBranch: { type: Function, required: true },
+  openContextMenu: { type: Function, required: true },
+  searchTerm: { type: String, default: '' },
+  level: { type: Number, default: 0 }
+});
 
-const emit = defineEmits(['update:activeBranch'])
+// Kiểm tra folder
+const isFolder = (subNode) => subNode && Object.keys(subNode).length > 0;
 
-// Highlight tên branch match search (theo name hoặc path)
-const highlightedName = (name, fullPath) => {
-  if (!props.searchTerm) return name
-  const term = props.searchTerm.toLowerCase()
-  if (name.toLowerCase().includes(term) || fullPath.toLowerCase().includes(term)) {
-    const regex = new RegExp(`(${props.searchTerm})`, 'gi')
-    return name.replace(regex, `<span class="highlight">$1</span>`)
+// full path
+const fullPath = (name) => props.path + name;
+
+// Highlight theo search
+const highlightedName = (name, path) => {
+  if (!props.searchTerm) return name;
+  const term = props.searchTerm.toLowerCase();
+  if (name.toLowerCase().includes(term) || path.toLowerCase().includes(term)) {
+    const escapedTerm = props.searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(${escapedTerm})`, 'gi');
+    return name.replace(regex, `<span class="highlight">$1</span>`);
   }
-  return name
-}
+  return name;
+};
 
-// Kiểm tra có children
-const hasChildren = (node) => node !== null && Object.keys(node || {}).length > 0
-
-// Click leaf
-const setActiveBranch = (path) => {
-  emit('update:activeBranch', path)
-}
-
-// Hàm init collapsedGroups mặc định
-function initCollapsed(tree, pathPrefix = '') {
-  for (const key in tree) {
-    const fullPath = pathPrefix + key
-    if (hasChildren(tree[key])) {
-      if (!(fullPath in props.collapsedGroups)) {
-        props.collapsedGroups[fullPath] = true
-      }
-      initCollapsed(tree[key], fullPath + '/')
-    }
-  }
-}
-
-// Watch searchTerm → reset collapsedGroups rồi mở folder chứa match
-watch(
-  () => props.searchTerm,
-  () => {
-    // reset tất cả folder về đóng
-    resetCollapsed(props.node, props.path)
-    // mở folder chứa match
-    if (props.searchTerm) toggleCollapseForMatches(props.node, props.path)
-  }
-)
-
-// reset collapsedGroups về true
-function resetCollapsed(tree, pathPrefix = '') {
-  for (const key in tree) {
-    const fullPath = pathPrefix + key
-    if (hasChildren(tree[key])) {
-      props.collapsedGroups[fullPath] = true
-      resetCollapsed(tree[key], fullPath + '/')
-    }
-  }
-}
-
-// mở folder chứa nhánh match search
-function toggleCollapseForMatches(tree, pathPrefix = '') {
-  for (const key in tree) {
-    const fullPath = pathPrefix + key
-    if (
-      props.searchTerm &&
-      (key.toLowerCase().includes(props.searchTerm.toLowerCase()) ||
-        fullPath.toLowerCase().includes(props.searchTerm.toLowerCase()))
-    ) {
-      const parts = fullPath.split('/')
-      let p = ''
-      for (let i = 0; i < parts.length - 1; i++) {
-        p += parts[i] + '/'
-        props.collapsedGroups[p] = false
-      }
-    }
-    if (hasChildren(tree[key])) {
-      toggleCollapseForMatches(tree[key], fullPath + '/')
-    }
-  }
-}
-
-// mounted → init collapsed
-onMounted(() => {
-  initCollapsed(props.node, props.path)
-})
+// Click item
+const onItemClick = (name, subNode) => {
+  if (isFolder(subNode)) props.toggleGroup(fullPath(name));
+  else props.setActiveBranch(fullPath(name));
+};
 </script>
 
 <style scoped>
@@ -175,7 +97,7 @@ onMounted(() => {
   border-radius: 5px;
   user-select: none;
   transition: background-color 0.2s ease;
-  padding: 4px 0 4px calc(var(--level) * 20px);
+  padding: 4px 0 4px calc(var(--level, 0) * 20px);
 }
 
 .tree-item:hover {
