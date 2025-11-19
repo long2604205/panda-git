@@ -13,7 +13,7 @@ const notify = {
 
   error(message, options = {}) {
     mitter.emit("alert", {
-      type: "error",
+      type: "danger",
       message,
       title: options.title || null,
       duration: options.duration || 5000,

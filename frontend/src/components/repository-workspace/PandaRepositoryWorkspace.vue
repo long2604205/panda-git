@@ -109,18 +109,19 @@ import { useRepositoryStore } from '@/stores/repositoryStore.js'
 import { showPageInModal } from '@/services/modals.js'
 import commonApi from '@/services/api/common.js'
 import notify from '@/plugins/notify.js'
+import { getStatusColor, getStatusIcon } from '@/composable/attributes.js'
 
 /*----Data----*/
-const repoContextMenu = ref(null)
-const showActions = ref(true)
-const showSearchRepository = ref(false)
+let isResizingContainer = false
 const reposHeight = ref(0)
 const containerHeight = ref(0)
 const containerWidth = ref(325)
 const previousWidth = ref(300)
-let isResizingContainer = false
-const repositoryKeyword = ref('')
 const isWorkspaceCollapsed = ref(false)
+const repoContextMenu = ref(null)
+const showActions = ref(true)
+const showSearchRepository = ref(false)
+const repositoryKeyword = ref('')
 const repositorySearchInput = ref(null)
 const activeRepository = ref(null)
 const repositories = ref([])
@@ -128,7 +129,7 @@ const loading = useLoadingStore()
 const isLoadingRepos = ref(true)
 const repositoryStore = useRepositoryStore()
 const renameForm = defineAsyncComponent(() => import('@/components/repository-workspace/RenameForm.vue'),)
-const confirmDialog = defineAsyncComponent(() => import('@/components/common/ConfirmDialog.vue'),)
+const confirmDialog = defineAsyncComponent(() => import('@/components/common/ConfirmDialog.vue'))
 
 /*----Mounted----*/
 onMounted(() => {
@@ -137,7 +138,9 @@ onMounted(() => {
     containerHeight.value = container.clientHeight
     reposHeight.value = containerHeight.value / 2
   }
+})
 
+onMounted(() => {
   if (repositories.value.length > 0 && !activeRepository.value) {
     setActiveRepository(repositories.value[0])
   }
@@ -145,15 +148,13 @@ onMounted(() => {
   mitter.on('open-repository', (repo) => {
     const existing = repositories.value.find((r) => r.path === repo.path)
 
-    repositories.value.forEach(r => r.active = false)
-
+    repositories.value.forEach((r) => (r.active = false))
     if (existing) {
       existing.active = true
       activeRepository.value = existing
       return
     }
 
-    // Nếu chưa có -> push mới và active
     repo.active = true
     repositories.value.push(repo)
     activeRepository.value = repo
@@ -166,7 +167,6 @@ onMounted(async () => {
     const savedRepos = await loadRepos()
     repositories.value = savedRepos
 
-    // 1) Có repo có active = true -> active repo đó
     const active = savedRepos.find((r) => r.active)
 
     if (active) {
@@ -174,7 +174,6 @@ onMounted(async () => {
       return
     }
 
-    // 2) Không có active -> active repo đầu tiên
     if (savedRepos.length) {
       await setActiveRepository(savedRepos[0])
     }
@@ -196,9 +195,7 @@ const filteredRepositories = computed(() => {
 })
 
 /*----Watch----*/
-watch(
-  () => isWorkspaceCollapsed.value,
-  (newVal) => {
+watch(() => isWorkspaceCollapsed.value, (newVal) => {
     if (!newVal) {
       showActions.value = true
       containerWidth.value = previousWidth.value
@@ -219,10 +216,7 @@ watch(showSearchRepository, (newVal) => {
   }
 })
 
-// Watch repositories để tự động lưu khi có thay đổi
-watch(
-  repositories,
-  async (newVal) => {
+watch(repositories, async (newVal) => {
     const basicRepos = newVal.map((r) => ({
       id: r.id,
       path: r.path,
@@ -259,156 +253,8 @@ const stopResizeContainer = () => {
   window.removeEventListener('mouseup', stopResizeContainer)
 }
 
-const getStatusIcon = (status) => {
-  switch (status) {
-    case 'clean':
-      return 'fa-check-circle'
-    case 'dirty':
-      return 'fa-exclamation-circle'
-    case 'untracked':
-      return 'fa-question-circle'
-    default:
-      return 'fa-circle'
-  }
-}
-
-const getStatusColor = (status) => {
-  switch (status) {
-    case 'clean':
-      return 'text-success'
-    case 'dirty':
-      return 'text-warning'
-    case 'untracked':
-      return 'text-secondary'
-    default:
-      return 'text-muted'
-  }
-}
-
-async function setActiveRepository(repo) {
-  try {
-    loading.show(`Fetching repository "${repo.name}"...`)
-
-    // 1. Load repo từ backend
-    const response = await commonApi.open({repo_path: repo.path})
-    const result = response.data
-    if (!result) return
-
-    // === SET ACTIVE ===
-    repositories.value.forEach((r) => (r.active = false))
-    result.active = true
-
-    // 2. Replace/update in list
-    const index = repositories.value.findIndex((r) => r.path === repo.path)
-    if (index !== -1) repositories.value.splice(index, 1, result)
-    else repositories.value.push(result)
-
-    // 3. Set active
-    activeRepository.value = result
-
-    repositoryStore.setActiveRepo(result)
-
-    // 4. Emit
-    mitter.emit('set-active-repository', result)
-    mitter.emit('push-repository', result.path)
-
-    // notify.success(`Open repository for ${repo.name}`)
-  } catch (error) {
-    notify.error(`❌ Failed: ${error.message}`)
-  } finally {
-    loading.hide()
-  }
-}
-
 function toggleWorkspacePanel() {
   isWorkspaceCollapsed.value = !isWorkspaceCollapsed.value
-}
-
-async function pushRepository(repoPath) {
-  try {
-    loading.show('Pushing...')
-    const res = await api.post('/push', {
-      repo_path: repoPath,
-    })
-    mitter.emit('alert', {
-      message: res.data.message || 'Push successfully!',
-      type: 'success',
-    })
-  } catch (error) {
-    mitter.emit('alert', {
-      message: error.response?.data?.message || 'Push failed!',
-      type: 'danger',
-    })
-  } finally {
-    loading.hide()
-  }
-}
-
-async function pullRepository(repoPath) {
-  try {
-    loading.show('Pulling...')
-    const res = await api.post('/pull', {
-      repo_path: repoPath,
-    })
-    mitter.emit('alert', {
-      title: 'Pull',
-      message: res.data.message || 'Pull successfully!',
-      type: 'info',
-    })
-  } catch (error) {
-    mitter.emit('alert', {
-      message: error.response?.data?.message || 'Pull failed!',
-      type: 'danger',
-    })
-    console.error(error)
-  } finally {
-    loading.hide()
-  }
-}
-
-async function fetchRepository(repoPath) {
-  try {
-    loading.show(`Fetching "${repoPath}"...`)
-    await api.post('/fetch', { repo_path: repoPath })
-  } catch (err) {
-    mitter.emit('alert', {
-      message: err.response?.data?.message || err.message || 'Fetch failed!',
-      type: 'danger',
-    })
-    console.error(err)
-    throw err
-  } finally {
-    loading.hide()
-  }
-}
-
-async function refreshRepository(repo) {
-  try {
-    loading.show(`Refreshing "${repo.name}"...`)
-
-    const data = {
-      repo_path: repo.path,
-    }
-
-    await commonApi.fetch(data)
-
-    await setActiveRepository(repo)
-
-    notify.success(`Repository "${repo.name}" refreshed!`)
-
-  } catch (err) {
-    mitter.emit('alert', {
-      message: err.response?.data?.message || err.message || 'Refresh failed!',
-      type: 'danger',
-    })
-    console.error(err)
-  } finally {
-    loading.hide()
-  }
-}
-
-function renameRepositoryForm(repo) {
-  showPageInModal(renameForm, {data: repo}, { width: '20%' })
 }
 
 function onRepoAction({ action, repo }) {
@@ -432,26 +278,124 @@ function onRepoAction({ action, repo }) {
       refreshRepository(repo)
       break
     case 'rename': {
-      renameRepositoryForm(repo)
+      openRenameForm(repo)
       break
     }
     case 'delete':
-      showPageInModal(
-        confirmDialog,
-        {
-          title: "Confirm delete",
-          message: `Are you sure you want to delete ${repo.name}?`,
-          onConfirm() {
-              const index = repositories.value.findIndex((r) => r.id === repo.id)
-              if (index !== -1) repositories.value.splice(index, 1)
-              if (activeRepository.value?.id === repo.id) {
-                activeRepository.value = repositories.value[0] || null
-              }
+      showPageInModal(confirmDialog, {
+        title: 'Confirm delete',
+        message: `Are you sure you want to delete ${repo.name}?`,
+        onConfirm() {
+          const index = repositories.value.findIndex((r) => r.id === repo.id)
+          if (index !== -1) repositories.value.splice(index, 1)
+          if (activeRepository.value?.id === repo.id) {
+            activeRepository.value = repositories.value[0] || null
           }
-        }
-      )
+        },
+      })
       break
   }
+}
+
+async function setActiveRepository(repo) {
+  try {
+    loading.show(`Fetching repository "${repo.name}"...`)
+
+    const response = await commonApi.open({ repo_path: repo.path })
+    const result = response.data
+    if (!result) return
+    // set active false for all repos
+    repositories.value.forEach((r) => (r.active = false))
+    result.active = true
+    //Replace/update in list
+    const index = repositories.value.findIndex((r) => r.path === repo.path)
+    if (index !== -1) repositories.value.splice(index, 1, result)
+    else repositories.value.push(result)
+    // 3. Set active repo in store
+    activeRepository.value = result
+    repositoryStore.setActiveRepo(result)
+
+    mitter.emit('set-active-repository', result)
+    notify.success(`Activated repository "${repo.name}"`)
+  } catch (error) {
+    notify.error(`Failed: ${error.message}`)
+  } finally {
+    loading.hide()
+  }
+}
+
+async function pushRepository(repoPath) {
+  try {
+    loading.show('Pushing...')
+    const data = {
+      repo_path: repoPath,
+    }
+    await commonApi.push(data)
+    notify.info('Everything is up to date')
+  } catch (error) {
+    notify.error(`Push failed: ${error.message}`)
+  } finally {
+    loading.hide()
+  }
+}
+
+async function pullRepository(repoPath) {
+  try {
+    loading.show('Pulling...')
+    const data = {
+      repo_path: repoPath,
+    }
+    await commonApi.pull(data)
+    notify.info('All files are up to date')
+  } catch (error) {
+    notify.error(`Pull failed: ${error.message}`)
+    console.error(error)
+  } finally {
+    loading.hide()
+  }
+}
+
+async function refreshRepository(repo) {
+  try {
+    loading.show(`Refreshing "${repo.name}"...`)
+
+    const data = {
+      repo_path: repo.path,
+    }
+
+    // 1. Load repo từ backend
+    const response = await commonApi.open(data)
+    const result = response.data
+    if (!result) return
+
+    // 2. Replace/update in list
+
+    const index = repositories.value.findIndex((r) => r.id === repo.id)
+    if (index !== -1) {
+      repositories.value[index] = {
+        ...repositories.value[index],
+        branches: result.branches,
+        changes: result.changes,
+        currentBranch: result.currentBranch,
+        status: result.status,
+      }
+    }
+
+    // 3. Set active
+    activeRepository.value = result
+    repositoryStore.setActiveRepo(result)
+
+    notify.success(`Repository "${repo.name}" refreshed!`)
+  } catch (err) {
+    notify.error('Refresh failed')
+    console.error(err)
+  } finally {
+    loading.hide()
+  }
+}
+
+function openRenameForm(repo) {
+  showPageInModal(renameForm, { data: repo }, { width: '20%' })
 }
 </script>
 <style scoped src="@/assets/styles/PandaRepositoryWorkspace.css"></style>
