@@ -243,6 +243,7 @@ const collapsedTree = ref({
   remote: false,
 })
 const branchContextActionMenu = ref(null)
+const collapsedGroups = ref({})
 
 /*----Mounted----*/
 onMounted(() => {
@@ -307,6 +308,28 @@ const filteredRepositories = computed(() => {
   )
 })
 
+const localBranchTree = computed(() => {
+  const repo = activeRepository.value
+  if (!repo || !repo.branches || !repo.branches.local) return
+  let localBranches = activeRepository.value.branches.local
+  if (!repo || !repo.branches || !repo.branches.local) return {}
+  if (!branchKeyword.value) return buildTree(localBranches)
+  const normalizedTerm = branchKeyword.value.toLowerCase()
+  const filtered = localBranches.filter((b) => b.toLowerCase().includes(normalizedTerm))
+  return buildTree(filtered)
+})
+
+const remoteBranchTree = computed(() => {
+  const repo = activeRepository.value
+  if (!repo || !repo.branches || !repo.branches.remote) return
+  let remoteBranches = activeRepository.value.branches.remote
+  if (!repo || !repo.branches || !repo.branches.remote) return {}
+  if (!branchKeyword.value) return buildTree(remoteBranches)
+  const normalizedTerm = branchKeyword.value.toLowerCase()
+  const filtered = remoteBranches.filter((b) => b.toLowerCase().includes(normalizedTerm))
+  return buildTree(filtered)
+})
+
 /*----Watch----*/
 watch(() => isWorkspaceCollapsed.value, (newVal) => {
     if (!newVal) {
@@ -339,6 +362,30 @@ watch(repositories, async (newVal) => {
     }))
     await saveRepos(basicRepos)
   }, { deep: true })
+
+watchEffect(() => {
+  const newCollapsedGroups = {}
+  const initCollapsed = (subTree, pathPrefix = '') => {
+    for (const key in subTree) {
+      const fullPathKey = pathPrefix + key
+      if (hasChildren(subTree[key])) {
+        newCollapsedGroups[fullPathKey] = true
+        initCollapsed(subTree[key], fullPathKey + '/')
+      }
+    }
+  }
+
+  initCollapsed(localBranchTree.value)
+  initCollapsed(remoteBranchTree.value)
+
+  // Expand match khi search
+  if (branchKeyword.value) {
+    toggleCollapseForMatches(localBranchTree.value, '', newCollapsedGroups)
+    toggleCollapseForMatches(remoteBranchTree.value, '', newCollapsedGroups)
+  }
+
+  collapsedGroups.value = newCollapsedGroups
+})
 
 /*----Method----*/
 const startResizeContainer = () => {
@@ -553,10 +600,8 @@ const getDisplayHeadBranchName = (branch) => {
   }
   return last;
 };
-// __________________________________________
-const collapsedGroups = ref({})
 
-// Build tree
+/*----Build branch tree----*/
 const buildTree = (branches) => {
   const tree = {}
   branches.forEach((branch) => {
@@ -570,44 +615,16 @@ const buildTree = (branches) => {
   return tree
 }
 
-// Tree filtered by search
-const localBranchTree = computed(() => {
-  const repo = activeRepository.value
-  if (!repo || !repo.branches || !repo.branches.local) return
-  let localBranches = activeRepository.value.branches.local
-  if (!repo || !repo.branches || !repo.branches.local) return {}
-  if (!branchKeyword.value) return buildTree(localBranches)
-  const normalizedTerm = branchKeyword.value.toLowerCase()
-  const filtered = localBranches.filter((b) => b.toLowerCase().includes(normalizedTerm))
-  return buildTree(filtered)
-})
-
-const remoteBranchTree = computed(() => {
-  const repo = activeRepository.value
-  if (!repo || !repo.branches || !repo.branches.remote) return
-  let remoteBranches = activeRepository.value.branches.remote
-  if (!repo || !repo.branches || !repo.branches.remote) return {}
-  if (!branchKeyword.value) return buildTree(remoteBranches)
-  const normalizedTerm = branchKeyword.value.toLowerCase()
-  const filtered = remoteBranches.filter((b) => b.toLowerCase().includes(normalizedTerm))
-  return buildTree(filtered)
-})
-
-// Check folder
 const hasChildren = (node) =>
   node !== null && node !== undefined && Object.keys(node || {}).length > 0
 
-// Toggle collapse
 const toggleGroup = (path) => {
   collapsedGroups.value[path] = !collapsedGroups.value[path]
 }
 
-// Right click
 const openContextMenu = (branchName, event) => {
   branchContextActionMenu.value.open(event, branchName)
 }
-
-// Toggle collapse for search matches
 const toggleCollapseForMatches = (treeNode, pathPrefix = '', currentCollapsedGroups) => {
   const normalizedTerm = branchKeyword.value.toLowerCase()
   for (const key in treeNode) {
@@ -630,33 +647,7 @@ const toggleCollapseForMatches = (treeNode, pathPrefix = '', currentCollapsedGro
   }
 }
 
-// Watch branchKeyword
-watchEffect(() => {
-  const newCollapsedGroups = {}
-  const initCollapsed = (subTree, pathPrefix = '') => {
-    for (const key in subTree) {
-      const fullPathKey = pathPrefix + key
-      if (hasChildren(subTree[key])) {
-        newCollapsedGroups[fullPathKey] = true
-        initCollapsed(subTree[key], fullPathKey + '/')
-      }
-    }
-  }
-
-  initCollapsed(localBranchTree.value)
-  initCollapsed(remoteBranchTree.value)
-
-  // Expand match khi search
-  if (branchKeyword.value) {
-    toggleCollapseForMatches(localBranchTree.value, '', newCollapsedGroups)
-    toggleCollapseForMatches(remoteBranchTree.value, '', newCollapsedGroups)
-  }
-
-  collapsedGroups.value = newCollapsedGroups
-})
-
 function onBranchAction({ action, branch}) {
-  console.log(action, branch )
   switch (action) {
     case 'checkout':
       switchBranch(branch)
@@ -691,22 +682,10 @@ async function checkoutBranch(repoPath, branchName) {
       if (!activeRepository.value.branches.local.includes(result.currentBranch)) {
         activeRepository.value.branches.local.push(result.currentBranch)
       }
-      mitter.emit('alert', {
-        message: `✅ Switched to branch "${result.currentBranch}"`,
-        type: 'success'
-      })
-    } else {
-      mitter.emit('alert', {
-        message: '❌ Failed to open repository: No data returned',
-        type: 'error'
-      })
+      notify.success(`Switched to branch "${result.currentBranch}"`)
     }
-
   } catch (error) {
-    mitter.emit('alert', {
-      message: `Checkout error: ${error.message}`,
-      type: 'error'
-    })
+    notify.error(error.message)
   } finally {
     loading.hide()
   }
