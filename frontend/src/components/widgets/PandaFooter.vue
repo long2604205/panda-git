@@ -112,7 +112,7 @@ function capitalize(str) {
 
 <style scoped>
 .status-bar {
-  background-color: var(--bg-tertiary);
+  background-color: var(--bg-primary);
   border-top: 1px solid var(--border-color);
   min-height: 34px;
   font-size: 12px;

@@ -25,12 +25,30 @@ class GitService:
             # Nhánh hiện tại
             current_branch = repo.active_branch.name if not repo.head.is_detached else "DETACHED"
 
+            # --------------------------
+            # 1. Detect default branch
+            # --------------------------
+            default_branch = None
+            try:
+                ref = repo.git.symbolic_ref("refs/remotes/origin/HEAD")  # ví dụ: refs/remotes/origin/main
+                default_branch = ref.split("/")[-1]  # main
+            except:
+                # fallback: nếu repo local mới init
+                default_branch = "main" if "main" in [h.name for h in repo.heads] else "master"
+
+
             # Danh sách nhánh
             local_branches = [head.name for head in repo.heads]
             remote_branches = []
             for remote in repo.remotes:
                 for ref in remote.refs:
-                    remote_branches.append(str(ref.name))
+                    remote_branches.append(str(ref.name).replace("refs/remotes/", ""))
+
+            # --------------------------
+            # 3. Sort function
+            # --------------------------
+            local_branches = GitService.sort_branches(local_branches, default_branch)
+            remote_branches = GitService.sort_branches(remote_branches, default_branch)
 
             # File đã thay đổi
             changed_files = []
@@ -308,3 +326,18 @@ class GitService:
             "name": new_name,
             "path": new_path
         }
+
+    @staticmethod
+    def sort_branches(branches, default_branch):
+        def weight(name):
+            # Nếu remote branch, lấy phần sau 'origin/' để sort
+            short_name = name.split("/", 1)[-1] if name.startswith("origin/") else name
+
+            if short_name == default_branch:
+                return 0, short_name
+            elif "/" not in short_name:
+                return 1, short_name
+            else:
+                return 2, short_name
+
+        return sorted(branches, key=weight)

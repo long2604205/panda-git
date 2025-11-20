@@ -12,7 +12,7 @@
                 v-if="showActions"
                 @click="showSearchRepository = !showSearchRepository"
               >
-                <i class="fa-solid fa-magnifying-glass"></i>
+                <i class="fa-solid fa-magnifying-glass"/>
               </button>
               <button class="btn btn-sm workspace-action" @click="toggleWorkspacePanel">
                 <i
@@ -20,16 +20,15 @@
                     'fas',
                     isWorkspaceCollapsed ? 'fa-solid fa-layer-group' : 'fa-solid fa-layer-group',
                   ]"
-                ></i>
+                />
               </button>
             </div>
           </div>
-          <div class="toolbar-line" />
 
           <transition name="fade-search">
             <div class="search-workspace" v-if="showSearchRepository">
               <div class="symbol-search">
-                <i class="fa-solid fa-magnifying-glass"></i>
+                <i class="fa-solid fa-magnifying-glass"/>
               </div>
               <input
                 ref="repositorySearchInput"
@@ -45,7 +44,7 @@
             <div class="workspace-repos">
               <template v-if="repositories.length === 0">
                 <div class="no-repos-message text-center py-4">
-                  <i class="fas fa-folder-open fa-2x mb-2"></i>
+                  <i class="fas fa-folder-open fa-2x mb-2"/>
                   <p>No repositories open</p>
                   <small>Open repositories to manage them here</small>
                 </div>
@@ -61,7 +60,7 @@
                   @contextmenu.prevent="repoContextMenu.open($event, repo)"
                 >
                   <div class="repo-icon">
-                    <i class="fas fa-folder text-warning"></i>
+                    <i class="fas fa-folder text-warning"/>
                   </div>
                   <div class="repo-info">
                     <div class="repo-name">{{ repo.name }}</div>
@@ -72,7 +71,7 @@
                       class="fas"
                       :class="[getStatusIcon(repo.status), getStatusColor(repo.status)]"
                       :title="repo.status"
-                    ></i>
+                    />
                   </div>
                 </div>
               </template>
@@ -94,17 +93,17 @@
                 v-if="showActions"
                 @click="showSearchBranch = !showSearchBranch"
               >
-                <i class="fa-solid fa-magnifying-glass"></i>
+                <i class="fa-solid fa-magnifying-glass"/>
               </button>
               <button class="btn btn-sm workspace-action" v-if="showActions">
-                <i class="fa-solid fa-ellipsis-vertical"></i>
+                <i class="fa-solid fa-ellipsis-vertical"/>
               </button>
             </div>
           </div>
           <transition name="fade-search">
             <div class="search-workspace" v-if="showSearchBranch">
               <div class="symbol-search">
-                <i class="fa-solid fa-magnifying-glass"></i>
+                <i class="fa-solid fa-magnifying-glass"/>
               </div>
               <input
                 ref="branchSearchInput"
@@ -117,7 +116,7 @@
           <div class="workspace-content branch-tree-scroll">
             <div class="branch-tree" id="branch-tree">
               <div v-if="!activeRepository" class="no-repos-message text-center py-4">
-                <i class="fas fa-code-branch fa-2x mb-2"></i>
+                <i class="fas fa-code-branch fa-2x mb-2"/>
                 <p>No repository selected</p>
                 <small>Open a repository to view branches</small>
               </div>
@@ -125,10 +124,10 @@
               <template v-else>
                 <!-- HEAD -->
                 <div class="tree-item tree-header">
-                  <i class="fas fa-laptop text-info me-1"></i>
+                  <i class="fas fa-laptop text-info me-1"/>
                   <span>HEAD (Current Branch)</span>
                 </div>
-                <div class="tree-item nested active">
+                <div class="tree-item nested">
                   <i class="fas fa-solid fa-tag text-info me-1"/>
                   <span>{{ getDisplayHeadBranchName(activeRepository.currentBranch)}}</span>
                 </div>
@@ -136,19 +135,40 @@
                 <!-- Local -->
                 <div class="tree-item tree-header" @click="toggle('local')">
                   <i
-                    class="fas fa-chevron-down tree-toggle"
+                    class="fas fa-chevron-down tree-toggle branch-toggle"
                     :class="{ collapsed: collapsedTree.local }"
                   />
-                  <i class="fas fa-folder text-warning me-1"></i>
+                  <i class="fas fa-folder branch-folder me-1"/>
                   <span>Local</span>
                 </div>
                 <template v-if="!collapsedTree.local || branchKeyword">
-                  <branch-tree-verion
-                    :node="tree"
+                  <branch-tree-node
+                    :node="localBranchTree"
                     path=""
                     :collapsed-groups="collapsedGroups"
                     :toggle-group="toggleGroup"
-                    :active-branch="activeBranch"
+                    :open-context-menu="openContextMenu"
+                    :search-term="branchKeyword"
+                    :level="1"
+                  />
+                </template>
+
+                <!-- Remote -->
+                <div class="tree-item tree-header"
+                     @click="toggle('remote')">
+                  <i
+                    class="fas fa-chevron-down tree-toggle branch-toggle"
+                    :class="{ collapsed: collapsedTree.remote }"
+                  />
+                  <i class="fas fa-cloud branch-folder me-1"/>
+                  <span>Remote</span>
+                </div>
+                <template v-if="!collapsedTree.remote || branchKeyword">
+                  <branch-tree-node
+                    :node="remoteBranchTree"
+                    path=""
+                    :collapsed-groups="collapsedGroups"
+                    :toggle-group="toggleGroup"
                     :open-context-menu="openContextMenu"
                     :search-term="branchKeyword"
                     :level="1"
@@ -167,7 +187,7 @@
     ></div>
   </div>
   <repository-context-menu ref="repoContextMenu" @action="onRepoAction" />
-  <branch-context-menu ref="branchContextMenu" @action="onBranchAction"/>
+  <branch-context-menu ref="branchContextActionMenu" @action="onBranchAction"/>
 </template>
 <script setup>
 // Props
@@ -190,7 +210,7 @@ import { showPageInModal } from '@/services/modals.js'
 import commonApi from '@/services/api/common.js'
 import notify from '@/plugins/notify.js'
 import { getStatusColor, getStatusIcon } from '@/composable/attributes.js'
-import BranchTreeVerion from '@/components/draft/BranchTreeVerion.vue'
+import BranchTreeNode from '@/components/repository-workspace/BranchTreeNode.vue'
 import BranchContextMenu from '@/components/repository-workspace/BranchContextMenu.vue'
 
 /*----Data----*/
@@ -222,7 +242,7 @@ const collapsedTree = ref({
   local: false,
   remote: false,
 })
-const branchContextMenu = ref(null)
+const branchContextActionMenu = ref(null)
 
 /*----Mounted----*/
 onMounted(() => {
@@ -288,9 +308,7 @@ const filteredRepositories = computed(() => {
 })
 
 /*----Watch----*/
-watch(
-  () => isWorkspaceCollapsed.value,
-  (newVal) => {
+watch(() => isWorkspaceCollapsed.value, (newVal) => {
     if (!newVal) {
       showActions.value = true
       containerWidth.value = previousWidth.value
@@ -311,9 +329,7 @@ watch(showSearchRepository, (newVal) => {
   }
 })
 
-watch(
-  repositories,
-  async (newVal) => {
+watch(repositories, async (newVal) => {
     const basicRepos = newVal.map((r) => ({
       id: r.id,
       path: r.path,
@@ -322,9 +338,7 @@ watch(
       active: r.active || false,
     }))
     await saveRepos(basicRepos)
-  },
-  { deep: true },
-)
+  }, { deep: true })
 
 /*----Method----*/
 const startResizeContainer = () => {
@@ -529,8 +543,17 @@ function toggle(section) {
   collapsedTree.value[section] = !collapsedTree.value[section]
 }
 
+const getDisplayHeadBranchName = (branch) => {
+  const parts = branch.split('/');
+  if (parts.length === 1) return parts[0];
+
+  const last = parts[parts.length - 1];
+  if (last === 'main' || last === 'master') {
+    return parts[parts.length - 2];
+  }
+  return last;
+};
 // __________________________________________
-const activeBranch = ref('')
 const collapsedGroups = ref({})
 
 // Build tree
@@ -548,7 +571,7 @@ const buildTree = (branches) => {
 }
 
 // Tree filtered by search
-const tree = computed(() => {
+const localBranchTree = computed(() => {
   const repo = activeRepository.value
   if (!repo || !repo.branches || !repo.branches.local) return
   let localBranches = activeRepository.value.branches.local
@@ -556,6 +579,17 @@ const tree = computed(() => {
   if (!branchKeyword.value) return buildTree(localBranches)
   const normalizedTerm = branchKeyword.value.toLowerCase()
   const filtered = localBranches.filter((b) => b.toLowerCase().includes(normalizedTerm))
+  return buildTree(filtered)
+})
+
+const remoteBranchTree = computed(() => {
+  const repo = activeRepository.value
+  if (!repo || !repo.branches || !repo.branches.remote) return
+  let remoteBranches = activeRepository.value.branches.remote
+  if (!repo || !repo.branches || !repo.branches.remote) return {}
+  if (!branchKeyword.value) return buildTree(remoteBranches)
+  const normalizedTerm = branchKeyword.value.toLowerCase()
+  const filtered = remoteBranches.filter((b) => b.toLowerCase().includes(normalizedTerm))
   return buildTree(filtered)
 })
 
@@ -570,7 +604,7 @@ const toggleGroup = (path) => {
 
 // Right click
 const openContextMenu = (branchName, event) => {
-  branchContextMenu.value.open(event, branchName)
+  branchContextActionMenu.value.open(event, branchName)
 }
 
 // Toggle collapse for search matches
@@ -608,8 +642,16 @@ watchEffect(() => {
       }
     }
   }
-  initCollapsed(tree.value)
-  if (branchKeyword.value) toggleCollapseForMatches(tree.value, '', newCollapsedGroups)
+
+  initCollapsed(localBranchTree.value)
+  initCollapsed(remoteBranchTree.value)
+
+  // Expand match khi search
+  if (branchKeyword.value) {
+    toggleCollapseForMatches(localBranchTree.value, '', newCollapsedGroups)
+    toggleCollapseForMatches(remoteBranchTree.value, '', newCollapsedGroups)
+  }
+
   collapsedGroups.value = newCollapsedGroups
 })
 
@@ -669,21 +711,5 @@ async function checkoutBranch(repoPath, branchName) {
     loading.hide()
   }
 }
-const getDisplayHeadBranchName = (branch) => {
-  const parts = branch.split('/');
-
-  // Nếu chuỗi chỉ có 1 phần (không có slash)
-  if (parts.length === 1) return parts[0];
-
-  const last = parts[parts.length - 1];
-
-  // Nếu cuối là main hoặc master → lấy phần đứng trước nó
-  if (last === 'main' || last === 'master') {
-    return parts[parts.length - 2];
-  }
-
-  // Còn lại → lấy phần cuối
-  return last;
-};
 </script>
 <style scoped src="@/assets/styles/PandaRepositoryWorkspace.css"></style>
