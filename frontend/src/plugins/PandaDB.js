@@ -49,6 +49,22 @@ export async function loadGroups() {
   });
 }
 
+export async function updateGroup(groupId, newData) {
+  const currentGroups = await loadGroups();
+
+  const updated = currentGroups.map(group => {
+    if (group.id === groupId) {
+      return {
+        ...group,
+        ...newData
+      };
+    }
+    return group;
+  });
+
+  return await saveGroups(updated);
+}
+
 export async function saveRepos(repos) {
   const db = await openDB();
   return new Promise((resolve, reject) => {

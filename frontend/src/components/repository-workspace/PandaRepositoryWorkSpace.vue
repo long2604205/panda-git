@@ -140,33 +140,29 @@
 
       <div class="flex-1 overflow-y-auto py-1">
         <div class="px-3 py-1 text-[10px] font-bold text-[var(--p-text-dim)] uppercase mt-1">
-          Local
+          HEAD (Current branch)
         </div>
-        <div
-          v-for="(branch, idx) in filteredBranches"
-          :key="branch"
-          class="branch-item"
-          :class="{ 'active-branch': idx === 0 }"
-        >
-          <i
-            class="fa-solid w-4 text-center mr-1 text-[10px]"
-            :class="idx === 0 ? 'fa-check' : 'fa-code-branch'"
-          ></i>
-          <span class="truncate">{{ branch }}</span>
-          <span
-            v-if="idx === 0"
-            class="ml-auto text-[9px] border border-[var(--border-color)] px-1 rounded"
-          >
+        <div class="branch-item active-branch">
+          <i class="fa-solid fa-check w-4 text-center mr-1 text-[10px]" />
+          <span class="truncate">{{ currentBranch }}</span>
+          <span class="ml-auto text-[9px] border border-[var(--border-color)] px-1 rounded">
             HEAD
           </span>
+        </div>
+        <div class="px-3 py-1 text-[10px] font-bold text-[var(--p-text-dim)] uppercase mt-1">
+          Local
+        </div>
+        <div v-for="branch in filteredBranches.local" :key="branch" class="branch-item">
+          <i class="fa-solid fa-code-branch w-4 text-center mr-1 text-[10px]" />
+          <span class="truncate">{{ branch }}</span>
         </div>
 
         <div class="px-3 py-1 text-[10px] font-bold text-[var(--p-text-dim)] uppercase mt-2">
           Remotes
         </div>
-        <div class="branch-item opacity-75">
-          <i class="fa-brands fa-github w-4 text-center mr-1 text-[10px]"></i>
-          <span class="truncate">origin/main</span>
+        <div v-for="branch in filteredBranches.remote" :key="branch" class="branch-item opacity-75">
+          <i class="fa-brands fa-github w-4 text-center mr-1 text-[10px]" />
+          <span class="truncate">{{ branch }}</span>
         </div>
       </div>
     </div>
@@ -178,17 +174,10 @@
 </template>
 
 <script setup>
-import {
-  computed,
-  defineAsyncComponent,
-  onBeforeUnmount,
-  onMounted,
-  reactive,
-  ref,
-} from 'vue'
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { showPageInModal } from '@/services/modals.js'
 import mitter from '@/plugins/mitter.js'
-import { loadGroups, loadRepos, saveGroups, saveRepos } from '@/plugins/PandaDB.js'
+import { loadGroups, loadRepos, saveGroups, saveRepos, updateGroup } from '@/plugins/PandaDB.js'
 import commonApi from '@/services/api/common.js'
 import notify from '@/plugins/notify.js'
 const addGroupForm = defineAsyncComponent(() => import('@/components/common/GroupForm.vue'))
@@ -208,6 +197,9 @@ const repositories = ref([
   // { id: 'repo-4', name: 'analytics-worker', groupId: 'group-2' },
   // { id: 'repo-5', name: 'avsoul', groupId: null },
 ])
+const currentBranch = computed(() => {
+  return selectedRepo.value?.currentBranch ?? 's'
+})
 
 const selectedRepo = ref(null)
 const selectedBranch = ref('main')
@@ -220,24 +212,24 @@ const mockBranches = {
   'repo-5': ['master', 'mac-config', 'linux-config'],
 }
 
-function toggleGroup(group) {
+async function toggleGroup(group) {
   group.collapsed = !group.collapsed
+  await updateGroup(group.id, { collapsed: group.collapsed })
 }
 
 async function selectRepo(repo) {
   try {
     // loading.show(`Fetching repository "${repo.name}"...`)
-    selectedRepo.value = repo;
-    const branches = mockBranches[repo.id] || ['main'];
-    selectedBranch.value = branches[0];
+    const branches = mockBranches[repo.id] || ['main']
+    selectedBranch.value = branches[0]
 
     const response = await commonApi.open({ repo_path: repo.path })
     const result = response.data
     if (!result) return
 
     // ---- IMPORTANT FIX ----
-    const existing = repositories.value.find(r => r.path === repo.path);
-    result.groupId = existing ? existing.groupId : null;
+    const existing = repositories.value.find((r) => r.path === repo.path)
+    result.groupId = existing ? existing.groupId : null
 
     // set active false for all repos
     repositories.value.forEach((r) => (r.active = false))
@@ -247,7 +239,8 @@ async function selectRepo(repo) {
     if (index !== -1) repositories.value.splice(index, 1, result)
     else repositories.value.push(result)
     // 3. Set active repo in store
-    await saveRepos(repositories.value);
+    selectedRepo.value = result
+    await saveRepos(repositories.value)
     notify.success(`Activated repository "${repo.name}"`)
   } catch (error) {
     notify.error(`Failed: ${error.message}`)
@@ -255,7 +248,6 @@ async function selectRepo(repo) {
     // loading.hide()
   }
 }
-
 
 const filteredReposByGroup = computed(() => {
   const filter = repoFilter.value?.toLowerCase() ?? ''
@@ -281,10 +273,15 @@ const filteredReposByGroup = computed(() => {
 })
 
 const filteredBranches = computed(() => {
-  if (!selectedRepo.value) return []
-  const branches = mockBranches[selectedRepo.value.id] ?? ['main']
+  if (!selectedRepo.value) return { local: [], remote: [] }
+
   const filter = branchFilter.value?.toLowerCase() ?? ''
-  return branches.filter((b) => b.toLowerCase().includes(filter))
+
+  const local = selectedRepo.value.branches.local.filter((b) => b.toLowerCase().includes(filter))
+
+  const remote = selectedRepo.value.branches.remote.filter((b) => b.toLowerCase().includes(filter))
+
+  return { local, remote }
 })
 
 const paneRepo = ref(null)
@@ -404,17 +401,17 @@ function onDragStartRepo(repo) {
 }
 
 async function onDropRepo(group) {
-  if (!draggingRepo.value) return;
-  draggingRepo.value.groupId = group ? group.id : null;
-  await saveRepos(repositories.value);
-  draggingRepo.value = null;
+  if (!draggingRepo.value) return
+  draggingRepo.value.groupId = group ? group.id : null
+  await saveRepos(repositories.value)
+  draggingRepo.value = null
 }
 
 onMounted(async () => {
   groups.value = await loadGroups()
   repositories.value = await loadRepos()
 
-  const activeRepo = repositories.value.find(r => r.active)
+  const activeRepo = repositories.value.find((r) => r.active)
   await selectRepo(activeRepo)
 })
 
