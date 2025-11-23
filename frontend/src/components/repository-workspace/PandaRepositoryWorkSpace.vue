@@ -82,7 +82,7 @@
               draggable="true"
               @dragstart="onDragStartRepo(repo)"
             >
-              <i class="fa-brands fa-git-alt mr-2"></i>
+              <i class="fa-solid fa-bars-progress mr-2"/>
               <span>{{ repo.name }}</span>
             </div>
           </div>
@@ -143,7 +143,7 @@
           HEAD (Current branch)
         </div>
         <div class="branch-item active-branch">
-          <i class="fa-solid fa-check w-4 text-center mr-1 text-[10px]" />
+          <i class="fa-solid fa-check w-4 text-center mr-1 text-[10px]"/>
           <span class="truncate">{{ currentBranch }}</span>
           <span class="ml-auto text-[9px] border border-[var(--border-color)] px-1 rounded">
             HEAD
@@ -158,7 +158,6 @@
           :search-query="branchFilter"
           @select="onBranchSelect"
         />
-
 
         <div class="px-3 py-1 text-[10px] font-bold text-[var(--p-text-dim)] uppercase mt-2">
           remotes

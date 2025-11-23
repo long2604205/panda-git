@@ -3,14 +3,18 @@
     ref="openForm"
     v-model="visible"
     title="Open Repository"
+    @opened="onOpened"
   >
     <template #content>
       <label class="block text-xs text-[var(--p-text-muted)] mb-2">Repository path</label>
       <div class="flex gap-2 mb-4">
         <input
+          ref="pathInput"
           v-model="pathRepository"
           type="text"
           class="search-input w-full px-3 py-2 rounded border border-[var(--border-color)]"
+          @keyup.enter="openRepository"
+          @keyup.esc="close"
         />
         <button class="btn btn-secondary">
           <i class="fa-regular fa-folder-open"/>
@@ -35,6 +39,7 @@ const visible = ref(false);
 const openForm = ref(null);
 const pathRepository = ref('');
 const loading = useLoadingStore()
+const pathInput = ref(null)
 
 const close = () => {
   openForm.value.close()
@@ -68,6 +73,10 @@ async function handleOpenRepo(pathRepository) {
   } finally {
     loading.hide()
   }
+}
+
+const onOpened = () => {
+  pathInput.value?.focus()
 }
 </script>
 
