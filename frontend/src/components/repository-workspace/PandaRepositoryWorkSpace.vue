@@ -152,18 +152,23 @@
         <div class="px-3 py-1 text-[10px] font-bold text-[var(--p-text-dim)] uppercase mt-1">
           Local
         </div>
-        <div v-for="branch in filteredBranches.local" :key="branch" class="branch-item">
-          <i class="fa-solid fa-code-branch w-4 text-center mr-1 text-[10px]" />
-          <span class="truncate">{{ branch }}</span>
-        </div>
+        <panda-tree-git
+          ref="treeRef"
+          :branches="filteredBranches.local"
+          :search-query="branchFilter"
+          @select="onBranchSelect"
+        />
+
 
         <div class="px-3 py-1 text-[10px] font-bold text-[var(--p-text-dim)] uppercase mt-2">
-          Remotes
+          remotes
         </div>
-        <div v-for="branch in filteredBranches.remote" :key="branch" class="branch-item opacity-75">
-          <i class="fa-brands fa-github w-4 text-center mr-1 text-[10px]" />
-          <span class="truncate">{{ branch }}</span>
-        </div>
+        <panda-tree-git
+          ref="treeRef"
+          :branches="filteredBranches.remote"
+          :search-query="branchFilter"
+          @select="onBranchSelect"
+        />
       </div>
     </div>
   </aside>
@@ -180,6 +185,7 @@ import mitter from '@/plugins/mitter.js'
 import { loadGroups, loadRepos, saveGroups, saveRepos, updateGroup } from '@/plugins/PandaDB.js'
 import commonApi from '@/services/api/common.js'
 import notify from '@/plugins/notify.js'
+import PandaTreeGit from '@/components/common/PandaTreeGit.vue'
 const addGroupForm = defineAsyncComponent(() => import('@/components/common/GroupForm.vue'))
 
 const repoFilter = ref('')
@@ -424,6 +430,10 @@ function isGroupExpanded(group) {
   }
   return !group.collapsed
 }
+
+const onBranchSelect = (path) => {
+  console.log('Selected Branch:', path);
+};
 </script>
 
 <style scoped></style>
