@@ -1,5 +1,4 @@
 <template>
-  <!-- Sử dụng Teleport để đưa menu ra ngoài body, tránh bị khuất bởi overflow: hidden của sidebar -->
   <Teleport to="body">
     <div
       v-if="isVisible"

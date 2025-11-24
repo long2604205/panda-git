@@ -42,7 +42,7 @@
             @click="toggleGroup(group)"
             @dragover.prevent
             @drop="onDropRepo(group)"
-            @contextmenu.prevent="openMenu($event, group)"
+            @contextmenu.prevent="openGroupMenu($event, group)"
           >
             <i
               class="fa-solid fa-chevron-down arrow"
@@ -82,6 +82,7 @@
               @dblclick="selectRepo(repo)"
               draggable="true"
               @dragstart="onDragStartRepo(repo)"
+              @contextmenu.prevent="openRepositoryMenu($event, repo)"
             >
               <i class="fa-solid fa-bars-progress mr-2"/>
               <span>{{ repo.name }}</span>
@@ -100,6 +101,7 @@
             @dblclick="selectRepo(repo)"
             draggable="true"
             @dragstart="onDragStartRepo(repo)"
+            @contextmenu.prevent="openRepositoryMenu($event, repo)"
           >
             <i class="fa-solid fa-book mr-2"></i>
             <span>{{ repo.name }}</span>
@@ -176,7 +178,8 @@
     ref="resizerLeftSidebar"
     class="resizer-left-sidebar resizer-v w-1 cursor-col-resize bg-transparent"
   />
-  <draft-context-menu ref="groupContextMenuRef" @action-click="handleAction"/>
+  <group-context-menu ref="groupContextMenuRef" @action-click="handleGroupAction"/>
+  <repository-context-menu ref="repositoryContextMenuRef" @action-click="handleRepositoryAction"/>
 </template>
 
 <script setup>
@@ -187,9 +190,12 @@ import { loadGroups, loadRepos, saveGroups, saveRepos, updateGroup } from '@/plu
 import commonApi from '@/services/api/common.js'
 import notify from '@/plugins/notify.js'
 import PandaTreeGit from '@/components/common/PandaTreeGit.vue'
-import DraftContextMenu from "@/components/repository-workspace/DraftContextMenu.vue";
-const addGroupForm = defineAsyncComponent(() => import('@/components/common/GroupForm.vue'))
+import GroupContextMenu from '@/components/repository-workspace/components/GroupContextMenu.vue'
+import RepositoryContextMenu from '@/components/repository-workspace/components/RepositoryContextMenu.vue'
 
+const addGroupForm = defineAsyncComponent(() => import('@/components/common/GroupForm.vue'))
+const repositoryContextMenuRef = ref(null)
+const groupContextMenuRef = ref(null);
 const repoFilter = ref('')
 const branchFilter = ref('')
 
@@ -411,14 +417,43 @@ const onBranchSelect = (path) => {
   console.log('Selected Branch:', path);
 };
 
-const groupContextMenuRef = ref(null);
-const handleAction = ({ action, data }) => {
+
+const handleGroupAction = ({ action, data }) => {
   console.log('Action:', action, 'Data:', data);
 };
 
-function openMenu(event, group) {
+const handleRepositoryAction = ({ action, data }) => {
+  console.log('Action:', action, 'Data:', data);
+};
+
+function openGroupMenu(event, group) {
+  closeAllMenus()
   groupContextMenuRef.value.open(event, group);
 }
+
+function openRepositoryMenu(event, repo) {
+  closeAllMenus()
+  repositoryContextMenuRef.value.open(event, repo);
+}
+function closeAllMenus() {
+  groupContextMenuRef.value?.close?.()
+  repositoryContextMenuRef.value?.close?.()
+}
+
+async function expandAllGroups() {
+  for (const group of groups.value) {
+    group.collapsed = false
+    await updateGroup(group.id, { collapsed: false })
+  }
+}
+
+async function collapseAllGroups() {
+  for (const group of groups.value) {
+    group.collapsed = true
+    await updateGroup(group.id, { collapsed: true })
+  }
+}
+
 </script>
 
 <style scoped></style>
