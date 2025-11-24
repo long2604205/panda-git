@@ -8,9 +8,12 @@ function openDB() {
 
     request.onupgradeneeded = (event) => {
       const db = event.target.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+
+      if (db.objectStoreNames.contains(STORE_NAME)) {
+        db.deleteObjectStore(STORE_NAME);
       }
+
+      db.createObjectStore(STORE_NAME, { keyPath: 'id' });
     };
 
     request.onsuccess = (event) => resolve(event.target.result);

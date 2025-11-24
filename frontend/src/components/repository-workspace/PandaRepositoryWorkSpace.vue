@@ -42,6 +42,7 @@
             @click="toggleGroup(group)"
             @dragover.prevent
             @drop="onDropRepo(group)"
+            @contextmenu.prevent="openMenu($event, group)"
           >
             <i
               class="fa-solid fa-chevron-down arrow"
@@ -175,6 +176,7 @@
     ref="resizerLeftSidebar"
     class="resizer-left-sidebar resizer-v w-1 cursor-col-resize bg-transparent"
   />
+  <draft-context-menu ref="groupContextMenuRef" @action-click="handleAction"/>
 </template>
 
 <script setup>
@@ -185,37 +187,20 @@ import { loadGroups, loadRepos, saveGroups, saveRepos, updateGroup } from '@/plu
 import commonApi from '@/services/api/common.js'
 import notify from '@/plugins/notify.js'
 import PandaTreeGit from '@/components/common/PandaTreeGit.vue'
+import DraftContextMenu from "@/components/repository-workspace/DraftContextMenu.vue";
 const addGroupForm = defineAsyncComponent(() => import('@/components/common/GroupForm.vue'))
 
 const repoFilter = ref('')
 const branchFilter = ref('')
 
-const groups = ref([
-  // { id: 'group-1', name: 'E-commerce V2', collapsed: false },
-  // { id: 'group-2', name: 'Internal Tools', collapsed: false },
-])
+const groups = ref([])
 
-const repositories = ref([
-  // { id: 'repo-1', name: 'shop-ui-core', groupId: 'group-1' },
-  // { id: 'repo-2', name: 'shop-api-service', groupId: 'group-1' },
-  // { id: 'repo-3', name: 'admin-dashboard', groupId: 'group-2' },
-  // { id: 'repo-4', name: 'analytics-worker', groupId: 'group-2' },
-  // { id: 'repo-5', name: 'avsoul', groupId: null },
-])
+const repositories = ref([])
 const currentBranch = computed(() => {
-  return selectedRepo.value?.currentBranch ?? 's'
+  return selectedRepo.value?.currentBranch ?? ''
 })
 
 const selectedRepo = ref(null)
-const selectedBranch = ref('main')
-
-const mockBranches = {
-  'repo-1': ['main', 'feat/sidebar', 'fix/auth-token', 'hotfix/v1.2'],
-  'repo-2': ['master', 'dev', 'feature/api-gateway'],
-  'repo-3': ['main', 'analytics-dashboard'],
-  'repo-4': ['main'],
-  'repo-5': ['master', 'mac-config', 'linux-config'],
-}
 
 async function toggleGroup(group) {
   group.collapsed = !group.collapsed
@@ -225,9 +210,6 @@ async function toggleGroup(group) {
 async function selectRepo(repo) {
   try {
     // loading.show(`Fetching repository "${repo.name}"...`)
-    const branches = mockBranches[repo.id] || ['main']
-    selectedBranch.value = branches[0]
-
     const response = await commonApi.open({ repo_path: repo.path })
     const result = response.data
     if (!result) return
@@ -385,11 +367,6 @@ onMounted(() => {
 
     saveRepos(repositories.value)
 
-    // đảm bảo có branches
-    if (!mockBranches[newRepo.id]) {
-      mockBranches[newRepo.id] = ['main'] // mặc định 1 branch
-    }
-
     selectRepo(newRepo)
   })
 })
@@ -433,6 +410,15 @@ function isGroupExpanded(group) {
 const onBranchSelect = (path) => {
   console.log('Selected Branch:', path);
 };
+
+const groupContextMenuRef = ref(null);
+const handleAction = ({ action, data }) => {
+  console.log('Action:', action, 'Data:', data);
+};
+
+function openMenu(event, group) {
+  groupContextMenuRef.value.open(event, group);
+}
 </script>
 
 <style scoped></style>

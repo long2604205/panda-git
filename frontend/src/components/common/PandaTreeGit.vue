@@ -158,7 +158,7 @@ const rootTreeData = computed(() => {
       current = current[part].children;
     });
   });
-  return Object.values(root).sort((a, b) => a.name.localeCompare(b.name));
+  return Object.values(root)
 });
 
 // Các hàm utility để component Cha gọi thông qua ref template
@@ -196,7 +196,7 @@ const hasChildren = computed(() => {
 
 const sortedChildren = computed(() => {
   if (!hasChildren.value) return [];
-  return Object.values(props.node.children).sort((a, b) => a.name.localeCompare(b.name));
+  return Object.values(props.node.children)
 });
 
 // Logic Search Đệ quy

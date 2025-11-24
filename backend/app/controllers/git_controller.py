@@ -2,6 +2,9 @@ from app.services.git_service import GitService
 from app.utils.response import JsonResponse
 
 class GitController:
+    def __init__(self):
+        pass
+
     @staticmethod
     def clone_repo(request):
         data = request.get_json()

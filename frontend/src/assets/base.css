@@ -36,6 +36,7 @@
   --accent-color: var(--p-highlight);
   --status-fg: var(--p-text-main);
   --menu-bg: #1e2128;
+  --ctx-shadow: rgba(0, 0, 0, 0.5);
 }
 
 [data-theme="light"] {
@@ -54,6 +55,7 @@
   --menu-bg: #ffffff;
   --modal-bg: #ffffff;
   --modal-overlay: rgba(0, 0, 0, 0.2);
+  --ctx-shadow: rgba(0, 0, 0, 0.15);
 }
 
 /* --- GLOBAL STYLES --- */
