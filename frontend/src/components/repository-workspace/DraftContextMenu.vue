@@ -201,7 +201,7 @@ defineExpose({
 #context-menu {
   position: fixed;
   z-index: 1000;
-  width: 240px;
+  width: 200px;
   /* Lưu ý: Các biến var(--menu-bg) cần được define ở global css hoặc parent component */
   background-color: var(--menu-bg, #1e2128);
   border: 1px solid var(--border-color, #2a2d35);
@@ -215,7 +215,7 @@ defineExpose({
 
 .ctx-item {
   padding: 6px 12px;
-  font-size: 12px;
+  font-size: 10px;
   color: var(--text-color, #e2e8f0);
   display: flex;
   align-items: center;
@@ -237,9 +237,9 @@ defineExpose({
 }
 
 .ctx-icon {
-  width: 16px;
+  width: 14px;
   text-align: center;
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .ctx-shortcut {
