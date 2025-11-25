@@ -150,3 +150,18 @@ class GitController:
                 message="Repository renamed successfully")
         except Exception as e:
             return JsonResponse.error(str(e), status_code=500)
+
+    @staticmethod
+    def get_graph_data(request):
+        data = request.get_json()
+        if not data or "repo_path" not in data:
+            return JsonResponse.error("Missing required fields: 'repo_path' and 'new_name'", status_code=400)
+
+        repo_path = data["repo_path"]
+        branch = data.get("branch") or "--all"
+
+        try:
+            repo = GitService.get_graph_data(repo_path, branch)
+            return JsonResponse.success(repo, message="Open repository successfully")
+        except Exception as e:
+            return JsonResponse.error(str(e), status_code=500)

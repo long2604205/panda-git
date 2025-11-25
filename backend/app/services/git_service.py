@@ -1,6 +1,9 @@
 import os
+import re
 import subprocess
 from contextlib import suppress
+import datetime
+from git import Repo, NULL_TREE
 
 from git import Repo, InvalidGitRepositoryError, GitCommandError, FetchInfo
 
@@ -341,3 +344,183 @@ class GitService:
                 return 2, short_name
 
         return sorted(branches, key=weight)
+
+    @staticmethod
+    def get_initials(name):
+        """Helper để tạo ký tự viết tắt (VD: Lion Wilson -> LW)"""
+        if not name:
+            return "??"
+        parts = name.split()
+        if len(parts) >= 2:
+            return (parts[0][0] + parts[-1][0]).upper()
+        return parts[0][:2].upper()
+
+    @staticmethod
+    def get_graph_data(repo_path, branch, max_commits=300):
+        try:
+            repo = Repo(repo_path)
+            git = repo.git
+
+            # --- BƯỚC 1: Lấy dữ liệu thô từ git log ---
+            # Sử dụng format đặc biệt để dễ parse:
+            # %H: Hash, %P: Parents, %an: Author Name, %ae: Email, %at: Timestamp, %s: Subject, %D: Refs (Branch names)
+            # --name-status: Để lấy list file thay đổi
+            separator = "|||"
+            log_format = f"COMMIT{separator}%H{separator}%P{separator}%an{separator}%ae{separator}%at{separator}%s{separator}%D"
+
+            # Chạy lệnh git log
+            # --all: Lấy tất cả nhánh (local + remote)
+            # --date-order: Sắp xếp ưu tiên thời gian (datetime) nhưng vẫn giữ cấu trúc cha-con để vẽ graph.
+            # Khác với --topo-order (ưu tiên gom nhánh), --date-order xen kẽ các nhánh dựa trên thời gian thực.
+            raw_log = git.log(
+                branch,
+                "--date-order",
+                f"--pretty=format:{log_format}",
+                "--name-status",
+                f"-n {max_commits}"
+            )
+
+            # --- BƯỚC 2: Parse dữ liệu ---
+            commits = []
+            commit_map = {}  # Để truy cập nhanh theo Hash
+            current_commit = None
+
+            lines = raw_log.split('\n')
+
+            for line in lines:
+                if not line.strip(): continue
+
+                if line.startswith(f"COMMIT{separator}"):
+                    # Đây là dòng bắt đầu 1 commit mới
+                    parts = line.split(separator)
+                    if len(parts) >= 8:
+                        hexsha = parts[1]
+                        parents_str = parts[2]
+                        author_name = parts[3]
+                        author_email = parts[4]
+                        timestamp = int(parts[5])
+                        subject = parts[6]
+                        refs_str = parts[7]
+
+                        parents = parents_str.split() if parents_str else []
+
+                        # Xử lý Refs để tìm branch potential
+                        # refs_str ví dụ: "HEAD -> main, origin/main, origin/feature/abc"
+                        refs = []
+                        if refs_str:
+                            # Tách các ref, loại bỏ 'HEAD -> '
+                            raw_refs = [r.strip() for r in refs_str.split(',')]
+                            for r in raw_refs:
+                                clean_ref = r.replace('HEAD -> ', '')
+                                if clean_ref != 'HEAD':  # Bỏ qua HEAD pointer
+                                    refs.append(clean_ref)
+
+                        current_commit = {
+                            "id": hexsha,
+                            "parents": parents,
+                            "author": {
+                                "name": author_name,
+                                "email": author_email,
+                                "initials": GitService.get_initials(author_name)
+                            },
+                            "date": datetime.datetime.fromtimestamp(timestamp).isoformat(),
+                            "message": subject,
+                            "refs": refs,
+                            "changes": [],
+                            "branch": None  # Sẽ tính sau
+                        }
+                        commits.append(current_commit)
+                        commit_map[hexsha] = current_commit
+
+                elif current_commit and line[0] in ['M', 'A', 'D', 'R', 'C', 'U']:
+                    # Đây là dòng file change (VD: "M    src/app.js")
+                    # Parse theo tab hoặc space
+                    parts = re.split(r'\s+', line.strip(), maxsplit=1)
+                    if len(parts) == 2:
+                        status_char = parts[0][0]  # Lấy ký tự đầu (M, A, D...)
+                        file_path = parts[1]
+                        current_commit["changes"].append({
+                            "file": file_path,
+                            "status": status_char
+                        })
+
+            # --- BƯỚC 3: Gán Branch (Branch Coloring Strategy) ---
+            # Thuật toán:
+            # 1. Xác định các "đầu nhánh" (Tips) dựa vào refs.
+            # 2. Ưu tiên các nhánh Main (master/main/develop) đi trước.
+            # 3. Trace ngược từ Tip về quá khứ theo Parent[0] (First Parent).
+            # 4. Nếu commit đã có branch thì dừng (để nhánh phụ không ghi đè nhánh chính).
+
+            # 3.1 Tìm tất cả các Tips
+            tips = []  # List tuple (branch_name, commit_hash)
+
+            # Các từ khóa ưu tiên
+            PRIORITY_KEYWORDS = ['main', 'master', 'develop', 'release', 'production']
+
+            for commit in commits:
+                if commit["refs"]:
+                    # Lấy ref đầu tiên làm đại diện (ưu tiên local trước nếu có)
+                    # Sắp xếp refs của commit này để chọn cái tên "đẹp nhất"
+                    # Ví dụ: ưu tiên 'main' hơn 'origin/main'
+                    best_ref = commit["refs"][0]
+                    for ref in commit["refs"]:
+                        if not ref.startswith('origin/'):
+                            best_ref = ref
+                            break
+
+                    tips.append((best_ref, commit["id"]))
+
+            # 3.2 Sắp xếp độ ưu tiên xử lý Tips
+            def tip_sort_key(item):
+                ref_name = item[0].lower()
+                short_name = ref_name.split('/')[-1]
+
+                # Nhóm 1: Main/Master/Develop (Ưu tiên cao nhất để vẽ trục thẳng)
+                if any(kw == short_name for kw in PRIORITY_KEYWORDS):
+                    return 0
+                if any(kw in short_name for kw in PRIORITY_KEYWORDS):
+                    return 1
+                # Nhóm 2: Feature/Fix
+                return 2
+
+            tips.sort(key=tip_sort_key)
+
+            # 3.3 Trace ngược (Back-propagation)
+            for branch_name, start_hash in tips:
+                curr_hash = start_hash
+
+                while curr_hash in commit_map:
+                    commit_obj = commit_map[curr_hash]
+
+                    # Nếu commit này đã được gán branch bởi luồng ưu tiên hơn -> Dừng
+                    if commit_obj["branch"] is not None:
+                        break
+
+                    # Gán branch
+                    commit_obj["branch"] = branch_name
+
+                    # Di chuyển về cha đầu tiên (First Parent)
+                    # Đây là chìa khóa để giữ "thẳng hàng" cho nhánh
+                    if commit_obj["parents"]:
+                        curr_hash = commit_obj["parents"][0]
+                    else:
+                        break  # Root commit
+
+            # 3.4 Cleanup & Finalize
+            # Những commit nào vẫn chưa có branch (do nằm lơ lửng hoặc detached), gán tạm
+            for commit in commits:
+                if commit["branch"] is None:
+                    commit["branch"] = "detached"
+
+                # Xác định type
+                commit["type"] = "merge" if len(commit["parents"]) > 1 else "commit"
+
+                # Clean up field không cần thiết gửi về FE
+                del commit["refs"]
+
+            return commits
+
+        except Exception as e:
+            print(f"Error parsing git log: {str(e)}")
+            # Trả về mảng rỗng hoặc lỗi để FE xử lý
+            return []

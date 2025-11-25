@@ -37,3 +37,7 @@ def register_git_routes(app):
     @app.route("/rename", methods=["POST"])
     def rename():
         return GitController.rename_repo(request)
+
+    @app.route("/graph", methods=["POST"])
+    def get_graph_data():
+        return GitController.get_graph_data(request)
