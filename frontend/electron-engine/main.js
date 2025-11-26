@@ -3,7 +3,6 @@ import path, { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
 import { spawn } from 'child_process'
 import os from 'os'
-import fs from 'fs'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)

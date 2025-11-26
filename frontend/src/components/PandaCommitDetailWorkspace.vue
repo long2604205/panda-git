@@ -5,87 +5,118 @@
   <!-- RIGHT SIDEBAR -->
   <aside ref="sidebarRight" style="width: 300px"
          class="flex-shrink-0 bg-[var(--bg-side)] border-l border-[var(--border-color)] flex flex-col select-none z-10">
-    <div ref="paneCommitInfo" style="height: 40%"
-         class="flex-col min-h-0 border-b border-[var(--border-color)] flex">
+        <!-- Header -->
       <div class="sidebar-section-title border-b border-[var(--border-color)]">
         <span>Commit Details</span>
         <div class="flex gap-2">
           <i class="fa-regular fa-copy hover:text-[var(--text-color)] cursor-pointer"></i>
         </div>
       </div>
-      <div class="p-4 overflow-y-auto" id="commit-detail-info">
-        <div class="text-center text-[var(--p-text-dim)] mt-10 text-xs">
-          Select a commit to view details
-        </div>
-      </div>
+
+    <!-- Empty State -->
+    <div v-if="!commit" class="empty-state">
+      <p class="empty-text">Select commit to view changes</p>
     </div>
 
-    <!-- SPLITTER: RIGHT VERTICAL -->
-    <div ref="resizerRightInner" class="resizer-h bg-[var(--border-color)]"></div>
-
-    <div class="flex-1 flex flex-col min-h-0">
-      <div class="sidebar-section-title border-b border-[var(--border-color)] flex justify-between">
-        <span>Changed Files</span><span
-        class="text-[var(--accent-color)] text-[9px] border border-[var(--accent-color)] px-1 rounded"
-        id="commit-file-count">0</span>
+    <!-- Commit Content -->
+    <div v-else class="detail-content">
+      <!-- Branch & Hash -->
+      <div class="detail-section">
+        <div class="badge-row">
+          <span
+            class="branch-badge"
+            :style="{
+              color: commit.color,
+              borderColor: commit.color,
+              backgroundColor: commit.color + '10'
+            }"
+          >
+            {{ commit.branch }}
+          </span>
+          <span class="hash-badge">{{ commit.id }}</span>
+        </div>
+        <h2 class="commit-title">{{ commit.message }}</h2>
       </div>
-      <div class="flex-1 overflow-y-auto p-1" id="commit-file-tree">
-        <!-- Tree -->
+
+      <!-- Author Info -->
+      <div class="author-card">
+        <div class="avatar">{{ commit.author.initials }}</div>
+        <div class="author-details">
+          <span class="author-name">{{ commit.author.name }}</span>
+          <span class="author-email">{{ commit.author.email }}</span>
+        </div>
+      </div>
+
+      <!-- Metadata -->
+      <div class="detail-section">
+        <div class="metadata-item">
+          <span class="metadata-label">Date</span>
+          <span class="metadata-value">{{ formatDate(commit.date) }}</span>
+        </div>
+        <div class="metadata-item">
+          <span class="metadata-label">Commit Type</span>
+          <span class="metadata-value">{{ commit.type }}</span>
+        </div>
+        <div class="metadata-item">
+          <span class="metadata-label">Parents</span>
+          <span class="metadata-value">
+            {{ commit.parents.length > 0 ? commit.parents.join(', ') : 'None' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Changed Files -->
+      <div class="detail-section">
+        <h3 class="section-title">Changed Files</h3>
+        <div v-if="commit.changes && commit.changes.length > 0" class="file-list">
+          <div
+            v-for="(file, idx) in commit.changes"
+            :key="idx"
+            class="file-item"
+          >
+            <span class="file-status" :class="`status-${file.status.toLowerCase()}`">
+              {{ file.status }}
+            </span>
+            <span class="file-path">{{ file.file }}</span>
+          </div>
+        </div>
+        <div v-else class="no-changes">
+          <span>No changes recorded</span>
+        </div>
       </div>
     </div>
   </aside>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import {ref, onMounted, onBeforeUnmount} from "vue";
+import mitter from "@/plugins/mitter.js";
+
+const commit = ref(null)
+onMounted(() => {
+  mitter.on('select-commit', (data) => {
+    commit.value = data;
+  });
+  initRightSidebarResize();
+});
+
+onBeforeUnmount(() => {
+  mitter.off('select-commit')
+})
+const formatDate = (dateStr) => {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
 
 // refs cho DOM element
 const resizerRightSidebar = ref(null);
 const sidebarRight = ref(null);
-
-const resizerRightInner = ref(null);
-const paneCommitInfo = ref(null);
-
-// ---- logic resize chung (giống bản gốc) ----
-function initResize(resizerEl, prevEl, isVert) {
-  if (!resizerEl || !prevEl) return;
-
-  let startX, startY, startW, startH;
-
-  const onMouseDown = (e) => {
-    startX = e.clientX;
-    startY = e.clientY;
-
-    const rect = prevEl.getBoundingClientRect();
-    startW = rect.width;
-    startH = rect.height;
-
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", onMouseUp);
-
-    document.body.classList.add(isVert ? "resizing-col" : "resizing-row");
-  };
-
-  const onMouseMove = (e) => {
-    if (isVert) {
-      const dx = e.clientX - startX;
-      prevEl.style.width = `${startW + dx}px`;
-    } else {
-      const dy = e.clientY - startY;
-      prevEl.style.height = `${startH + dy}px`;
-    }
-  };
-
-  const onMouseUp = () => {
-    document.removeEventListener("mousemove", onMouseMove);
-    document.removeEventListener("mouseup", onMouseUp);
-
-    document.body.classList.remove("resizing-col");
-    document.body.classList.remove("resizing-row");
-  };
-
-  resizerEl.addEventListener("mousedown", onMouseDown);
-}
 
 // ---- RIGHT SIDEBAR WIDTH (kéo ngang) ----
 function initRightSidebarResize() {
@@ -114,12 +145,230 @@ function initRightSidebarResize() {
   });
 }
 
-// Mount
-onMounted(() => {
-  initRightSidebarResize();
-
-  initResize(resizerRightInner.value, paneCommitInfo.value, false);
-});
 </script>
 
-<style scoped></style>
+<style scoped>
+@media (min-width: 1024px) {
+  .commit-detail-panel {
+    position: relative;
+    transform: translateX(0);
+  }
+}
+
+.panel-header {
+  height: 36px;
+  border-bottom: 1px solid var(--border-color);
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--bg-header);
+}
+
+.panel-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--p-text-dim);
+}
+
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--p-text-muted);
+  padding: 32px;
+  text-align: center;
+  opacity: 0.6;
+}
+
+.empty-text {
+  font-size: 12px;
+  font-weight: 200;
+}
+
+.detail-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.badge-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.branch-badge {
+  padding: 4px 8px;
+  border-radius: 2px;
+  font-size: 10px;
+  border: 1px solid;
+  font-family: 'JetBrains Mono', monospace;
+  opacity: 0.7;
+}
+
+.hash-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--p-text-muted);
+  background-color: var(--p-hover);
+  padding: 4px 6px;
+  border-radius: 2px;
+}
+
+.commit-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-color);
+  line-height: 1.4;
+}
+
+.author-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background-color: var(--bg-main);
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--p-hover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--text-color);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.author-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.author-name {
+  font-size: 12px;
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+.author-email {
+  font-size: 10px;
+  color: var(--p-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.metadata-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border-color);
+  border-opacity: 0.3;
+}
+
+.metadata-item:last-child {
+  border-bottom: none;
+}
+
+.metadata-label {
+  font-size: 11px;
+  color: var(--p-text-dim);
+  font-weight: 500;
+}
+
+.metadata-value {
+  font-size: 11px;
+  color: var(--text-color);
+  font-family: 'JetBrains Mono', monospace;
+  text-align: right;
+}
+
+.section-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--p-text-dim);
+  margin-bottom: 4px;
+}
+
+.file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px;
+  color: var(--p-text-muted);
+  border-radius: 2px;
+  transition: background-color 0.15s;
+  cursor: pointer;
+}
+
+.file-item:hover {
+  background-color: var(--p-hover);
+}
+
+.file-status {
+  width: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.file-status.status-m {
+  color: #fbbf24;
+}
+
+.file-status.status-a {
+  color: #4ade80;
+}
+
+.file-status.status-d {
+  color: #f87171;
+}
+
+.file-path {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.no-changes {
+  padding: 8px;
+  color: var(--p-text-dim);
+  font-style: italic;
+  font-size: 11px;
+}
+</style>

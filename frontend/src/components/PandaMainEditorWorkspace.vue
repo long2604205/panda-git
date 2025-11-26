@@ -65,33 +65,75 @@
     <!-- SPLITTER: MAIN VERTICAL -->
     <div ref="resizerMainVert" class="resizer-h bg-[var(--border-color)]"></div>
 
-    <!-- BOTTOM PANE: GIT GRAPH -->
+    <!-- BOTTOM PANE: TABS -->
     <div ref="paneGraph" class="flex-1 flex flex-col min-h-0">
+
+      <!-- TAB BAR -->
       <div class="h-9 flex items-center bg-[var(--bg-header)] border-b border-[var(--border-color)] shrink-0">
+        <!-- TAB: GIT GRAPH -->
         <div
-          class="h-full px-4 flex items-center gap-2 text-xs bg-[var(--bg-main)] border-t-2 border-t-[var(--accent-color)] text-[var(--text-color)] border-r border-r-[var(--border-color)]">
-          <i class="fa-solid fa-code-commit text-[var(--accent-color)]"></i><span>History Graph</span>
+          @click="activeTab = 'graph'"
+          :class="[
+            'h-full px-4 flex items-center gap-2 text-xs border-r border-[var(--border-color)] cursor-pointer',
+            activeTab === 'graph'
+              ? 'bg-[var(--bg-main)] text-[var(--text-color)] border-t-2 border-t-[var(--accent-color)]'
+              : 'text-[var(--p-text-dim)] hover:bg-[var(--bg-side)]'
+          ]"
+        >
+          <i class="fa-solid fa-code-commit"></i>
+          <span>History Graph</span>
         </div>
-        <div class="ml-2 flex items-center">
-          <div class="relative">
-            <i
-              class="fa-solid fa-filter absolute left-2 top-1/2 transform -translate-y-1/2 text-[10px] text-[var(--p-text-dim)]"></i><input
-            type="text" id="commit-search-input"
-            class="search-input w-64 pl-6 pr-2 py-0.5 rounded-full" placeholder="Search commits..." />
+        <!-- TAB: TERMINAL -->
+        <div
+          @click="activeTab = 'terminal'"
+          :class="[
+            'h-full px-4 flex items-center gap-2 text-xs border-r border-[var(--border-color)] cursor-pointer',
+            activeTab === 'terminal'
+              ? 'bg-[var(--bg-main)] text-[var(--text-color)] border-t-2 border-t-[var(--accent-color)]'
+              : 'text-[var(--p-text-dim)] hover:bg-[var(--bg-side)]'
+          ]"
+        >
+          <i class="fa-solid fa-terminal"></i>
+          <span>Terminal</span>
+        </div>
+      </div>
+
+      <!-- TAB CONTENT -->
+      <div class="flex-1 min-h-0 relative">
+        <!-- GIT GRAPH -->
+        <div
+          v-show="activeTab === 'graph'"
+          class="w-full h-full graph-container overflow-auto"
+          id="graph-scroll-area"
+        >
+            <panda-git-graph
+              :commits="filteredCommits"
+              @select-commit="handleSelectCommit"
+            />
+        </div>
+
+        <!-- TERMINAL -->
+        <div
+          v-show="activeTab === 'terminal'"
+          class="w-full h-full p-2 text-sm font-mono text-[var(--text-color)] overflow-auto"
+        >
+          <div class="border border-[var(--border-color)] rounded p-2 h-full bg-black text-green-400">
+            <!-- Bạn nhúng terminal vào đây -->
+            <p>Terminal here...</p>
           </div>
         </div>
       </div>
-      <div class="graph-container" id="graph-scroll-area">
-        <svg id="graph-svg" class="graph-svg-layer" width="200" height="0"></svg>
-        <div id="graph-rows" class="w-full z-10 relative">
-          <!-- Rows -->
-        </div>
-      </div>
     </div>
+
   </main>
 </template>
 <script setup>
-import { ref, onMounted } from "vue";
+import {ref, onMounted, computed} from "vue";
+import PandaGitGraph from "@/components/PandaGitGraph.vue";
+import mitter from "@/plugins/mitter.js";
+import {commitSapmle} from "@/data/commitSapmle.js";
+
+const activeTab = ref('graph');
 
 // DOM refs
 const paneStaging = ref(null);        // left in top pane
@@ -168,6 +210,157 @@ onMounted(() => {
     false                        // vertical movement (resize height)
   );
 });
+
+
+class DataGenerator {
+  constructor() {
+    this.users = [
+      { name: 'Lion Wilson', email: 'lion@panda.com', initials: 'LW' },
+      { name: 'Sarah Chen', email: 'sarah@tech.co', initials: 'SC' },
+      { name: 'Mike Ross', email: 'mike@tech.co', initials: 'MR' },
+      { name: 'Bot CI/CD', email: 'bot@ci.com', initials: 'BT' }
+    ];
+
+    this.features = [
+      'ui-refresh', 'dark-mode', 'api-opt', 'sidebar',
+      'auth-flow', 'chart-fix', 'export-csv'
+    ];
+
+    this.files = [
+      'src/App.tsx', 'package.json', 'src/components/Header.tsx',
+      'src/utils/api.ts', 'README.md', 'src/styles.css'
+    ];
+  }
+
+  getSHA() {
+    return Math.random().toString(16).substring(2, 9);
+  }
+
+  getRandom(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  getChanges() {
+    const count = Math.floor(Math.random() * 4) + 1;
+    const changes = [];
+    for (let i = 0; i < count; i++) {
+      const status = Math.random() > 0.8
+        ? (Math.random() > 0.5 ? 'A' : 'D')
+        : 'M';
+      changes.push({
+        file: this.getRandom(this.files),
+        status: status
+      });
+    }
+    return changes;
+  }
+
+  generate(count = 150) {
+    const commits = [];
+    let branches = { main: null };
+    let activeFeatures = {};
+    const rootId = this.getSHA();
+
+    // Initial commit
+    commits.push(this.createCommit(
+      rootId, [], 'main', 'Initial commit',
+      this.users[0], count, 'commit', []
+    ));
+    branches['main'] = rootId;
+
+    for (let i = 1; i < count; i++) {
+      const rand = Math.random();
+      let activeBranch = 'main';
+      let parents = [];
+      let message = '';
+      let type = 'commit';
+
+      // Create feature branch
+      if (rand < 0.2 && Object.keys(activeFeatures).length < 5) {
+        const featName = `feat/${this.getRandom(this.features)}-${i}`;
+        if (!activeFeatures[featName]) {
+          activeBranch = featName;
+          parents = [branches['main']];
+          activeFeatures[featName] = null;
+          message = `Start ${featName}`;
+        }
+      }
+      // Merge branch
+      else if (rand < 0.35 && Object.keys(activeFeatures).length > 0) {
+        const feats = Object.keys(activeFeatures);
+        const source = feats[0];
+        if (branches[source]) {
+          activeBranch = 'main';
+          parents = [branches['main'], branches[source]];
+          type = 'merge';
+          message = `Merge ${source}`;
+          delete activeFeatures[source];
+        }
+      }
+      // Regular commit
+      else {
+        const candidates = ['main', ...Object.keys(activeFeatures)];
+        const valid = candidates.filter(b => branches[b] || activeFeatures[b]);
+        activeBranch = valid[Math.floor(Math.random() * valid.length)];
+        parents = [branches[activeBranch] || branches['main']];
+        message = `Update logic in ${activeBranch}`;
+      }
+
+      const newId = this.getSHA();
+      const author = this.getRandom(this.users);
+      commits.push(this.createCommit(
+        newId, parents, activeBranch, message,
+        author, count - i, type, this.getChanges()
+      ));
+
+      branches[activeBranch] = newId;
+      if (activeFeatures[activeBranch] !== undefined) {
+        activeFeatures[activeBranch] = newId;
+      }
+    }
+
+    return commits.reverse();
+  }
+
+  createCommit(id, parents, branch, message, author, timeOffset, type, changes) {
+    return {
+      id,
+      parents: parents.filter(p => p),
+      branch,
+      message,
+      author,
+      date: new Date(Date.now() - timeOffset * 3600000).toISOString(),
+      type,
+      changes
+    };
+  }
+}
+
+// State
+const generator = new DataGenerator();
+// const commits = ref(generator.generate(150));
+const commits = ref(commitSapmle)
+const searchTerm = ref('');
+
+// Computed
+const filteredCommits = computed(() => {
+  if (!searchTerm.value) return commits.value;
+
+  const term = searchTerm.value.toLowerCase();
+  return commits.value.filter(commit => {
+    return (
+      commit.message.toLowerCase().includes(term) ||
+      commit.author.name.toLowerCase().includes(term) ||
+      commit.branch.toLowerCase().includes(term) ||
+      commit.id.includes(term)
+    );
+  });
+});
+
+// Methods
+const handleSelectCommit = (commit) => {
+  mitter.emit('select-commit', commit);
+};
 </script>
 
 <style scoped></style>

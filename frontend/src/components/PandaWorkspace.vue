@@ -4,9 +4,9 @@
     <!-- SIDEBAR -->
     <panda-repository-work-space/>
     <!-- MAIN EDITOR -->
-<!--    <panda-main-editor-workspace/>-->
+    <panda-main-editor-workspace/>
     <!-- RIGHT SIDEBAR -->
-<!--    <panda-commit-detail-workspace/>-->
+    <panda-commit-detail-workspace/>
   </div>
 </template>
 

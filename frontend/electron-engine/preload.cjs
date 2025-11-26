@@ -14,6 +14,4 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openInExplorer: (folderPath) => ipcRenderer.invoke('open-in-explorer', folderPath),
   openTerminal: (folderPath) => ipcRenderer.invoke('open-terminal', folderPath),
   openDevtools: () => ipcRenderer.invoke('open-devtools'),
-
-
 })
