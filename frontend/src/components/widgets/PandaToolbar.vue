@@ -6,7 +6,7 @@
       <!-- --- 1. REPO & BRANCH --- -->
       <div class="info-group">
         <!-- Repo Dropdown Trigger -->
-        <div class="dropdown-wrapper">
+        <div class="dropdown-wrapper w-72">
           <div
             @click="toggleDropdown('repo')"
             class="info-trigger"
@@ -42,7 +42,7 @@
         <div class="vertical-separator"></div>
 
         <!-- Branch Dropdown Trigger -->
-        <div class="dropdown-wrapper">
+        <div class="dropdown-wrapper w-56">
           <div
             @click="toggleDropdown('branch')"
             class="info-trigger"
@@ -238,7 +238,6 @@ onBeforeUnmount(() => {
   border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
-  padding: 0 16px;
   user-select: none;
   position: relative;
 }
@@ -247,14 +246,12 @@ onBeforeUnmount(() => {
 .toolbar-left {
   display: flex;
   align-items: center;
-  gap: 16px;
   margin-right: auto;
 }
 
 .info-group {
   display: flex;
   align-items: center;
-  gap: 16px;
 }
 
 .vertical-separator {
@@ -280,7 +277,7 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 12px;
   cursor: pointer;
-  padding: 6px;
+  padding: 6px 6px 6px 16px;
   border-radius: 6px;
   transition: background-color 0.2s;
 }
@@ -328,7 +325,7 @@ onBeforeUnmount(() => {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   line-height: 1;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
   transition: color 0.2s;
 }
 
@@ -343,7 +340,7 @@ onBeforeUnmount(() => {
 }
 
 .value-text {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--text-color);
   line-height: 1;
@@ -360,6 +357,7 @@ onBeforeUnmount(() => {
   top: 100%;
   left: 0;
   margin-top: 4px;
+  margin-left: 16px;
   background-color: var(--bg-side);
   border: 1px solid var(--border-color);
   border-radius: 6px;
