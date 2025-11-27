@@ -1,70 +1,79 @@
 <template>
   <main class="flex-1 flex flex-col bg-[var(--bg-main)] min-w-0 relative" style="min-width: 300px">
     <!-- TOP PANE: WORKING COPY -->
-    <div ref="paneWorking" style="height: 300px"
-         class="flex bg-[var(--bg-main)] shrink-0 border-b border-[var(--border-color)]">
-      <!-- Left: File Tree (Staging) -->
-      <div ref="paneStaging" style="width: 50%" class="flex flex-col border-r border-[var(--border-color)]">
-        <div
-          class="h-8 px-4 flex items-center justify-between border-b border-[var(--border-color)] text-xs font-bold text-[var(--p-text-muted)] uppercase tracking-wider bg-[var(--bg-side)]">
-          <div class="flex items-center gap-2">
-            <input type="checkbox" class="tree-checkbox" checked />
-            <span>Changes
-                <span
-                  class="ml-1 px-1.5 py-0.5 rounded bg-[var(--p-hover)] text-[var(--text-color)] opacity-80 font-mono">
-                  4 files
-                </span>
-              </span>
-          </div>
-          <div class="flex gap-3 text-[var(--text-color)] opacity-70">
-            <i class="fa-solid fa-layer-group cursor-pointer hover:text-[var(--accent-color)]"></i><i
-            class="fa-solid fa-expand cursor-pointer hover:text-[var(--accent-color)]"></i>
-          </div>
-        </div>
-        <div class="flex-1 overflow-y-auto p-1" id="working-tree-container">
-          <!-- Tree -->
-        </div>
-      </div>
+<!--    <div ref="paneWorking" style="height: 300px"-->
+<!--         class="flex bg-[var(&#45;&#45;bg-main)] shrink-0 border-b border-[var(&#45;&#45;border-color)]">-->
+<!--      &lt;!&ndash; Left: File Tree (Staging) &ndash;&gt;-->
+<!--      <div ref="paneStaging" style="width: 50%" class="flex flex-col border-r border-[var(&#45;&#45;border-color)]">-->
+<!--        <div-->
+<!--          class="h-8 px-4 flex items-center justify-between border-b border-[var(&#45;&#45;border-color)] text-xs font-bold text-[var(&#45;&#45;p-text-muted)] uppercase tracking-wider bg-[var(&#45;&#45;bg-side)]">-->
+<!--          <div class="flex items-center gap-2">-->
+<!--            <input type="checkbox" class="tree-checkbox" checked />-->
+<!--            <span>Changes-->
+<!--                <span-->
+<!--                  class="ml-1 px-1.5 py-0.5 rounded bg-[var(&#45;&#45;p-hover)] text-[var(&#45;&#45;text-color)] opacity-80 font-mono">-->
+<!--                  4 files-->
+<!--                </span>-->
+<!--              </span>-->
+<!--          </div>-->
+<!--          <div class="flex gap-3 text-[var(&#45;&#45;text-color)] opacity-70">-->
+<!--            <i class="fa-solid fa-layer-group cursor-pointer hover:text-[var(&#45;&#45;accent-color)]"></i><i-->
+<!--            class="fa-solid fa-expand cursor-pointer hover:text-[var(&#45;&#45;accent-color)]"></i>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--        <div class="flex-1 overflow-y-auto p-1" id="working-tree-container">-->
+<!--          &lt;!&ndash; Tree &ndash;&gt;-->
+<!--        </div>-->
+<!--      </div>-->
 
-      <!-- SPLITTER: WORKING HORIZONTAL -->
-      <div ref="resizerWorkingInner" class="resizer-v bg-[var(--border-color)]"></div>
+<!--      &lt;!&ndash; SPLITTER: WORKING HORIZONTAL &ndash;&gt;-->
+<!--      <div ref="resizerWorkingInner" class="resizer-v bg-[var(&#45;&#45;border-color)]"></div>-->
 
-      <!-- Right: Commit Message -->
-      <div class="flex-1 flex flex-col min-w-0">
-        <div
-          class="h-8 px-4 flex items-center border-b border-[var(--border-color)] text-xs font-bold text-[var(--p-text-muted)] uppercase tracking-wider bg-[var(--bg-side)]">
-          <span>Commit</span>
-          <div class="ml-auto flex gap-2 text-[var(--text-color)]">
-            <i class="fa-solid fa-clock-rotate-left cursor-pointer hover:text-[var(--accent-color)]"
-               title="History"></i>
-          </div>
-        </div>
-        <div class="flex-1 p-3 flex flex-col gap-2">
-          <div class="flex items-center gap-2 select-none">
-            <input type="checkbox" id="amend-check" class="tree-checkbox" /><label for="amend-check"
-                                                                                   class="text-xs text-[var(--text-color)] cursor-pointer">Amend</label>
-          </div>
-          <textarea
-            class="w-full h-full bg-transparent border border-[var(--border-color)] outline-none text-sm text-[var(--text-color)] font-mono resize-none p-2 rounded hover:border-[var(--p-text-muted)] focus:border-[var(--accent-color)] transition-colors placeholder-[var(--p-text-dim)]"
-            placeholder="Commit Message"></textarea>
-        </div>
-        <div
-          class="h-12 border-t border-[var(--border-color)] flex items-center justify-between px-4 bg-[var(--bg-side)]">
-          <div class="flex gap-2">
-            <button class="btn btn-primary text-xs">Commit</button><button
-            class="btn btn-secondary text-xs">
-            Commit and Push...
-          </button>
-          </div>
-          <i
-            class="fa-solid fa-ellipsis-vertical text-[var(--p-text-dim)] hover:text-[var(--text-color)] cursor-pointer px-2"></i>
-        </div>
-      </div>
-    </div>
+<!--      &lt;!&ndash; Right: Commit Message &ndash;&gt;-->
+<!--      <div class="flex-1 flex flex-col min-w-0">-->
+<!--        <div-->
+<!--          class="h-8 px-4 flex items-center border-b border-[var(&#45;&#45;border-color)] text-xs font-bold text-[var(&#45;&#45;p-text-muted)] uppercase tracking-wider bg-[var(&#45;&#45;bg-side)]">-->
+<!--          <span>Commit</span>-->
+<!--          <div class="ml-auto flex gap-2 text-[var(&#45;&#45;text-color)]">-->
+<!--            <i class="fa-solid fa-clock-rotate-left cursor-pointer hover:text-[var(&#45;&#45;accent-color)]"-->
+<!--               title="History"></i>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--        <div class="flex-1 p-3 flex flex-col gap-2">-->
+<!--          <div class="flex items-center gap-2 select-none">-->
+<!--            <input type="checkbox" id="amend-check" class="tree-checkbox" /><label for="amend-check"-->
+<!--                                                                                   class="text-xs text-[var(&#45;&#45;text-color)] cursor-pointer">Amend</label>-->
+<!--          </div>-->
+<!--          <textarea-->
+<!--            class="w-full h-full bg-transparent border border-[var(&#45;&#45;border-color)] outline-none text-sm text-[var(&#45;&#45;text-color)] font-mono resize-none p-2 rounded hover:border-[var(&#45;&#45;p-text-muted)] focus:border-[var(&#45;&#45;accent-color)] transition-colors placeholder-[var(&#45;&#45;p-text-dim)]"-->
+<!--            placeholder="Commit Message"></textarea>-->
+<!--        </div>-->
+<!--        <div-->
+<!--          class="h-12 border-t border-[var(&#45;&#45;border-color)] flex items-center justify-between px-4 bg-[var(&#45;&#45;bg-side)]">-->
+<!--          <div class="flex gap-2">-->
+<!--            <button class="btn btn-primary text-xs">Commit</button><button-->
+<!--            class="btn btn-secondary text-xs">-->
+<!--            Commit and Push...-->
+<!--          </button>-->
+<!--          </div>-->
+<!--          <i-->
+<!--            class="fa-solid fa-ellipsis-vertical text-[var(&#45;&#45;p-text-dim)] hover:text-[var(&#45;&#45;text-color)] cursor-pointer px-2"></i>-->
+<!--        </div>-->
+<!--      </div>-->
+<!--    </div>-->
 
     <!-- SPLITTER: MAIN VERTICAL -->
-    <div ref="resizerMainVert" class="resizer-h bg-[var(--border-color)]"></div>
+<!--    <div ref="resizerMainVert" class="resizer-h bg-[var(&#45;&#45;border-color)]"></div>-->
 
+      <div class="sidebar-section-title border-b border-[var(--border-color)]">
+        <span>Working Space</span>
+        <div class="flex gap-2">
+          <i
+            class="fa-solid fa-plus hover:text-[var(--text-color)] cursor-pointer"
+          />
+          <i class="fa-solid fa-ellipsis hover:text-[var(--text-color)] cursor-pointer" />
+        </div>
+      </div>
     <!-- BOTTOM PANE: TABS -->
     <div ref="paneGraph" class="flex-1 flex flex-col min-h-0">
 
