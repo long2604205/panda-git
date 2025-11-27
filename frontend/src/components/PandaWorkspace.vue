@@ -6,12 +6,12 @@
     <!-- MAIN EDITOR -->
     <panda-main-editor-workspace/>
     <!-- RIGHT SIDEBAR -->
-    <panda-commit-detail-workspace/>
+    <panda-commit-workspace/>
   </div>
 </template>
 
 <script setup>
 import PandaRepositoryWorkSpace from '@/components/repository-workspace/PandaRepositoryWorkSpace.vue'
-import PandaCommitDetailWorkspace from '@/components/PandaCommitDetailWorkspace.vue'
 import PandaMainEditorWorkspace from '@/components/PandaMainEditorWorkspace.vue'
+import PandaCommitWorkspace from '@/components/PandaCommitWorkspace.vue'
 </script>

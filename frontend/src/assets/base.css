@@ -24,6 +24,9 @@
   --resizer-hover: #22d3ee;
   --modal-bg: #181a20;
   --modal-overlay: rgba(0, 0, 0, 0.6);
+
+  --p-cyan-btn: #22d3ee;
+  --p-pink-btn: #e879f9;
 }
 
 [data-theme="dark"] {

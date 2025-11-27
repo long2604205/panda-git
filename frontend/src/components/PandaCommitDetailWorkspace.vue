@@ -1,91 +1,73 @@
 <template>
-  <!-- SPLITTER: MAIN RIGHT -->
-  <div ref="resizerRightSidebar" class="resizer-right-sidebar resizer-v bg-transparent -mr-[2px]"></div>
-
-  <!-- RIGHT SIDEBAR -->
-  <aside ref="sidebarRight" style="width: 300px"
-         class="flex-shrink-0 bg-[var(--bg-side)] border-l border-[var(--border-color)] flex flex-col select-none z-10">
-        <!-- Header -->
-      <div class="sidebar-section-title border-b border-[var(--border-color)]">
-        <span>Commit Details</span>
-        <div class="flex gap-2">
-          <i class="fa-regular fa-copy hover:text-[var(--text-color)] cursor-pointer"></i>
-        </div>
-      </div>
-
-    <!-- Empty State -->
-    <div v-if="!commit" class="empty-state">
+  <!-- Empty State -->
+  <div v-if="!commit" class="empty-state">
       <p class="empty-text">Select commit to view changes</p>
     </div>
-
-    <!-- Commit Content -->
-    <div v-else class="detail-content">
-      <!-- Branch & Hash -->
-      <div class="detail-section">
-        <div class="badge-row">
-          <span
-            class="branch-badge"
-            :style="{
-              color: commit.color,
-              borderColor: commit.color,
-              backgroundColor: commit.color + '10'
-            }"
-          >
-            {{ commit.branch }}
-          </span>
-          <span class="hash-badge">{{ commit.id }}</span>
-        </div>
-        <h2 class="commit-title">{{ commit.message }}</h2>
+  <!-- Commit Content -->
+  <div v-else class="detail-content">
+    <!-- Branch & Hash -->
+    <div class="detail-section">
+      <div class="badge-row">
+        <span
+          class="branch-badge"
+          :style="{
+            color: commit.color,
+            borderColor: commit.color,
+            backgroundColor: commit.color + '10'
+          }"
+        >
+          {{ commit.branch }}
+        </span>
+        <span class="hash-badge">{{ commit.id }}</span>
       </div>
-
-      <!-- Author Info -->
-      <div class="author-card">
-        <div class="avatar">{{ commit.author.initials }}</div>
-        <div class="author-details">
-          <span class="author-name">{{ commit.author.name }}</span>
-          <span class="author-email">{{ commit.author.email }}</span>
-        </div>
-      </div>
-
-      <!-- Metadata -->
-      <div class="detail-section">
-        <div class="metadata-item">
-          <span class="metadata-label">Date</span>
-          <span class="metadata-value">{{ formatDate(commit.date) }}</span>
-        </div>
-        <div class="metadata-item">
-          <span class="metadata-label">Commit Type</span>
-          <span class="metadata-value">{{ commit.type }}</span>
-        </div>
-        <div class="metadata-item">
-          <span class="metadata-label">Parents</span>
-          <span class="metadata-value">
-            {{ commit.parents.length > 0 ? commit.parents.join(', ') : 'None' }}
-          </span>
-        </div>
-      </div>
-
-      <!-- Changed Files -->
-      <div class="detail-section">
-        <h3 class="section-title">Changed Files</h3>
-        <div v-if="commit.changes && commit.changes.length > 0" class="file-list">
-          <div
-            v-for="(file, idx) in commit.changes"
-            :key="idx"
-            class="file-item"
-          >
-            <span class="file-status" :class="`status-${file.status.toLowerCase()}`">
-              {{ file.status }}
-            </span>
-            <span class="file-path">{{ file.file }}</span>
-          </div>
-        </div>
-        <div v-else class="no-changes">
-          <span>No changes recorded</span>
-        </div>
+      <h2 class="commit-title">{{ commit.message }}</h2>
+    </div>
+  <!-- Author Info -->
+    <div class="author-card">
+      <div class="avatar">{{ commit.author.initials }}</div>
+      <div class="author-details">
+        <span class="author-name">{{ commit.author.name }}</span>
+        <span class="author-email">{{ commit.author.email }}</span>
       </div>
     </div>
-  </aside>
+      <!-- Metadata -->
+    <div class="detail-section">
+      <div class="metadata-item">
+        <span class="metadata-label">Date</span>
+        <span class="metadata-value">{{ formatDate(commit.date) }}</span>
+      </div>
+      <div class="metadata-item">
+        <span class="metadata-label">Commit Type</span>
+        <span class="metadata-value">{{ commit.type }}</span>
+      </div>
+      <div class="metadata-item">
+        <span class="metadata-label">Parents</span>
+        <span class="metadata-value">
+          {{ commit.parents.length > 0 ? commit.parents.join(', ') : 'None' }}
+        </span>
+      </div>
+    </div>
+
+      <!-- Changed Files -->
+    <div class="detail-section">
+      <h3 class="section-title">Changed Files</h3>
+      <div v-if="commit.changes && commit.changes.length > 0" class="file-list">
+        <div
+          v-for="(file, idx) in commit.changes"
+          :key="idx"
+          class="file-item"
+        >
+          <span class="file-status" :class="`status-${file.status.toLowerCase()}`">
+            {{ file.status }}
+          </span>
+          <span class="file-path">{{ file.file }}</span>
+        </div>
+      </div>
+      <div v-else class="no-changes">
+        <span>No changes recorded</span>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -97,7 +79,6 @@ onMounted(() => {
   mitter.on('select-commit', (data) => {
     commit.value = data;
   });
-  initRightSidebarResize();
 });
 
 onBeforeUnmount(() => {
@@ -111,68 +92,11 @@ const formatDate = (dateStr) => {
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit'
-  });
-};
-
-// refs cho DOM element
-const resizerRightSidebar = ref(null);
-const sidebarRight = ref(null);
-
-// ---- RIGHT SIDEBAR WIDTH (kéo ngang) ----
-function initRightSidebarResize() {
-  const resizer = resizerRightSidebar.value;
-  const pane = sidebarRight.value;
-
-  if (!resizer || !pane) return;
-
-  let startX, startW;
-
-  resizer.addEventListener("mousedown", (e) => {
-    startX = e.clientX;
-    startW = pane.getBoundingClientRect().width;
-
-    const mm = (e) => {
-      pane.style.width = `${startW - (e.clientX - startX)}px`;
-    };
-
-    const mu = () => {
-      document.removeEventListener("mousemove", mm);
-      document.removeEventListener("mouseup", mu);
-    };
-
-    document.addEventListener("mousemove", mm);
-    document.addEventListener("mouseup", mu);
-  });
+  })
 }
-
 </script>
 
 <style scoped>
-@media (min-width: 1024px) {
-  .commit-detail-panel {
-    position: relative;
-    transform: translateX(0);
-  }
-}
-
-.panel-header {
-  height: 36px;
-  border-bottom: 1px solid var(--border-color);
-  padding: 0 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background-color: var(--bg-header);
-}
-
-.panel-title {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--p-text-dim);
-}
-
 .empty-state {
   flex: 1;
   display: flex;
