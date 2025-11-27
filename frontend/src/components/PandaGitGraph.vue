@@ -305,8 +305,6 @@ watch(() => props.commits, () => {
   width: 100%;
   cursor: pointer;
   transition: background-color 0.05s ease;
-  border-bottom: 1px solid var(--border-color);
-  border-opacity: 0.3;
 }
 
 .commit-row:hover {
@@ -327,7 +325,6 @@ watch(() => props.commits, () => {
   height: 100%;
   padding: 0 16px;
   border-right: 1px solid var(--border-color);
-  border-opacity: 0.3;
   overflow: hidden;
 }
 
@@ -354,7 +351,7 @@ watch(() => props.commits, () => {
 
 .commit-message {
   color: var(--text-color);
-  font-weight: 500;
+  font-weight: 250;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
