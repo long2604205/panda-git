@@ -3,10 +3,7 @@
     <!-- Graph Viewport -->
     <div ref="viewport" class="graph-viewport">
       <!-- Sticky Header BÊN TRONG viewport -->
-      <div
-        class="column-header"
-        :style="{ right: '350px' }"
-      >
+      <div class="column-header" :style="{ right: '350px' }">
         <div class="header-col flex-1">Graph & Subject</div>
         <div class="header-col w-author">Author</div>
         <div class="header-col w-date">Date</div>
@@ -30,8 +27,9 @@
             class="commit-row"
             :style="{
               top: `${idx * rowHeight}px`,
-              height: `${rowHeight}px`
+              height: `${rowHeight}px`,
             }"
+            :data-id="commit.id"
             @mouseenter="highlightNode(commit.id, true)"
             @mouseleave="highlightNode(commit.id, false)"
             @click="selectCommit(commit)"
@@ -72,16 +70,25 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch, nextTick } from "vue";
 
 const props = defineProps({
   commits: {
     type: Array,
-    required: true
-  }
+    required: true,
+  },
+  // Thêm prop này để nhận text tìm kiếm từ cha
+  searchQuery: {
+    type: String,
+    default: "",
+  },
+  searchOptions: {
+    type: Object,
+    default: () => ({ matchCase: false, matchWord: false, useRegex: false }),
+  },
 });
 
-const emit = defineEmits(['select-commit']);
+const emit = defineEmits(["select-commit"]);
 
 // Constants
 const ROW_HEIGHT = 36;
@@ -89,8 +96,16 @@ const COL_WIDTH = 22;
 const X_OFFSET = 20;
 const Y_OFFSET = 18;
 const PALETTE = [
-  '#22d3ee', '#e879f9', '#f472b6', '#4ade80', '#fbbf24',
-  '#38bdf8', '#a78bfa', '#fb923c', '#f87171', '#818cf8'
+  "#22d3ee",
+  "#e879f9",
+  "#f472b6",
+  "#4ade80",
+  "#fbbf24",
+  "#38bdf8",
+  "#a78bfa",
+  "#fb923c",
+  "#f87171",
+  "#818cf8",
 ];
 
 // Refs
@@ -121,8 +136,8 @@ const layoutCommits = () => {
     }
 
     let color = PALETTE[col % PALETTE.length];
-    if (commit.branch === 'main' || commit.branch === 'master') {
-      color = '#3b82f6';
+    if (commit.branch === "main" || commit.branch === "master") {
+      color = "#3b82f6";
     }
 
     return {
@@ -130,27 +145,29 @@ const layoutCommits = () => {
       x: X_OFFSET + col * COL_WIDTH,
       y: Y_OFFSET + index * ROW_HEIGHT,
       color: color,
-      colIndex: col
+      colIndex: col,
     };
   });
 
-  const maxCol = Math.max(...processedCommits.value.map(c => c.colIndex));
+  const maxCol = Math.max(...processedCommits.value.map((c) => c.colIndex));
   graphWidth.value = X_OFFSET + maxCol * COL_WIDTH + 30;
 };
 
 const drawGraph = () => {
   if (!svg.value) return;
 
-  svg.value.innerHTML = '';
+  svg.value.innerHTML = "";
 
   // Draw paths
-  processedCommits.value.forEach(commit => {
-    commit.parents.forEach(parentId => {
-      const parent = processedCommits.value.find(c => c.id === parentId);
+  processedCommits.value.forEach((commit) => {
+    commit.parents.forEach((parentId) => {
+      const parent = processedCommits.value.find((c) => c.id === parentId);
       if (parent) {
         const path = createPath(
-          commit.x, commit.y,
-          parent.x, parent.y,
+          commit.x,
+          commit.y,
+          parent.x,
+          parent.y,
           commit.color,
           commit.colIndex !== parent.colIndex
         );
@@ -160,34 +177,42 @@ const drawGraph = () => {
   });
 
   // Draw nodes
-  processedCommits.value.forEach(commit => {
-    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    circle.setAttribute('cx', commit.x);
-    circle.setAttribute('cy', commit.y);
-    circle.setAttribute('r', '6');
-    circle.setAttribute('fill', commit.color);
-    circle.setAttribute('stroke', 'var(--bg-main)');
-    circle.setAttribute('stroke-width', '2');
-    circle.setAttribute('class', 'commit-node');
-    circle.dataset.id = commit.id;
+  processedCommits.value.forEach((commit) => {
+    const circle = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "circle"
+    );
+    circle.setAttribute("cx", commit.x);
+    circle.setAttribute("cy", commit.y);
+    circle.setAttribute("r", "6");
+    circle.setAttribute("fill", commit.color);
+    circle.setAttribute("stroke", "var(--bg-main)");
+    circle.setAttribute("stroke-width", "2");
+    circle.setAttribute("class", "commit-node");
+    circle.dataset.id = commit.id; // Quan trọng để search
     circle.onclick = () => selectCommit(commit);
     svg.value.appendChild(circle);
   });
+
+  // Re-apply search nếu đang có query khi vẽ lại
+  if (props.searchQuery) {
+    handleSearch(props.searchQuery);
+  }
 };
 
 const createPath = (x1, y1, x2, y2, color, isMerge) => {
-  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
   const d = `M ${x1} ${y1} L ${x2} ${y2}`;
 
-  path.setAttribute('d', d);
-  path.setAttribute('stroke', color);
-  path.setAttribute('stroke-width', '2');
-  path.setAttribute('fill', 'none');
-  path.setAttribute('class', 'branch-path opacity-80');
+  path.setAttribute("d", d);
+  path.setAttribute("stroke", color);
+  path.setAttribute("stroke-width", "2");
+  path.setAttribute("fill", "none");
+  path.setAttribute("class", "branch-path opacity-80");
 
   if (isMerge) {
-    path.setAttribute('stroke-dasharray', '4 2');
-    path.setAttribute('opacity', '0.5');
+    path.setAttribute("stroke-dasharray", "4 2");
+    path.setAttribute("opacity", "0.5");
   }
 
   return path;
@@ -197,12 +222,98 @@ const highlightNode = (id, isActive) => {
   if (!svg.value) return;
   const node = svg.value.querySelector(`circle[data-id="${id}"]`);
   if (node) {
-    node.classList.toggle('is-hovered', isActive);
+    // Chỉ highlight hover nếu không đang trong chế độ search hoặc node này khớp search
+    if (!props.searchQuery || node.classList.contains("search-match")) {
+      node.classList.toggle("is-hovered", isActive);
+    }
+  }
+};
+
+// --- LOGIC SEARCH MỚI ---
+// --- LOGIC SEARCH MỚI (Đã thêm Scroll) ---
+const handleSearch = () => {
+  if (!svg.value || !content.value) return;
+
+  const query = props.searchQuery.trim();
+  const options = props.searchOptions;
+  const hasQuery = query.length > 0;
+
+  // Tạo Regex Object
+  const regex = hasQuery ? buildSearchRegex(query, options) : null;
+
+  let firstMatchElement = null;
+
+  // 1. Xử lý DOM Rows (HTML)
+  const rows = content.value.querySelectorAll(".commit-row");
+  rows.forEach((row) => {
+    // Lấy text để so khớp (bao gồm hash, message, author, date)
+    const textContent = row.innerText;
+
+    // Kiểm tra: Nếu có regex hợp lệ thì test, ngược lại false
+    const isMatch = regex ? regex.test(textContent) : false;
+
+    if (hasQuery && regex) {
+      if (isMatch) {
+        row.classList.add("search-match");
+        row.classList.remove("search-dimmed");
+        if (!firstMatchElement) firstMatchElement = row;
+      } else {
+        row.classList.add("search-dimmed");
+        row.classList.remove("search-match");
+      }
+    } else {
+      // Reset khi không search hoặc regex lỗi
+      row.classList.remove("search-match", "search-dimmed");
+    }
+  });
+
+  // 2. Xử lý SVG Nodes (Circles)
+  processedCommits.value.forEach((commit) => {
+    const node = svg.value.querySelector(`circle[data-id="${commit.id}"]`);
+    if (!node) return;
+
+    // Gom thông tin cần search lại thành 1 string để test regex
+    const searchTarget = `${commit.id} ${commit.message} ${commit.author.name}`;
+    const isMatch = regex ? regex.test(searchTarget) : false;
+
+    if (hasQuery && regex) {
+      if (isMatch) {
+        node.classList.add("search-match");
+        node.classList.remove("search-dimmed");
+      } else {
+        node.classList.add("search-dimmed");
+        node.classList.remove("search-match");
+      }
+    } else {
+      node.classList.remove("search-match", "search-dimmed");
+    }
+  });
+
+  // 3. Xử lý Paths
+  const paths = svg.value.querySelectorAll("path");
+  paths.forEach((path) => {
+    if (hasQuery && regex) {
+      path.classList.add("search-dimmed-path");
+    } else {
+      path.classList.remove("search-dimmed-path");
+    }
+  });
+
+  // 4. SCROLL TỚI KẾT QUẢ (Logic mới thêm)
+  if (firstMatchElement && viewport.value) {
+    // scrollIntoView là API native mượt mà nhất
+    firstMatchElement.scrollIntoView({
+      behavior: "smooth", // Cuộn mượt
+      block: "center", // Đưa kết quả vào giữa màn hình cho dễ nhìn
+    });
+  } else if (!hasQuery && viewport.value) {
+    // (Tùy chọn) Nếu xóa search, cuộn về đầu trang
+    viewport.value.scrollTo({ top: 0, behavior: "smooth" });
   }
 };
 
 const selectCommit = (commit) => {
-  emit('select-commit', commit);
+  emit("select-commit", commit);
 };
 
 const formatDate = (dateStr) => {
@@ -215,10 +326,53 @@ onMounted(() => {
   drawGraph();
 });
 
-watch(() => props.commits, () => {
-  layoutCommits();
-  drawGraph();
-}, { deep: true });
+const buildSearchRegex = (query, options) => {
+  if (!query) return null;
+
+  let pattern = query;
+  let flags = options.matchCase ? "g" : "gi"; // 'i' là ignore case
+
+  // Nếu KHÔNG phải Regex mode, ta phải escape các ký tự đặc biệt
+  // Ví dụ user tìm "tính tổng (a+b)" -> dấu (,+,) phải được coi là text thường
+  if (!options.useRegex) {
+    pattern = pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  // Nếu chọn Match Whole Word -> thêm \b vào đầu cuối
+  if (options.matchWord) {
+    pattern = `\\b${pattern}\\b`;
+  }
+
+  try {
+    return new RegExp(pattern, flags);
+    // eslint-disable-next-line no-unused-vars
+  } catch (e) {
+    // Trường hợp user gõ Regex lỗi (vd: "[A-")
+    return null;
+  }
+};
+
+watch(
+  [() => props.searchQuery, () => props.searchOptions],
+  () => {
+    handleSearch();
+  },
+  { deep: true } // deep true để watch sự thay đổi bên trong object searchOptions
+);
+
+// Khi vẽ lại graph (do đổi data commit), cũng cần search lại
+watch(
+  () => props.commits,
+  () => {
+    layoutCommits();
+    drawGraph();
+    // Đợi DOM vẽ xong mới search
+    nextTick(() => {
+      handleSearch();
+    });
+  },
+  { deep: true }
+);
 </script>
 
 <style scoped>
@@ -228,6 +382,7 @@ watch(() => props.commits, () => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  z-index: 1;
 }
 
 .graph-viewport {
@@ -334,7 +489,7 @@ watch(() => props.commits, () => {
 }
 
 .commit-hash {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: "JetBrains Mono", monospace;
   font-size: 10px;
   color: var(--p-text-muted);
   opacity: 0.5;
@@ -402,7 +557,7 @@ watch(() => props.commits, () => {
   justify-content: flex-end;
   font-size: 12px;
   color: var(--p-text-dim);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: "JetBrains Mono", monospace;
 }
 
 /* Graph Styles */
@@ -432,5 +587,24 @@ watch(() => props.commits, () => {
   stroke-width: 4px !important;
   opacity: 1 !important;
   filter: drop-shadow(0 0 4px currentColor);
+}
+
+/* --- SEARCH ANIMATION STYLES --- */
+
+/* Trạng thái bị làm mờ (Dimmed) */
+:deep(.search-dimmed) {
+  opacity: 0.1 !important;
+  filter: grayscale(100%);
+  transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+:deep(.search-dimmed-path) {
+  opacity: 0.05 !important;
+  transition: opacity 0.3s ease;
+}
+
+/* Giữ hover effect hoạt động mượt mà */
+.commit-row {
+  transition: background-color 0.2s ease, opacity 0.3s ease;
 }
 </style>
