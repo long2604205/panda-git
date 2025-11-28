@@ -67,12 +67,6 @@
 
       <div class="sidebar-section-title border-b border-[var(--border-color)]">
         <span>Working Space</span>
-        <div class="flex gap-2">
-          <i
-            class="fa-solid fa-plus hover:text-[var(--text-color)] cursor-pointer"
-          />
-          <i class="fa-solid fa-ellipsis hover:text-[var(--text-color)] cursor-pointer" />
-        </div>
       </div>
     <!-- BOTTOM PANE: TABS -->
     <div ref="paneGraph" class="flex-1 flex flex-col min-h-0">
@@ -112,9 +106,68 @@
         <!-- GIT GRAPH -->
         <div
           v-show="activeTab === 'graph'"
-          class="w-full h-full graph-container overflow-auto"
+          class="w-full h-full graph-container"
           id="graph-scroll-area"
         >
+          <!-- B. NEW FILTER BAR (FIXED UI) -->
+            <div class="h-10 flex-shrink-0 flex items-center px-4 gap-2 bg-[var(--bg-header)] border-b border-[var(--border-color)] z-30 relative">
+
+                <!-- Search Box -->
+                <div class="relative w-64 group">
+                    <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-1/2 transform -translate-y-1/2 text-[11px] text-[var(--p-text-dim)] group-focus-within:text-[var(--accent-color)]"></i>
+                    <input type="text" id="filterSearch" class="filter-input" placeholder="Search message or hash..." />
+                </div>
+
+                <div class="h-4 w-px bg-[var(--border-color)] mx-2"></div>
+
+                <!-- Custom Filters -->
+                <div class="flex items-center gap-2">
+
+                    <!-- Branch Filter -->
+                    <div class="custom-select-container" id="filterBranchContainer">
+                        <div class="custom-select-trigger" data-value="all">
+                            <span>All Branches</span>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </div>
+                        <div class="custom-select-menu">
+                            <div class="custom-option selected" data-value="all">All Branches</div>
+                            <!-- Dynamic items here -->
+                        </div>
+                    </div>
+
+                    <!-- Author Filter -->
+                    <div class="custom-select-container" id="filterAuthorContainer">
+                        <div class="custom-select-trigger" data-value="all">
+                            <span>All Authors</span>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </div>
+                        <div class="custom-select-menu">
+                            <div class="custom-option selected" data-value="all">All Authors</div>
+                            <!-- Dynamic items here -->
+                        </div>
+                    </div>
+
+                    <!-- Date Filter -->
+                    <div class="custom-select-container" id="filterDateContainer" style="min-width: 100px;">
+                        <div class="custom-select-trigger" data-value="all">
+                            <span>Any Time</span>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </div>
+                        <div class="custom-select-menu">
+                            <div class="custom-option selected" data-value="all">Any Time</div>
+                            <div class="custom-option" data-value="24h">Last 24 Hours</div>
+                            <div class="custom-option" data-value="7d">Last 7 Days</div>
+                            <div class="custom-option" data-value="30d">Last 30 Days</div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Reset Button -->
+                <button onclick="resetFilters()" id="resetBtn" class="ml-auto text-[10px] text-[var(--p-text-muted)] hover:text-[var(--accent-color)] hidden transition-colors px-2 py-1 rounded hover:bg-[var(--p-hover)]">
+                    <i class="fa-solid fa-rotate-left mr-1"></i> Reset
+                </button>
+            </div>
             <panda-git-graph
               :commits="filteredCommits"
               @select-commit="handleSelectCommit"
@@ -372,4 +425,134 @@ const handleSelectCommit = (commit) => {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+        /* --- FILTER BAR STYLES (FIXED) --- */
+        .filter-input {
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            outline: none;
+            font-size: 11px;
+            transition: border-color 0.2s;
+            padding: 5px 8px 5px 30px; /* More left padding for icon */
+            border-radius: 4px;
+            width: 100%;
+            height: 26px;
+        }
+
+        .filter-input:focus {
+            border-color: var(--accent-color);
+        }
+
+        /* CUSTOM DROPDOWN CSS (FIXED) */
+        .custom-select-container {
+            position: relative;
+            min-width: 130px;
+            height: 26px;
+        }
+
+        .custom-select-trigger {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: var(--p-text-muted);
+            font-size: 11px;
+            padding: 0 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            user-select: none;
+            height: 100%;
+            white-space: nowrap;
+        }
+
+        .custom-select-trigger:hover {
+            border-color: var(--p-text-dim);
+            color: var(--text-color);
+            background-color: var(--p-hover);
+        }
+
+        .custom-select-trigger.active {
+            border-color: var(--accent-color);
+            color: var(--text-color);
+        }
+
+        .custom-select-trigger i {
+            transition: transform 0.2s ease;
+            margin-left: 8px;
+            font-size: 10px;
+        }
+
+        .custom-select-trigger.active i {
+            transform: rotate(180deg);
+        }
+
+        /* FIXED MENU STYLES */
+        .custom-select-menu {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            /* width: 100%; Ensure menu fits trigger width */
+            min-width: 100%; /* Can be wider if content needs it */
+            max-width: 250px; /* Don't get too wide */
+
+            /* IMPORTANT FIXES FOR OVERFLOW */
+            max-height: 250px; /* Fix height issue */
+            overflow-y: auto;  /* Add scrollbar */
+
+            background-color: var(--menu-bg); /* Solid background */
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.6); /* Stronger shadow */
+            z-index: 1000; /* High Z-index to sit on top */
+
+            /* Animation States */
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-5px);
+            transition: all 0.1s ease-in-out;
+            pointer-events: none;
+        }
+
+        .custom-select-menu.open {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .custom-option {
+            padding: 6px 12px;
+            font-size: 11px;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: background 0.1s;
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+        }
+
+        .custom-option:hover {
+            background-color: var(--p-selection);
+            color: var(--accent-color);
+        }
+
+        .custom-option.selected {
+            background-color: var(--p-hover);
+            color: var(--accent-color);
+            font-weight: 600;
+            position: relative;
+        }
+
+        .custom-option.selected::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: var(--accent-color);
+        }
+</style>
