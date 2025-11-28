@@ -85,7 +85,7 @@
           :class="[
             'h-full px-4 flex items-center gap-2 text-xs border-r border-[var(--border-color)] cursor-pointer',
             activeTab === 'graph'
-              ? 'bg-[var(--bg-main)] text-[var(--text-color)] border-t-2 border-t-[var(--accent-color)]'
+              ? 'bg-[var(--p-selection)] text-[var(--accent-color)]'
               : 'text-[var(--p-text-dim)] hover:bg-[var(--bg-side)]'
           ]"
         >
@@ -98,7 +98,7 @@
           :class="[
             'h-full px-4 flex items-center gap-2 text-xs border-r border-[var(--border-color)] cursor-pointer',
             activeTab === 'terminal'
-              ? 'bg-[var(--bg-main)] text-[var(--text-color)] border-t-2 border-t-[var(--accent-color)]'
+              ? 'bg-[var(--p-selection)] text-[var(--accent-color)]'
               : 'text-[var(--p-text-dim)] hover:bg-[var(--bg-side)]'
           ]"
         >
