@@ -77,7 +77,7 @@ const props = defineProps({
     type: Array,
     required: true,
   },
-  // Thêm prop này để nhận text tìm kiếm từ cha
+  // --- SEARCH PROPS (Highlight) ---
   searchQuery: {
     type: String,
     default: "",
@@ -86,6 +86,20 @@ const props = defineProps({
     type: Object,
     default: () => ({ matchCase: false, matchWord: false, useRegex: false }),
   },
+
+  // --- FILTER PROPS (Ẩn hiện data) ---
+  filterBranch: {
+    type: String,
+    default: 'all'
+  },
+  filterAuthor: {
+    type: String, // Email hoặc Name tùy data của bạn
+    default: 'all'
+  },
+  filterDate: {
+    type: Object,
+    default: () => ({ from: null, to: null })
+  }
 });
 
 const emit = defineEmits(["select-commit"]);
@@ -96,35 +110,61 @@ const COL_WIDTH = 22;
 const X_OFFSET = 20;
 const Y_OFFSET = 18;
 const PALETTE = [
-  "#22d3ee",
-  "#e879f9",
-  "#f472b6",
-  "#4ade80",
-  "#fbbf24",
-  "#38bdf8",
-  "#a78bfa",
-  "#fb923c",
-  "#f87171",
-  "#818cf8",
+  "#22d3ee", "#e879f9", "#f472b6", "#4ade80", "#fbbf24",
+  "#38bdf8", "#a78bfa", "#fb923c", "#f87171", "#818cf8",
 ];
 
 // Refs
 const viewport = ref(null);
 const svg = ref(null);
 const content = ref(null);
-const processedCommits = ref([]);
+const processedCommits = ref([]); // Danh sách đã tính toán tọa độ (x, y)
 const graphWidth = ref(0);
 const rowHeight = ROW_HEIGHT;
 
-// Computed
-const totalHeight = computed(() => props.commits.length * ROW_HEIGHT + 40);
+// --- 1. COMPUTED FILTER LOGIC ---
+// Lọc dữ liệu thô trước khi tính toán layout
+const filteredRawCommits = computed(() => {
+  return props.commits.filter(commit => {
+    // 1. Filter Branch
+    if (props.filterBranch !== 'all' && commit.branch !== props.filterBranch) {
+      return false;
+    }
 
-// Methods
+    // 2. Filter Author
+    if (props.filterAuthor !== 'all') {
+      if (commit.author.email !== props.filterAuthor) return false;
+    }
+
+    // 3. Filter Date (SỬA LỖI TẠI ĐÂY)
+    // Thêm điều kiện: props.filterDate && ... để chắc chắn nó không null
+    if (props.filterDate && (props.filterDate.from || props.filterDate.to)) {
+      const commitDate = new Date(commit.date).setHours(0, 0, 0, 0);
+
+      if (props.filterDate.from) {
+        const fromDate = new Date(props.filterDate.from).setHours(0, 0, 0, 0);
+        if (commitDate < fromDate) return false;
+      }
+
+      if (props.filterDate.to) {
+        const toDate = new Date(props.filterDate.to).setHours(0, 0, 0, 0);
+        if (commitDate > toDate) return false;
+      }
+    }
+
+    return true;
+  });
+});
+// Tính tổng chiều cao dựa trên danh sách ĐÃ LỌC
+const totalHeight = computed(() => filteredRawCommits.value.length * ROW_HEIGHT + 40);
+
+// --- 2. LAYOUT LOGIC ---
 const layoutCommits = () => {
   const branchToCol = { main: 0, master: 0 };
   let nextCol = 1;
 
-  processedCommits.value = props.commits.map((commit, index) => {
+  // Sử dụng filteredRawCommits thay vì props.commits
+  processedCommits.value = filteredRawCommits.value.map((commit, index) => {
     let col;
     if (branchToCol[commit.branch] !== undefined) {
       col = branchToCol[commit.branch];
@@ -149,19 +189,28 @@ const layoutCommits = () => {
     };
   });
 
-  const maxCol = Math.max(...processedCommits.value.map((c) => c.colIndex));
+  // Tính lại độ rộng graph để đẩy text sang phải
+  const maxCol = processedCommits.value.length > 0
+    ? Math.max(...processedCommits.value.map((c) => c.colIndex))
+    : 0;
   graphWidth.value = X_OFFSET + maxCol * COL_WIDTH + 30;
 };
 
+// --- DRAWING LOGIC ---
 const drawGraph = () => {
   if (!svg.value) return;
 
   svg.value.innerHTML = "";
 
+  // Helper tìm node cha trong danh sách hiện tại
+  // Lưu ý: Khi filter, cha của node có thể bị ẩn đi -> Đường nối sẽ không vẽ được hoặc phải vẽ nối tắt (phức tạp).
+  // Ở đây ta dùng logic đơn giản: Chỉ vẽ nếu cha cũng đang hiển thị.
+  const findParent = (id) => processedCommits.value.find(c => c.id === id);
+
   // Draw paths
   processedCommits.value.forEach((commit) => {
     commit.parents.forEach((parentId) => {
-      const parent = processedCommits.value.find((c) => c.id === parentId);
+      const parent = findParent(parentId);
       if (parent) {
         const path = createPath(
           commit.x,
@@ -178,10 +227,7 @@ const drawGraph = () => {
 
   // Draw nodes
   processedCommits.value.forEach((commit) => {
-    const circle = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "circle"
-    );
+    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     circle.setAttribute("cx", commit.x);
     circle.setAttribute("cy", commit.y);
     circle.setAttribute("r", "6");
@@ -189,21 +235,20 @@ const drawGraph = () => {
     circle.setAttribute("stroke", "var(--bg-main)");
     circle.setAttribute("stroke-width", "2");
     circle.setAttribute("class", "commit-node");
-    circle.dataset.id = commit.id; // Quan trọng để search
+    circle.dataset.id = commit.id;
     circle.onclick = () => selectCommit(commit);
     svg.value.appendChild(circle);
   });
 
-  // Re-apply search nếu đang có query khi vẽ lại
+  // Sau khi vẽ xong, chạy lại Search Text (Highlight) nếu đang có query
   if (props.searchQuery) {
-    handleSearch(props.searchQuery);
+    handleSearch();
   }
 };
 
 const createPath = (x1, y1, x2, y2, color, isMerge) => {
   const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
   const d = `M ${x1} ${y1} L ${x2} ${y2}`;
-
   path.setAttribute("d", d);
   path.setAttribute("stroke", color);
   path.setAttribute("stroke-width", "2");
@@ -214,42 +259,50 @@ const createPath = (x1, y1, x2, y2, color, isMerge) => {
     path.setAttribute("stroke-dasharray", "4 2");
     path.setAttribute("opacity", "0.5");
   }
-
   return path;
 };
 
+// --- SEARCH / HIGHLIGHT LOGIC (Giữ nguyên logic highlight của bạn) ---
 const highlightNode = (id, isActive) => {
   if (!svg.value) return;
   const node = svg.value.querySelector(`circle[data-id="${id}"]`);
   if (node) {
-    // Chỉ highlight hover nếu không đang trong chế độ search hoặc node này khớp search
     if (!props.searchQuery || node.classList.contains("search-match")) {
       node.classList.toggle("is-hovered", isActive);
     }
   }
 };
 
-// --- LOGIC SEARCH MỚI ---
-// --- LOGIC SEARCH MỚI (Đã thêm Scroll) ---
+const buildSearchRegex = (query, options) => {
+  if (!query) return null;
+  let pattern = query;
+  let flags = options.matchCase ? "g" : "gi";
+  if (!options.useRegex) {
+    pattern = pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+  if (options.matchWord) {
+    pattern = `\\b${pattern}\\b`;
+  }
+  try {
+    return new RegExp(pattern, flags);
+  } catch (e) {
+    return null;
+  }
+};
+
 const handleSearch = () => {
   if (!svg.value || !content.value) return;
 
   const query = props.searchQuery.trim();
   const options = props.searchOptions;
   const hasQuery = query.length > 0;
-
-  // Tạo Regex Object
   const regex = hasQuery ? buildSearchRegex(query, options) : null;
-
   let firstMatchElement = null;
 
-  // 1. Xử lý DOM Rows (HTML)
+  // Xử lý Rows
   const rows = content.value.querySelectorAll(".commit-row");
   rows.forEach((row) => {
-    // Lấy text để so khớp (bao gồm hash, message, author, date)
     const textContent = row.innerText;
-
-    // Kiểm tra: Nếu có regex hợp lệ thì test, ngược lại false
     const isMatch = regex ? regex.test(textContent) : false;
 
     if (hasQuery && regex) {
@@ -262,17 +315,14 @@ const handleSearch = () => {
         row.classList.remove("search-match");
       }
     } else {
-      // Reset khi không search hoặc regex lỗi
       row.classList.remove("search-match", "search-dimmed");
     }
   });
 
-  // 2. Xử lý SVG Nodes (Circles)
+  // Xử lý Nodes
   processedCommits.value.forEach((commit) => {
     const node = svg.value.querySelector(`circle[data-id="${commit.id}"]`);
     if (!node) return;
-
-    // Gom thông tin cần search lại thành 1 string để test regex
     const searchTarget = `${commit.id} ${commit.message} ${commit.author.name}`;
     const isMatch = regex ? regex.test(searchTarget) : false;
 
@@ -289,7 +339,7 @@ const handleSearch = () => {
     }
   });
 
-  // 3. Xử lý Paths
+  // Xử lý Paths
   const paths = svg.value.querySelectorAll("path");
   paths.forEach((path) => {
     if (hasQuery && regex) {
@@ -320,56 +370,36 @@ const formatDate = (dateStr) => {
   return new Date(dateStr).toLocaleDateString();
 };
 
-// Lifecycle
+// --- LIFECYCLE & WATCHERS ---
 onMounted(() => {
   layoutCommits();
   drawGraph();
 });
 
-const buildSearchRegex = (query, options) => {
-  if (!query) return null;
+// Watch sự thay đổi của Filters -> Layout lại toàn bộ graph
+watch(
+  [
+    () => props.commits,
+    () => props.filterBranch,
+    () => props.filterAuthor,
+    () => props.filterDate
+  ],
+  () => {
+    layoutCommits();
+    drawGraph();
+    // Sau khi layout lại, nếu đang có search text thì apply highlight
+    nextTick(() => {
+      handleSearch();
+    });
+  },
+  { deep: true }
+);
 
-  let pattern = query;
-  let flags = options.matchCase ? "g" : "gi"; // 'i' là ignore case
-
-  // Nếu KHÔNG phải Regex mode, ta phải escape các ký tự đặc biệt
-  // Ví dụ user tìm "tính tổng (a+b)" -> dấu (,+,) phải được coi là text thường
-  if (!options.useRegex) {
-    pattern = pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  }
-
-  // Nếu chọn Match Whole Word -> thêm \b vào đầu cuối
-  if (options.matchWord) {
-    pattern = `\\b${pattern}\\b`;
-  }
-
-  try {
-    return new RegExp(pattern, flags);
-    // eslint-disable-next-line no-unused-vars
-  } catch (e) {
-    // Trường hợp user gõ Regex lỗi (vd: "[A-")
-    return null;
-  }
-};
-
+// Watch sự thay đổi của Search Text -> Chỉ highlight/dim, KHÔNG layout lại
 watch(
   [() => props.searchQuery, () => props.searchOptions],
   () => {
     handleSearch();
-  },
-  { deep: true } // deep true để watch sự thay đổi bên trong object searchOptions
-);
-
-// Khi vẽ lại graph (do đổi data commit), cũng cần search lại
-watch(
-  () => props.commits,
-  () => {
-    layoutCommits();
-    drawGraph();
-    // Đợi DOM vẽ xong mới search
-    nextTick(() => {
-      handleSearch();
-    });
   },
   { deep: true }
 );

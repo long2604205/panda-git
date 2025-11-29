@@ -169,7 +169,7 @@
               <!-- Branch Filter -->
               <panda-select-search
                 style="width: 200px"
-                v-model="branch"
+                v-model="selectedBranch"
                 :options="branchList"
                 value="id"
                 text="label"
@@ -179,7 +179,7 @@
               <!-- Author Filter -->
               <panda-select-search
                 style="width: 200px"
-                v-model="author"
+                v-model="selectedAuthor"
                 :options="authorList"
                 value="email"
                 text="name"
@@ -188,15 +188,19 @@
 
               <!-- Date Filter -->
               <panda-range-date-picker
-                v-model="dateRange"
+                v-model="selectedDateRange"
               />
             </div>
           </div>
           <panda-git-graph
+            v-model="selectedDateRange"
             :commits="commits"
             :search-query="searchTerm"
             :search-options="searchOptions"
             @select-commit="handleSelectCommit"
+            :filter-branch="selectedBranch"
+            :filter-author="selectedAuthor"
+            :filter-date="selectedDateRange"
           />
         </div>
 
@@ -221,7 +225,6 @@ import { ref, onMounted, reactive, watch } from 'vue'
 import PandaGitGraph from '@/components/PandaGitGraph.vue'
 import mitter from '@/plugins/mitter.js'
 import { commitSapmle } from '@/data/commitSapmle.js'
-import PandaSelectOption from '@/components/common/PandaSelectOption.vue'
 import PandaSelectSearch from '@/components/common/PandaSelectSearch.vue'
 import PandaRangeDatePicker from '@/components/common/PandaRangeDatePicker.vue'
 
@@ -306,7 +309,7 @@ onMounted(() => {
 class DataGenerator {
   constructor() {
     this.users = [
-      { name: 'Lion Wilson', email: 'lion@panda.com', initials: 'LW' },
+      { name: 'Lion Wilson', email: 'lionwilson@gmail.com', initials: 'LW' },
       { name: 'Sarah Chen', email: 'sarah@tech.co', initials: 'SC' },
       { name: 'Mike Ross', email: 'mike@tech.co', initials: 'MR' },
       { name: 'Bot CI/CD', email: 'bot@ci.com', initials: 'BT' },
@@ -443,8 +446,8 @@ class DataGenerator {
 
 // State
 const generator = new DataGenerator()
-// const commits = ref(generator.generate(150));
-const commits = ref(commitSapmle)
+const commits = ref(generator.generate(150));
+// const commits = ref(commitSapmle)
 const searchTerm = ref('')
 
 // Methods
@@ -516,9 +519,10 @@ const dateRange = ref({
   from: null,
   to: null,
 })
+const selectedDateRange = ref({ from: null, to: null });
 
 // Watch để filter data khi chọn ngày xong
-watch(dateRange, (newRange) => {
+watch(selectedDateRange, (newRange) => {
   if (!newRange.from || !newRange.to) {
     console.log('Show All Time')
   } else {
@@ -550,6 +554,9 @@ const authorList = [
   { email: "julianprice@gmail.com", name: "Julian Price" },
   { email: "scarlettjenkins@gmail.com", name: "Scarlett Jenkins" },
 ];
+
+const selectedBranch = ref(null)
+const selectedAuthor = ref(null)
 
 </script>
 
