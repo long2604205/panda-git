@@ -1,39 +1,346 @@
-<!-- splash.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Panda Git</title>
-  <style>
-      html, body {
-          margin: 0;
-          padding: 0;
-          background: #1e1f22;
-          color: white;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          height: 100%;
-          font-family: sans-serif;
-      }
-      .splash-content {
-          text-align: center;
-      }
-      .logo {
-          font-size: 2rem;
-          font-weight: bold;
-          margin-bottom: 1rem;
-      }
-      .loading {
-          font-size: 0.9rem;
-          opacity: 0.7;
-      }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panda Git UI - Splash Screen</title>
+
+    <!-- Fonts: Sora, Be Vietnam Pro, JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- GSAP Core -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Be Vietnam Pro"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                        display: ['"Sora"', 'sans-serif'],
+                    },
+                    colors: {
+                        void: '#030305',
+                        surface: '#0a0a0f',
+                        primary: '#00f2ff',
+                        secondary: '#2563eb',
+                        text: '#e2e8f0',
+                        muted: '#64748b',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body, html {
+            background-color: transparent;
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        #splash-window {
+            width: 100%;
+            height: 100%;
+            background-color: #030305;
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            /* Shadow viền đen mờ */
+            box-shadow:
+                0 0 0 1px rgba(0, 0, 0, 0.5),
+                inset 0 0 80px rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Center Content */
+            justify-content: center;
+        }
+
+        /* Top Accent Line */
+        .top-accent {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0, 242, 255, 0.4), transparent);
+            z-index: 20;
+            opacity: 0.7;
+        }
+
+        /* Particles */
+        #particle-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            opacity: 0.3;
+        }
+
+        /* Glow Effects */
+        .glow-effect {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.15;
+            z-index: 0;
+        }
+        .glow-center {
+            width: 300px;
+            height: 300px;
+            background: #00f2ff;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0.1;
+        }
+
+        /* Outline Text Effect ("ATTITUDE") */
+        .text-stroke {
+            -webkit-text-stroke: 1px rgba(255, 255, 255, 0.3);
+            color: transparent;
+        }
+
+        /* Progress Bar */
+        .progress-track {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: #00f2ff;
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.6);
+            transition: width 0.1s linear;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 40px;
+            background: linear-gradient(90deg, transparent, #fff);
+            opacity: 0.5;
+        }
+
+    </style>
 </head>
 <body>
-<div class="splash-content">
-  <div class="logo">🐼 Panda Git</div>
-  <div class="loading">Loading...</div>
-</div>
+
+    <div id="splash-window">
+        <!-- Decoration -->
+        <div class="top-accent"></div>
+        <div class="glow-effect glow-center"></div>
+        <canvas id="particle-canvas"></canvas>
+
+        <!-- Main Content -->
+        <div class="relative z-10 flex flex-col items-center justify-center text-center w-full h-full pb-6">
+
+            <!-- 1. Panda Logo (Tăng kích thước: w-32 h-32) -->
+            <div class="relative mb-5 anim-logo opacity-0 scale-50">
+                <div class="absolute inset-0 bg-primary/20 blur-2xl rounded-full animate-pulse"></div>
+                <img id="app-logo" src="assets/panda-git-logo.png" alt="Panda Logo" class="w-32 h-32 object-contain relative z-10 drop-shadow-[0_0_15px_rgba(0,242,255,0.3)]">
+            </div>
+
+            <!-- 2. Tagline -->
+            <div class="font-mono text-primary text-[10px] tracking-[0.4em] uppercase mb-1 opacity-0 anim-text">
+                Git Simply Cool
+            </div>
+
+            <!-- 3. Main Title (Giảm kích thước: text-3xl) -->
+            <h1 class="font-display text-3xl font-bold text-white leading-none tracking-tight mb-3 opacity-0 anim-text">
+                CODE WITH <span class="text-stroke">ATTITUDE</span>
+            </h1>
+
+            <!-- 4. Subtitle (Giảm nhẹ padding/margin nếu cần) -->
+            <p class="text-slate-400 text-xs font-light max-w-xs mx-auto leading-relaxed opacity-0 anim-text">
+                The most intuitive Git Client for developers who value speed, aesthetics, and simplicity.
+            </p>
+
+            <!-- 5. Bottom Status -->
+            <div class="absolute bottom-6 w-full flex flex-col items-center gap-1">
+                <div class="flex items-center gap-2 text-[10px] font-mono text-primary/80 tracking-widest">
+                    <div class="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></div>
+                    <span id="status-text">INITIALIZING...</span>
+                </div>
+                <div class="text-[9px] font-mono text-slate-600">v2025.1.0 • Build #PG-1402</div>
+            </div>
+
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress-track">
+            <div class="progress-fill" id="progress-bar"></div>
+        </div>
+    </div>
+
+    <script>
+        // 1. PARTICLES
+        const initParticles = () => {
+            const canvas = document.getElementById('particle-canvas');
+            const ctx = canvas.getContext('2d');
+            let w = canvas.width = window.innerWidth;
+            let h = canvas.height = window.innerHeight;
+            let particles = [];
+
+            window.addEventListener('resize', () => {
+                 w = canvas.width = window.innerWidth;
+                 h = canvas.height = window.innerHeight;
+            });
+
+            class Particle {
+                constructor() {
+                    this.x = Math.random() * w;
+                    this.y = Math.random() * h;
+                    this.size = Math.random() * 1.5;
+                    this.vx = (Math.random() - 0.5) * 0.2;
+                    this.vy = (Math.random() - 0.5) * 0.2;
+                    this.alpha = Math.random() * 0.4 + 0.1;
+                }
+                update() {
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    if (this.x < 0) this.x = w;
+                    if (this.x > w) this.x = 0;
+                    if (this.y < 0) this.y = h;
+                    if (this.y > h) this.y = 0;
+                }
+                draw() {
+                    ctx.fillStyle = "#00f2ff";
+                    ctx.globalAlpha = this.alpha;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            const init = () => {
+                particles = Array.from({ length: 35 }, () => new Particle());
+            }
+
+            const animate = () => {
+                ctx.clearRect(0, 0, w, h);
+                particles.forEach(p => { p.update(); p.draw(); });
+                particles.forEach((p, i) => {
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const dx = p.x - particles[j].x;
+                        const dy = p.y - particles[j].y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < 80) {
+                            ctx.strokeStyle = `rgba(0, 242, 255, ${0.1 - dist/800})`;
+                            ctx.lineWidth = 0.5;
+                            ctx.beginPath();
+                            ctx.moveTo(p.x, p.y);
+                            ctx.lineTo(particles[j].x, particles[j].y);
+                            ctx.stroke();
+                        }
+                    }
+                });
+                requestAnimationFrame(animate);
+            }
+
+            init();
+            animate();
+        }
+        initParticles();
+
+        // 2. SMOOTH FADE-IN ANIMATION
+        const tl = gsap.timeline();
+
+        // Logo Animation (Pop in smoothly)
+        tl.to(".anim-logo", {
+            opacity: 1,
+            scale: 1,
+            duration: 1.2,
+            ease: "back.out(1.7)"
+        });
+
+        // Text Animation (Fade In Up - Smooth)
+        tl.fromTo(".anim-text",
+            { y: 20, opacity: 0 }, // Start state
+            {
+                y: 0,
+                opacity: 1,
+                duration: 1.5,     // Slow duration for elegance
+                stagger: 0.2,      // Delay between elements
+                ease: "power2.out" // Smooth deceleration
+            },
+            "-=0.8" // Overlap with logo animation
+        );
+
+        // Loading Logic
+        const progressBar = document.getElementById('progress-bar');
+        const statusText = document.getElementById('status-text');
+
+        const steps = [
+            { pct: 15, msg: "LOADING KERNEL..." },
+            { pct: 30, msg: "VERIFYING INTEGRITY..." },
+            { pct: 55, msg: "CONNECTING DAEMON..." },
+            { pct: 75, msg: "LOADING ASSETS..." },
+            { pct: 90, msg: "STARTING UI..." },
+            { pct: 100, msg: "READY" }
+        ];
+
+        let currentStep = 0;
+
+        // Thời gian splash chạy (duration: 5 giây)
+        gsap.to(progressBar, {
+            width: "100%",
+            duration: 5,
+            ease: "power1.inOut",
+            onUpdate: function() {
+                const progress = this.progress() * 100;
+
+                if (currentStep < steps.length && progress >= steps[currentStep].pct) {
+                    const text = steps[currentStep].msg;
+                    statusText.innerText = text;
+                    gsap.fromTo(statusText, { opacity: 0.5 }, { opacity: 1, duration: 0.1 });
+                    currentStep++;
+                }
+            },
+            onComplete: () => {
+                statusText.classList.remove("text-primary/80");
+                statusText.classList.add("text-white", "font-bold");
+                statusText.innerText = "LAUNCHING...";
+
+                // --- GỬI TÍN HIỆU CHO ELECTRON ---
+                setTimeout(() => {
+                    try {
+                        const { ipcRenderer } = require('electron');
+                        ipcRenderer.send('splash-finished');
+                    } catch (e) {
+                        console.log('Không tìm thấy Electron IPC (Đang chạy trên web?)');
+                    }
+                }, 800);
+            }
+        });
+
+    </script>
 </body>
 </html>

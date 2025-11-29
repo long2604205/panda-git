@@ -9,14 +9,20 @@
       class="overflow-hidden flex flex-col"
       :style="{ height: paneHeight + 'px' }"
     >
-      <div class="sidebar-section-title border-b border-[var(--border-color)]">
+      <div
+        class="sidebar-section-title border-b border-[var(--border-color)] flex items-center justify-between"
+      >
         <span>Repositories</span>
         <div class="flex gap-2">
-          <i
-            class="fa-solid fa-plus hover:text-[var(--text-color)] cursor-pointer"
-            @click="openFormAddGroup"
-          />
-          <i class="fa-solid fa-ellipsis hover:text-[var(--text-color)] cursor-pointer" />
+          <div
+            class="cursor-pointer hover:text-[var(--p-text-main)] px-1 rounded hover:bg-[var(--p-hover)] transition-colors"
+            :class="{'text-[var(--p-text-main)] bg-[var(--p-hover)]': isMenuOpen}"
+            @click.stop="toggleMenu($event)"
+          >
+            <i
+              class="w-4 fa-solid fa-ellipsis fa-lg hover:text-[var(--text-color)] cursor-pointer items-center text-center"
+            />
+          </div>
         </div>
       </div>
 
@@ -25,7 +31,7 @@
         <div class="relative">
           <i
             class="fa-solid fa-search absolute left-2 top-1/2 transform -translate-y-1/2 text-[10px] text-[var(--p-text-dim)]"
-          ></i>
+          />
           <input
             type="text"
             v-model="repoFilter"
@@ -84,7 +90,7 @@
               @dragstart="onDragStartRepo(repo)"
               @contextmenu.prevent="openRepositoryMenu($event, repo)"
             >
-              <i class="fa-solid fa-bars-progress mr-2"/>
+              <i class="fa-solid fa-bars-progress mr-2" />
               <span>{{ repo.name }}</span>
             </div>
           </div>
@@ -103,7 +109,7 @@
             @dragstart="onDragStartRepo(repo)"
             @contextmenu.prevent="openRepositoryMenu($event, repo)"
           >
-            <i class="fa-solid fa-book mr-2"></i>
+            <i class="fa-solid fa-book mr-2" />
             <span>{{ repo.name }}</span>
           </div>
         </div>
@@ -126,8 +132,13 @@
           BRANCHES
         </span>
         <div class="flex gap-2">
-          <i class="fa-solid fa-code-branch text-[var(--p-text-dim)]"></i>
-          <i class="fa-solid fa-filter hover:text-[var(--text-color)] cursor-pointer"></i>
+          <div
+            class="cursor-pointer hover:text-[var(--p-text-main)] px-1 rounded hover:bg-[var(--p-hover)] transition-colors"
+            :class="{'text-[var(--p-text-main)] bg-[var(--p-hover)]': isMenuOpenBranch}"
+            @click.stop="toggleMenuBranch($event)"
+          >
+            <i class="w-4 fa-solid fa-ellipsis fa-lg hover:text-[var(--text-color)] cursor-pointer items-center text-center" />
+          </div>
         </div>
       </div>
 
@@ -146,7 +157,7 @@
           HEAD (Current branch)
         </div>
         <div class="branch-item active-branch">
-          <i class="fa-solid fa-check w-4 text-center mr-1 text-[10px]"/>
+          <i class="fa-solid fa-check w-4 text-center mr-1 text-[10px]" />
           <span class="truncate">{{ currentBranch }}</span>
           <span class="ml-auto text-[9px] border border-[var(--border-color)] px-1 rounded">
             HEAD
@@ -178,12 +189,24 @@
     ref="resizerLeftSidebar"
     class="resizer-left-sidebar resizer-v w-1 cursor-col-resize bg-transparent"
   />
-  <group-context-menu ref="groupContextMenuRef" @action-click="handleGroupAction"/>
-  <repository-context-menu ref="repositoryContextMenuRef" @action-click="handleRepositoryAction"/>
+  <group-context-menu ref="groupContextMenuRef" @action-click="handleGroupAction" />
+  <repository-context-menu ref="repositoryContextMenuRef" @action-click="handleRepositoryAction" />
+  <teleport-menu
+    :is-open="isMenuOpen"
+    :menu-style="menuStyle"
+    :actions="menuActions"
+    @action="handleMenuAction"
+  />
+    <teleport-menu
+    :is-open="isMenuOpenBranch"
+    :menu-style="menuStyle"
+    :actions="menuActionBranch"
+    @action="handleMenuActionBranch"
+  />
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { showPageInModal } from '@/services/modals.js'
 import mitter from '@/plugins/mitter.js'
 import { loadGroups, loadRepos, saveGroups, saveRepos, updateGroup } from '@/plugins/PandaDB.js'
@@ -192,6 +215,7 @@ import notify from '@/plugins/notify.js'
 import PandaTreeGit from '@/components/common/PandaTreeGit.vue'
 import GroupContextMenu from '@/components/repository-workspace/components/GroupContextMenu.vue'
 import RepositoryContextMenu from '@/components/repository-workspace/components/RepositoryContextMenu.vue'
+import TeleportMenu from '@/components/common/TeleportMenu.vue'
 
 const addGroupForm = defineAsyncComponent(() => import('@/components/common/GroupForm.vue'))
 const repositoryContextMenuRef = ref(null)
@@ -454,6 +478,130 @@ async function collapseAllGroups() {
   }
 }
 
+   const isMenuOpen = ref(false);
+   const isMenuOpenBranch = ref(false);
+   const menuStyle = ref({ top: '0px', left: '0px' });
+   const menuActions = ref([
+     {
+       value: 'add_repo',
+       label: 'Add Repository...',
+       icon: 'fa-solid fa-plus',
+       shortcut: 'Alt+A'
+     },
+     {
+       value: 'add_group',
+       label: 'Add Group...',
+       icon: 'fa-regular fa-folder',
+       shortcut: 'Alt+G'
+     },
+     {
+       type: 'separator'  // Separator line
+     },
+     {
+       value: 'expand_all',
+       label: 'Expand All',
+       icon: 'fa-solid fa-angles-down',
+       shortcut: 'Shift+E'
+     }
+   ]);
+   const menuActionBranch = ref([
+     {
+       value: 'add_repo',
+       label: 'Add Repository...',
+       icon: 'fa-solid fa-plus',
+       shortcut: 'Alt+A'
+     },
+     {
+       value: 'add_group',
+       label: 'Add Group...',
+       icon: 'fa-regular fa-folder',
+       shortcut: 'Alt+G'
+     },
+     {
+       type: 'separator'  // Separator line
+     },
+     {
+       value: 'expand_all',
+       label: 'Expand All',
+       icon: 'fa-solid fa-angles-down',
+       shortcut: 'Shift+E'
+     }
+   ]);
+
+
+   const calculatePosition = (event) => {
+     const rect = event.currentTarget.getBoundingClientRect();
+     return {
+       top: `${rect.top}px`,
+       left: `${rect.right + 1}px`
+     };
+   };
+
+
+const closeAllTeleportMenus = () => {
+  isMenuOpen.value = false;
+  isMenuOpenBranch.value = false;
+};
+
+const toggleMenu = (event) => {
+  const wasOpen = isMenuOpen.value;
+  closeAllTeleportMenus();
+
+  if (!wasOpen) {
+    menuStyle.value = calculatePosition(event);
+    isMenuOpen.value = true;
+  }
+};
+
+const toggleMenuBranch = (event) => {
+  const wasOpen = isMenuOpenBranch.value;
+  closeAllTeleportMenus();
+
+  if (!wasOpen) {
+    menuStyle.value = calculatePosition(event);
+    isMenuOpenBranch.value = true;
+  }
+};
+
+
+   const handleMenuAction = (actionValue) => {
+     isMenuOpen.value = false;
+
+     switch(actionValue) {
+       case 'add_repo':
+         console.log('Add repository');
+         break;
+       case 'add_group':
+         openFormAddGroup()
+         break;
+       case 'expand_all':
+         console.log('Expand all');
+         break
+     }
+   };
+   const handleMenuActionBranch = (actionValue) => {
+     isMenuOpen.value = false;
+
+     switch(actionValue) {
+       case 'add_repo':
+         console.log('Add repository');
+         break;
+       case 'add_group':
+         openFormAddGroup()
+         break;
+       case 'expand_all':
+         console.log('Expand all');
+         break
+     }
+   };
+
+   const handleGlobalClick = () => {
+     isMenuOpen.value = false;
+     isMenuOpenBranch.value = false
+   };
+
+   onMounted(() => window.addEventListener('click', handleGlobalClick));
+   onUnmounted(() => window.removeEventListener('click', handleGlobalClick));
 </script>
 
 <style scoped></style>

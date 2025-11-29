@@ -12,13 +12,17 @@ let win, splash
 function createWindow() {
 
   splash = new BrowserWindow({
-    width: 600,
-    height: 300,
+    width: 680,
+    height: 420,
     frame: false,
     alwaysOnTop: true,
-    transparent: false,
+    transparent: true,
     resizable: false,
     center: true,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false
+    }
   })
   splash.loadFile(join(__dirname, 'splash.html'))
 
@@ -36,13 +40,16 @@ function createWindow() {
   })
   win.loadFile(join(__dirname, '../dist/index.html'))
 
-  win.once('ready-to-show', () => {
-    setTimeout(() => {
-      splash.destroy()
-      win.maximize()
-      win.show()
-    }, 1000)
-  })
+  win.once('ready-to-show', () => {})
+  ipcMain.on('splash-finished', () => {
+      if (splash && !splash.isDestroyed()) {
+        splash.destroy();
+      }
+      if (win && !win.isDestroyed()) {
+        win.maximize();
+        win.show();
+      }
+  });
 
   win.on('restore', () => {
     if (!win.isMaximized()) {
