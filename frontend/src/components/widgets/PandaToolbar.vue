@@ -18,7 +18,7 @@
               <span class="info-label">Repository</span>
               <div class="info-value">
                 <span class="value-text">{{ currentRepo }}</span>
-                <i class="fa-solid fa-chevron-down chevron-icon"></i>
+                <i class="fa-solid fa-chevron-down chevron-icon"/>
               </div>
             </div>
           </div>
@@ -33,13 +33,13 @@
               :class="['dropdown-item', { active: repo.id === currentRepo }]"
               @click="selectRepo(repo.id)"
             >
-              <i class="fa-solid fa-folder-open text-xs"></i> {{ repo.name }}
+              <i class="fa-solid fa-folder-open text-xs"/> {{ repo.name }}
             </div>
           </div>
         </div>
 
         <!-- Vertical Separator -->
-        <div class="vertical-separator"></div>
+        <div class="vertical-separator"/>
 
         <!-- Branch Dropdown Trigger -->
         <div class="dropdown-wrapper w-56">
@@ -48,13 +48,13 @@
             class="info-trigger"
           >
             <div class="branch-avatar">
-              <i class="fa-solid fa-code-branch text-sm"></i>
+              <i class="fa-solid fa-code-branch text-sm"/>
             </div>
             <div class="info-content">
               <span class="info-label">Current Branch</span>
               <div class="info-value">
                 <span class="value-text">{{ currentBranch }}</span>
-                <i class="fa-solid fa-chevron-down chevron-icon"></i>
+                <i class="fa-solid fa-chevron-down chevron-icon"/>
               </div>
             </div>
           </div>
@@ -72,14 +72,14 @@
               :class="['dropdown-item', { active: branch.id === currentBranch }]"
               @click="selectBranch(branch.id)"
             >
-              <i class="fa-solid fa-code-branch text-xs"></i> {{ branch.name }}
+              <i class="fa-solid fa-code-branch text-xs"/> {{ branch.name }}
             </div>
           </div>
         </div>
       </div>
 
       <!-- Vertical Separator between Info and Actions -->
-      <div class="section-separator"></div>
+      <div class="section-separator"/>
 
       <!-- --- 2. ACTIONS --- -->
       <div class="actions-group">
@@ -89,27 +89,36 @@
             @click="$emit('fetch')"
             title="Fetch from origin"
           >
-            <i class="fa-solid fa-cloud-arrow-down"></i>
-            <span>Fetch</span>
+<!--            <i class="fa-solid fa-clone"/>-->
+            <i class="fa-solid fa-cloud-arrow-down"/>
+            <span>Clone</span>
           </button>
-          <div class="toolbar-divider"></div>
+          <div class="toolbar-divider"/>
           <button
             class="control-btn"
             @click="$emit('pull')"
             title="Pull 1 commit from origin"
           >
-            <div v-if="showPullBadge" class="badge-dot"></div>
-            <i class="fa-solid fa-arrow-down-long"></i>
+            <i class="fa-solid fa-arrow-down-long"/>
             <span>Pull</span>
           </button>
-          <div class="toolbar-divider"></div>
+          <div class="toolbar-divider"/>
           <button
             class="control-btn"
             @click="$emit('push')"
             title="Push to origin"
           >
-            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <i class="fa-solid fa-arrow-up-long"/>
             <span>Push</span>
+          </button>
+          <div class="toolbar-divider"/>
+          <button
+            class="control-btn"
+            @click="$emit('fetch')"
+            title="Fetch from origin"
+          >
+            <i class="fa-solid fa-retweet"/>
+            <span>Fetch</span>
           </button>
         </div>
       </div>
@@ -124,7 +133,7 @@
           @click="$emit('open-settings')"
           title="Settings"
         >
-          <i class="fa-solid fa-gear text-sm"></i>
+          <i class="fa-solid fa-gear text-sm"/>
         </button>
       </div>
     </div>
