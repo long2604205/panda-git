@@ -21,7 +21,7 @@
 import { defineProps, defineEmits } from 'vue';
 
 // Props
-const props = defineProps({
+defineProps({
   isOpen: {
     type: Boolean,
     required: true,
@@ -51,22 +51,11 @@ const handleAction = (action) => {
 </script>
 
 <style scoped>
-/* --- THEME VARIABLES --- */
-:root {
-  --p-border: #2a2d35;
-  --p-highlight: #22d3ee;
-  --p-selection: rgba(34, 211, 238, 0.1);
-  --p-text-main: #e2e8f0;
-  --p-text-dim: #64748b;
-  --menu-bg: #1e2128;
-  --ctx-shadow: rgba(0, 0, 0, 0.5);
-}
-
 /* --- DROPDOWN MENU (Fixed Position) --- */
 .custom-dropdown {
   position: fixed;
   background-color: var(--menu-bg);
-  border: 1px solid var(--p-border);
+  border: 1px solid var(--border-color);
   min-width: 220px;
   box-shadow: 0 4px 12px var(--ctx-shadow);
   border-radius: 6px;
@@ -79,7 +68,7 @@ const handleAction = (action) => {
   padding: 6px 12px;
   font-size: 11px;
   font-weight: 400;
-  color: var(--p-text-main);
+  color: var(--text-color);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -89,7 +78,7 @@ const handleAction = (action) => {
 
 .dropdown-item:hover {
   background-color: var(--p-selection);
-  color: var(--p-highlight);
+  color: var(--accent-color);
 }
 
 .dropdown-left {
@@ -106,13 +95,13 @@ const handleAction = (action) => {
 }
 
 .dropdown-item:hover .dropdown-shortcut {
-  color: var(--p-highlight);
+  color: var(--accent-color);
   opacity: 0.8;
 }
 
 .dropdown-separator {
   height: 1px;
-  background-color: var(--p-border);
+  background-color: var(--border-color);
   margin: 4px 0;
 }
 

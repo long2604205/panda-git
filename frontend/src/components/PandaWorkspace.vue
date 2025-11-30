@@ -2,7 +2,7 @@
   <!-- 2. MAIN WORKSPACE -->
   <div class="flex-1 flex overflow-hidden">
     <!-- SIDEBAR -->
-    <panda-repository-work-space/>
+    <panda-git-left-side-bar/>
     <!-- MAIN EDITOR -->
     <panda-main-editor-workspace/>
     <!-- RIGHT SIDEBAR -->
@@ -11,7 +11,7 @@
 </template>
 
 <script setup>
-import PandaRepositoryWorkSpace from '@/components/repository-workspace/PandaRepositoryWorkSpace.vue'
+import PandaGitLeftSideBar from '@/components/repository-workspace/PandaGitLeftSideBar.vue'
 import PandaMainEditorWorkspace from '@/components/PandaMainEditorWorkspace.vue'
 import PandaCommitWorkspace from '@/components/PandaCommitWorkspace.vue'
 </script>

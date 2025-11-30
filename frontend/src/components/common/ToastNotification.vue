@@ -23,7 +23,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, onBeforeUnmount } from 'vue';
+import mitter from '@/plugins/mitter.js'
 
 // ==================== STATE ====================
 const toasts = ref([]);
@@ -143,6 +144,15 @@ defineExpose({
   removeToast,
   clear
 });
+
+
+mitter.on("toast", (payload) => {
+  show(
+    payload.message,
+    payload.type,
+    payload
+  )
+})
 
 // ==================== LIFECYCLE ====================
 onBeforeUnmount(() => {

@@ -16,7 +16,7 @@
         <span class="ctx-shortcut">Alt+T</span>
       </div>
 
-      <div class="ctx-item" @click="handleAction('open-terminal')">
+      <div class="ctx-item" @click="handleAction('open-in-terminal')">
         <div class="ctx-left">
           <terminal-icon class="ctx-icon"/>
           <span>Open in Terminal</span>
@@ -24,7 +24,7 @@
         <span class="ctx-shortcut">Alt+T</span>
       </div>
 
-      <div class="ctx-item" @click="handleAction('open-terminal')">
+      <div class="ctx-item" @click="handleAction('open-in-explorer')">
         <div class="ctx-left">
           <i class="fa-solid fa-folder-tree ctx-icon"/>
           <span>Open in Explorer</span>
@@ -222,7 +222,7 @@ const handleAction = (actionName) => {
 
 // --- LIFECYCLE ---
 // Lắng nghe sự kiện click toàn cục để đóng menu khi click ra ngoài
-const handleGlobalClick = (e) => {
+const handleGlobalClick = () => {
   if (isVisible.value) {
     // Nếu click vào trong menu thì không đóng (trừ khi click vào item action đã xử lý ở trên)
     // Tuy nhiên logic menu chuẩn thường đóng luôn khi click bất kỳ đâu

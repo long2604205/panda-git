@@ -1,14 +1,14 @@
 <template>
   <!-- TRƯỜNG HỢP 1: LÀ ROOT (CHỈ RENDER LIST, KHÔNG RENDER TOOLBAR) -->
   <div v-if="isRoot">
-    <panda-tree-git
+    <git-branch-tree
       v-for="childNode in rootTreeData"
       :key="childNode.path"
       :node="childNode"
       :depth="0"
     />
     <div v-if="rootTreeData.length === 0" class="text-center text-gray-500 mt-4 italic">
-      No branches found
+      <span class="text-[12px]">No branches found</span>
     </div>
   </div>
 
@@ -50,7 +50,7 @@
 
     <!-- Recursive Children -->
     <div v-if="isOpen && hasChildren">
-      <panda-tree-git
+      <git-branch-tree
         v-for="child in sortedChildren"
         :key="child.path"
         :node="child"

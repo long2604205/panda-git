@@ -22,7 +22,8 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false
-    }
+    },
+    icon: join(__dirname, 'assets/panda-logo.ico'),
   })
   splash.loadFile(join(__dirname, 'splash.html'))
 
