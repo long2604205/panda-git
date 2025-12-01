@@ -65,21 +65,28 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import mitter from '@/plugins/mitter.js'
-import { loadGroups, loadRepos, saveGroups, saveRepos, updateGroup } from '@/plugins/PandaDB.js'
+import {
+  findRepos,
+  loadGroups,
+  loadRepos,
+  saveGroups,
+  saveRepos,
+  updateGroup
+} from '@/plugins/PandaDB.js'
 import commonApi from '@/services/api/common.js'
 
 // Import Components đã tách
 import GroupContextMenu from '@/components/repository-workspace/components/GroupContextMenu.vue'
 import RepositoryContextMenu from '@/components/repository-workspace/components/RepositoryContextMenu.vue'
 import TeleportMenu from '@/components/common/TeleportMenu.vue'
-import { useSidebarResize } from '@/composables/useSidebarResize.js'
+import { useSideBarResize } from '@/composables/use-side-bar-resize.js'
 import SidebarBranches from '@/components/repository-workspace/components/SidebarBranches.vue'
 import SidebarRepositories from '@/components/repository-workspace/components/SidebarRepositories.vue'
 import { addGroup, openRepository } from '@/composables/repositories-manager.js'
 import notify from '@/plugins/notify.js'
 
 // --- 1. RESIZE LOGIC (Từ Composable) ---
-const { paneHeight, sidebarWidth, startRowResize, startColResize } = useSidebarResize()
+const { paneHeight, sidebarWidth, startRowResize, startColResize } = useSideBarResize()
 
 // --- 2. DATA STATE ---
 const groups = ref([])
@@ -91,6 +98,7 @@ const sidebarBranchesRef = ref(null)
 
 // --- 3. REPOSITORY ACTIONS ---
 async function selectRepo(repo) {
+  const loadingId = notify.loading('Đang tải dữ liệu...')
   try {
     const response = await commonApi.open({ repo_path: repo.path })
     const result = response.data
@@ -111,21 +119,18 @@ async function selectRepo(repo) {
 
     selectedRepo.value = result
     await saveRepos(repositories.value)
+    notify.remove(loadingId)
+    notify.info('Active successfully')
   } catch (error) {
+    notify.remove(loadingId)
     notify.error(`Failed: ${error.message}`)
   }
 }
 
 async function toggleGroup(groupReceived) {
-  // 1. Tìm object GỐC trong danh sách groups (nguồn sự thật - source of truth)
   const targetGroup = groups.value.find(g => g.id === groupReceived.id)
-
   if (targetGroup) {
-    // 2. Cập nhật trên object GỐC.
-    // Việc này sẽ kích hoạt Vue Reactivity -> Props truyền xuống con sẽ thay đổi -> UI cập nhật.
     targetGroup.collapsed = !targetGroup.collapsed
-
-    // 3. Gọi API lưu lại
     await updateGroup(targetGroup.id, { collapsed: targetGroup.collapsed })
   }
 }
@@ -266,20 +271,16 @@ const handleRepositoryAction = ({ action, data }) => {
   }
 }
 const handleMenuAction = (action) => {
-    // 1. Đóng menu
     closeAllMenus()
-
     // 2. Phân loại xử lý dựa trên loại menu đang mở
     if (activeMenuType.value === 'branch') {
-        // --- LOGIC CHO BRANCH ---
-        if (action === 'expand_all') {
-            sidebarBranchesRef.value?.callExpandAll()
-        } else if (action === 'collapse_all') {
-            sidebarBranchesRef.value?.callCollapseAll()
-        }
-        else if (action === 'add_repo') {
-            // Logic add repo (nếu dùng chung)
-             console.log('Add repo clicked from branch menu')
+      switch (action) {
+        case 'expand_all':
+          sidebarBranchesRef.value?.callExpandAll()
+          break
+        case 'collapse_all':
+          sidebarBranchesRef.value?.callCollapseAll()
+          break
         }
     }
     else {
@@ -318,8 +319,6 @@ onMounted(async () => {
   mitter.on('add-group', (g) => { groups.value.push(g); saveGroups(groups.value) })
   mitter.on('open-repository', (r) => {
       const newRepo = reactive({ groupId: null, ...r })
-      repositories.value.push(newRepo)
-      saveRepos(repositories.value)
       selectRepo(newRepo)
   })
   window.addEventListener('click', handleGlobalClick)

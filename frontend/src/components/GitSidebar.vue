@@ -73,13 +73,13 @@ import notify from '@/plugins/notify.js'
 import GroupContextMenu from '@/components/repository-workspace/components/GroupContextMenu.vue'
 import RepositoryContextMenu from '@/components/repository-workspace/components/RepositoryContextMenu.vue'
 import TeleportMenu from '@/components/common/TeleportMenu.vue'
-import { useSidebarResize } from '@/composables/useSidebarResize.js'
+import { useSideBarResize } from '@/composables/use-side-bar-resize.js'
 import SidebarBranches from '@/components/repository-workspace/components/SidebarBranches.vue'
 import SidebarRepositories from '@/components/repository-workspace/components/SidebarRepositories.vue'
 import { addGroup, openRepository } from '@/composables/repositories-manager.js'
 
 // --- 1. RESIZE LOGIC (Từ Composable) ---
-const { paneHeight, sidebarWidth, startRowResize, startColResize } = useSidebarResize()
+const { paneHeight, sidebarWidth, startRowResize, startColResize } = useSideBarResize()
 
 // --- 2. DATA STATE ---
 const groups = ref([])

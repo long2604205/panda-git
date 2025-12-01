@@ -116,3 +116,20 @@ export async function loadRepos() {
   });
 }
 
+export async function findRepos(repoPath) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const store = tx.objectStore(STORE_NAME);
+
+    const request = store.get('repositories');
+
+    request.onsuccess = () => {
+      const data = request.result?.data || [];
+      const found = data.find(r => r.path.trim() === repoPath.trim());
+      resolve(found || null);
+    };
+
+    request.onerror = () => reject(request.error);
+  });
+}

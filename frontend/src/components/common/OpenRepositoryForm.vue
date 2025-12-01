@@ -16,7 +16,10 @@
           @keyup.enter="openRepository"
           @keyup.esc="close"
         />
-        <button class="btn btn-secondary">
+        <button
+          class="btn btn-secondary"
+          @click="chooseFolder"
+        >
           <i class="fa-regular fa-folder-open"/>
         </button>
       </div>
@@ -77,6 +80,13 @@ async function handleOpenRepo(pathRepository) {
 
 const onOpened = () => {
   pathInput.value?.focus()
+}
+
+const chooseFolder = async () => {
+  const selected = await window.electronAPI?.selectFolder()
+  if (selected) {
+    pathRepository.value = selected
+  }
 }
 </script>
 

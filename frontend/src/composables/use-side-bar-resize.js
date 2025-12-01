@@ -1,6 +1,6 @@
 import { ref, onBeforeUnmount } from 'vue'
 
-export function useSidebarResize() {
+export function useSideBarResize() {
   // 1. Resize Chiều cao (Giữa Repo và Branch)
   const paneHeight = ref(200)
   let startY = 0
