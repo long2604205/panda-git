@@ -8,57 +8,67 @@
       @contextmenu.prevent
     >
       <!-- Item 1 -->
-      <div class="ctx-item" @click="handleAction('open-repository')">
+      <div
+        :class="{ disabled: isActiveRepo }"
+        class="ctx-item"
+        @click="handleAction('open-repository')"
+      >
         <div class="ctx-left">
-          <i class="fa-solid fa-folder-open ctx-icon"></i>
-          <span>Open</span>
+          <i class="fa-regular fa-circle-check ctx-icon"></i>
+          <span>Active</span>
         </div>
         <span class="ctx-shortcut">Alt+T</span>
       </div>
 
-      <div class="ctx-item" @click="handleAction('open-in-terminal')">
-        <div class="ctx-left">
-          <terminal-icon class="ctx-icon"/>
-          <span>Open in Terminal</span>
-        </div>
-        <span class="ctx-shortcut">Alt+T</span>
-      </div>
-
-      <div class="ctx-item" @click="handleAction('open-in-explorer')">
-        <div class="ctx-left">
-          <i class="fa-solid fa-folder-tree ctx-icon"/>
-          <span>Open in Explorer</span>
-        </div>
-        <span class="ctx-shortcut">Alt+T</span>
-      </div>
-
-      <!-- Item 2 -->
-      <!-- Multi-level Item -->
+      <!-- Open Multi-level -->
       <div class="ctx-item">
         <div class="ctx-left">
-          <i class="fa-solid fa-code-branch ctx-icon"></i>
-          <span>Open with</span>
+          <i class="fa-solid fa-folder-open ctx-icon"></i>
+          <span>Open In</span>
         </div>
         <i class="fa-solid fa-chevron-right text-[10px]"></i>
 
         <!-- Sub Menu -->
         <div class="ctx-submenu">
-          <div class="ctx-item" @click="handleAction('git-fetch')">
+          <div class="ctx-item" @click="handleAction('open-in-explorer')">
             <div class="ctx-left">
-              <php-storm-icon size="5" class="ctx-icon"/>
-              <span>PhpStorm</span>
+              <i class="fa-solid fa-folder-tree ctx-icon"/>
+              <span>Explorer</span>
             </div>
           </div>
-          <div class="ctx-item" @click="handleAction('git-pull')">
+          <div class="ctx-item">
             <div class="ctx-left">
-              <sublime-text-icon size="5" class="ctx-icon"/>
-              <span>Sublime Text</span>
+              <i class="fa-solid fa-code-branch ctx-icon"></i>
+              <span>Open with</span>
+            </div>
+            <i class="fa-solid fa-chevron-right text-[10px]"></i>
+
+            <!-- Sub Menu -->
+            <div class="ctx-submenu">
+              <div class="ctx-item" @click="handleAction('git-fetch')">
+                <div class="ctx-left">
+                  <php-storm-icon size="5" class="ctx-icon"/>
+                  <span>PhpStorm</span>
+                </div>
+              </div>
+              <div class="ctx-item" @click="handleAction('git-pull')">
+                <div class="ctx-left">
+                  <sublime-text-icon size="5" class="ctx-icon"/>
+                  <span>Sublime Text</span>
+                </div>
+              </div>
+              <div class="ctx-item" @click="handleAction('git-pull')">
+                <div class="ctx-left">
+                  <visual-studio-code-icon class="ctx-icon"/>
+                  <span>Visual Studio Code</span>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="ctx-item" @click="handleAction('git-pull')">
+          <div class="ctx-item" @click="handleAction('open-in-terminal')">
             <div class="ctx-left">
-              <visual-studio-code-icon class="ctx-icon"/>
-              <span>Visual Studio Code</span>
+              <terminal-icon size="5" class="ctx-icon"/>
+              <span>Terminal</span>
             </div>
           </div>
         </div>
@@ -133,7 +143,7 @@
       <!-- Rename -->
       <div class="ctx-item" @click="handleAction('rename')">
         <div class="ctx-left">
-          <i class="fa-solid fa-i-cursor ctx-icon"></i>
+          <i class="fa-solid fa-pencil ctx-icon"/>
           <span>Rename...</span>
         </div>
         <span class="ctx-shortcut">F2</span>
@@ -142,7 +152,11 @@
       <div class="menu-separator"></div>
 
       <!-- Remove -->
-      <div class="ctx-item" style="color: #ef4444;" @click="handleAction('remove-repo')">
+      <div
+        :class="{ disabled: isActiveRepo }"
+        class="ctx-item"
+        @click="handleAction('remove-repo')"
+      >
         <div class="ctx-left">
           <i class="fa-solid fa-trash-can ctx-icon"/>
           <span>Remove</span>
@@ -159,13 +173,13 @@ import TerminalIcon from '@/components/icons/TerminalIcon.vue'
 import PhpStormIcon from '@/components/icons/PhpStormIcon.vue'
 import VisualStudioCodeIcon from '@/components/icons/VisualStudioCodeIcon.vue'
 import SublimeTextIcon from '@/components/icons/SublimeTextIcon.vue'
-
 // --- STATE ---
 const isVisible = ref(false);
 const x = ref(0);
 const y = ref(0);
 const menuRef = ref(null);
 const targetData = ref(null); // Lưu dữ liệu của item được click chuột phải (nếu cần)
+const isActiveRepo = ref(false)
 
 // --- EMITS ---
 // Bắn sự kiện ra ngoài component cha khi chọn một hành động
@@ -184,6 +198,8 @@ const open = async (event, data = null) => {
 
   targetData.value = data;
   isVisible.value = true;
+
+  isActiveRepo.value = data?.active ?? false
 
   // Tính toán vị trí chuột
   x.value = event.pageX;
@@ -335,4 +351,10 @@ defineExpose({
     transform: translateY(0);
   }
 }
+
+.ctx-item.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
 </style>
