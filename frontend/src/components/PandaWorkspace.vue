@@ -7,6 +7,7 @@
     <panda-main-editor-workspace/>
     <!-- RIGHT SIDEBAR -->
     <panda-commit-workspace/>
+    <!-- TOAST NOTIFICATION -->
     <toast-notification ref="toast"/>
   </div>
 </template>
@@ -15,7 +16,7 @@
 import PandaGitLeftSideBar from '@/components/repository-workspace/PandaGitLeftSideBar.vue'
 import PandaMainEditorWorkspace from '@/components/PandaMainEditorWorkspace.vue'
 import PandaCommitWorkspace from '@/components/PandaCommitWorkspace.vue'
-import ToastNotification from "@/components/common/ToastNotification.vue";
+import ToastNotification from "@/components/common/ToastNotification.vue"
 import {ref} from "vue";
 
 const toast = ref(null)

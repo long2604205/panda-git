@@ -8,19 +8,19 @@ export const useRepositoryStore = defineStore('repository', () => {
     activeRepo.value = {
       id: repo.id,
       name: repo.name,
-      branch: repo.branch || 'main',
+      currentBranch: repo.currentBranch,
       path: repo.path,
-      status: repo.status || 'clean',
       groupId: repo.groupId || null,
     }
   }
 
   function setBranch(branchName) {
-    if (activeRepo.value) activeRepo.value.branch = branchName
+    if (activeRepo.value) activeRepo.value.currentBranch = branchName
   }
 
   const repoName = computed(() => activeRepo.value?.name || '')
-  const branchName = computed(() => activeRepo.value?.branch || '')
+  const branchName = computed(() => activeRepo.value?.currentBranch || '')
+  const repoPath = computed(() => activeRepo.value?.path || '')
 
   return {
     activeRepo,
@@ -28,5 +28,6 @@ export const useRepositoryStore = defineStore('repository', () => {
     setBranch,
     repoName,
     branchName,
+    repoPath
   }
 })

@@ -84,6 +84,7 @@ import SidebarBranches from '@/components/repository-workspace/components/Sideba
 import SidebarRepositories from '@/components/repository-workspace/components/SidebarRepositories.vue'
 import { addGroup, openRepository } from '@/composables/repositories-manager.js'
 import notify from '@/plugins/notify.js'
+import {useRepositoryStore} from "@/stores/repositoryStore.js";
 
 // --- 1. RESIZE LOGIC (Từ Composable) ---
 const { paneHeight, sidebarWidth, startRowResize, startColResize } = useSideBarResize()
@@ -95,6 +96,7 @@ const selectedRepo = ref(null)
 const draggingRepo = ref(null)
 const currentBranch = computed(() => selectedRepo.value?.currentBranch ?? '')
 const sidebarBranchesRef = ref(null)
+const repositoriesStore = useRepositoryStore()
 
 // --- 3. REPOSITORY ACTIONS ---
 async function selectRepo(repo) {
@@ -118,6 +120,7 @@ async function selectRepo(repo) {
     else repositories.value.push(result)
 
     selectedRepo.value = result
+    repositoriesStore.setActiveRepo(result)
     await saveRepos(repositories.value)
     notify.remove(loadingId)
     notify.info('Active successfully')
@@ -227,26 +230,15 @@ function openRepositoryMenu(event, repo) {
   repositoryContextMenuRef.value.open(event, repo)
 }
 function toggleMenu(event, type) {
-    // 1. Kiểm tra xem ĐÚNG cái menu này có đang mở không
-    // Phải khớp cả trạng thái mở lẫn loại menu (main hay branch)
     const isThisMenuOpen = isMenuOpen.value && activeMenuType.value === type;
-
-    // 2. Đóng tất cả menu trước (để reset trạng thái)
     closeAllMenus();
-
-    // 3. Nếu menu này CHƯA mở thì mới mở nó ra
-    // (Nếu nó đang mở rồi thì bước 2 đã đóng nó lại -> hành vi toggle)
     if (!isThisMenuOpen) {
-        activeMenuType.value = type; // Set type mới (main hoặc branch)
-
-        // Tính toán vị trí
-        const rect = event.currentTarget.getBoundingClientRect();
+        activeMenuType.value = type
+        const rect = event.currentTarget.getBoundingClientRect()
         menuStyle.value = {
             top: `${rect.top}px`,
             left: `${rect.right + 1}px`
-        };
-
-        // Mở menu
+        }
         isMenuOpen.value = true;
     }
 }
@@ -272,7 +264,6 @@ const handleRepositoryAction = ({ action, data }) => {
 }
 const handleMenuAction = (action) => {
     closeAllMenus()
-    // 2. Phân loại xử lý dựa trên loại menu đang mở
     if (activeMenuType.value === 'branch') {
       switch (action) {
         case 'expand_all':

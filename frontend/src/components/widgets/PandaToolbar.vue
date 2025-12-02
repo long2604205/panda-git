@@ -7,33 +7,15 @@
       <div class="info-group">
         <!-- Repo Dropdown Trigger -->
         <div class="dropdown-wrapper w-72">
-          <div
-            @click="toggleDropdown('repo')"
-            class="info-trigger"
-          >
+          <div class="info-trigger">
             <div class="repo-avatar">
               {{ repoInitials }}
             </div>
             <div class="info-content">
               <span class="info-label">Repository</span>
               <div class="info-value">
-                <span class="value-text">{{ currentRepo }}</span>
-                <i class="fa-solid fa-chevron-down chevron-icon"/>
+                <span class="value-text">{{ repositoryStore.repoName }}</span>
               </div>
-            </div>
-          </div>
-          <!-- Repo Dropdown Content -->
-          <div
-            v-show="activeDropdown === 'repo'"
-            class="toolbar-dropdown"
-          >
-            <div
-              v-for="repo in repositories"
-              :key="repo.id"
-              :class="['dropdown-item', { active: repo.id === currentRepo }]"
-              @click="selectRepo(repo.id)"
-            >
-              <i class="fa-solid fa-folder-open text-xs"/> {{ repo.name }}
             </div>
           </div>
         </div>
@@ -43,37 +25,17 @@
 
         <!-- Branch Dropdown Trigger -->
         <div class="dropdown-wrapper w-56">
-          <div
-            @click="toggleDropdown('branch')"
-            class="info-trigger"
-          >
+          <div class="info-trigger group relative">
             <div class="branch-avatar">
               <i class="fa-solid fa-code-branch text-sm"/>
             </div>
             <div class="info-content">
               <span class="info-label">Current Branch</span>
               <div class="info-value">
-                <span class="value-text">{{ currentBranch }}</span>
-                <i class="fa-solid fa-chevron-down chevron-icon"/>
+                <span class="value-text">{{ repositoryStore.branchName }}</span>
               </div>
             </div>
-          </div>
-          <!-- Branch Dropdown Content -->
-          <div
-            v-show="activeDropdown === 'branch'"
-            class="toolbar-dropdown"
-          >
-            <div class="dropdown-section-title">
-              Local Branches
-            </div>
-            <div
-              v-for="branch in branches"
-              :key="branch.id"
-              :class="['dropdown-item', { active: branch.id === currentBranch }]"
-              @click="selectBranch(branch.id)"
-            >
-              <i class="fa-solid fa-code-branch text-xs"/> {{ branch.name }}
-            </div>
+            <div class="tooltip-arrow-box">{{ repositoryStore.branchName }}</div>
           </div>
         </div>
       </div>
@@ -87,9 +49,7 @@
           <button
             class="control-btn"
             @click="$emit('fetch')"
-            title="Fetch from origin"
           >
-<!--            <i class="fa-solid fa-clone"/>-->
             <i class="fa-solid fa-cloud-arrow-down"/>
             <span>Clone</span>
           </button>
@@ -97,7 +57,6 @@
           <button
             class="control-btn"
             @click="$emit('pull')"
-            title="Pull 1 commit from origin"
           >
             <i class="fa-solid fa-arrow-down-long"/>
             <span>Pull</span>
@@ -106,7 +65,6 @@
           <button
             class="control-btn"
             @click="$emit('push')"
-            title="Push to origin"
           >
             <i class="fa-solid fa-arrow-up-long"/>
             <span>Push</span>
@@ -115,7 +73,6 @@
           <button
             class="control-btn"
             @click="$emit('fetch')"
-            title="Fetch from origin"
           >
             <i class="fa-solid fa-retweet"/>
             <span>Fetch</span>
@@ -131,7 +88,6 @@
         <button
           class="icon-only-btn"
           @click="$emit('open-settings')"
-          title="Settings"
         >
           <i class="fa-solid fa-gear text-sm"/>
         </button>
@@ -141,47 +97,41 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { computed } from 'vue';
+import {useRepositoryStore} from "@/stores/repositoryStore.js";
 
-// Props
-const props = defineProps({
-  currentRepo: {
-    type: String,
-    default: 'shop-ui-core'
-  },
-  currentBranch: {
-    type: String,
-    default: 'main'
-  },
-  repositories: {
-    type: Array,
-    default: () => [
-      { id: 'shop-ui-core', name: 'shop-ui-core' },
-      { id: 'shop-api', name: 'shop-api' },
-      { id: 'auth-service', name: 'auth-service' }
-    ]
-  },
-  branches: {
-    type: Array,
-    default: () => [
-      { id: 'main', name: 'main' },
-      { id: 'develop', name: 'develop' },
-      { id: 'feat/new-login', name: 'feat/new-login' },
-      { id: 'fix/bug-102', name: 'fix/bug-102' }
-    ]
-  },
-  showPullBadge: {
-    type: Boolean,
-    default: false
-  },
-  sidebarVisible: {
-    type: Boolean,
-    default: true
-  },
-  detailVisible: {
-    type: Boolean,
-    default: true
+const repositoryStore = useRepositoryStore()
+
+const repoInitials = computed(() => {
+  const name = repositoryStore.repoName;
+  if (!name) return '';
+
+  let cleanName = name.replace(/[-_]/g, ' ');
+  cleanName = cleanName.replace(/([a-z])([A-Z])/g, '$1 $2');
+  const words = cleanName.trim().split(/\s+/);
+
+  const firstInitial = words[0].charAt(0).toUpperCase();
+
+  if (words.length === 1) {
+    return firstInitial;
   }
+
+  const lastWord = words[words.length - 1];
+  const lastWordInitial = lastWord.charAt(0).toUpperCase();
+
+  if (firstInitial !== lastWordInitial) {
+    return firstInitial + lastWordInitial;
+  }
+
+  for (let i = lastWord.length - 1; i > 0; i--) {
+    const char = lastWord.charAt(i).toUpperCase();
+
+    if (char !== firstInitial) {
+      return firstInitial + char;
+    }
+  }
+
+  return firstInitial;
 });
 
 // Emits
@@ -189,54 +139,8 @@ const emit = defineEmits([
   'fetch',
   'pull',
   'push',
-  'stash',
-  'pop',
-  'select-repo',
-  'select-branch',
-  'open-terminal',
   'open-settings',
-  'toggle-sidebar',
-  'toggle-detail'
 ]);
-
-// State
-const activeDropdown = ref(null);
-
-// Computed
-const repoInitials = computed(() => {
-  const words = props.currentRepo.split('-');
-  return words.map(w => w[0].toUpperCase()).join('').slice(0, 2);
-});
-
-// Methods
-const toggleDropdown = (type) => {
-  activeDropdown.value = activeDropdown.value === type ? null : type;
-};
-
-const selectRepo = (repoId) => {
-  emit('select-repo', repoId);
-  activeDropdown.value = null;
-};
-
-const selectBranch = (branchId) => {
-  emit('select-branch', branchId);
-  activeDropdown.value = null;
-};
-
-const handleClickOutside = (event) => {
-  if (!event.target.closest('.dropdown-wrapper')) {
-    activeDropdown.value = null;
-  }
-};
-
-// Lifecycle
-onMounted(() => {
-  window.addEventListener('click', handleClickOutside);
-});
-
-onBeforeUnmount(() => {
-  window.removeEventListener('click', handleClickOutside);
-});
 </script>
 
 <style scoped>
@@ -277,29 +181,21 @@ onBeforeUnmount(() => {
 }
 
 /* --- DROPDOWN WRAPPER --- */
-.dropdown-wrapper {
-  position: relative;
-}
-
 .info-trigger {
   display: flex;
   align-items: center;
   gap: 12px;
-  cursor: pointer;
   padding: 6px 6px 6px 16px;
   border-radius: 6px;
   transition: background-color 0.2s;
-}
-
-.info-trigger:hover {
-  background-color: var(--p-hover);
 }
 
 .repo-avatar {
   width: 32px;
   height: 32px;
   border-radius: 4px;
-  background: linear-gradient(135deg, #f97316 0%, #eab308 100%);
+  background: linear-gradient(135deg, #22d3ee 0%, #831843 100%);
+
   display: flex;
   align-items: center;
   justify-content: center;
@@ -338,9 +234,6 @@ onBeforeUnmount(() => {
   transition: color 0.2s;
 }
 
-.info-trigger:hover .info-label {
-  color: var(--text-color);
-}
 
 .info-value {
   display: flex;
@@ -349,73 +242,16 @@ onBeforeUnmount(() => {
 }
 
 .value-text {
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 700;
   color: var(--text-color);
   line-height: 1;
-}
 
-.chevron-icon {
-  font-size: 10px;
-  color: var(--p-text-dim);
-}
-
-/* --- TOOLBAR DROPDOWN --- */
-.toolbar-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  margin-top: 4px;
-  margin-left: 16px;
-  background-color: var(--bg-side);
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  z-index: 1000;
-  min-width: 200px;
+  white-space: nowrap;
   overflow: hidden;
-  animation: fadeIn 0.1s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.dropdown-section-title {
-  padding: 8px 12px;
-  font-size: 10px;
-  color: var(--p-text-dim);
-  text-transform: uppercase;
-  font-weight: 700;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.dropdown-item {
-  padding: 8px 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  font-size: 12px;
-  color: var(--p-text-muted);
-  transition: background-color 0.1s;
-}
-
-.dropdown-item:hover {
-  background-color: var(--p-hover);
-  color: var(--text-color);
-}
-
-.dropdown-item.active {
-  color: var(--accent-color);
-  background-color: var(--p-selection);
+  text-overflow: ellipsis;
+  max-width: 160px;
+  display: inline-block;
 }
 
 /* --- ACTIONS GROUP --- */
@@ -544,5 +380,30 @@ onBeforeUnmount(() => {
 .icon-only-btn.active {
   background-color: var(--p-selection);
   color: var(--accent-color);
+}
+.tooltip-arrow-box {
+  @apply absolute top-full mt-1 left-1/2 -translate-x-1/2 z-50
+         whitespace-nowrap rounded-md px-3 py-1.5 text-[11px] font-semibold
+         opacity-0 group-hover:opacity-100 transition-all duration-200 ease-out
+         -translate-y-1 group-hover:translate-y-0 pointer-events-none;
+
+  background-color: var(--bg-header);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.tooltip-arrow-box::before {
+  content: "";
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 9px;
+  height: 9px;
+  background-color: var(--bg-header);
+  border-top: 1px solid var(--border-color);
+  border-left: 1px solid var(--border-color);
+  z-index: 10;
 }
 </style>

@@ -60,7 +60,8 @@
             :key="repo.id"
             class="repo-item"
             :class="{ active: selectedRepoId === repo.id }"
-            @dblclick="$emit('select-repo', repo)"
+            @dblclick="repositoryStore.repoPath !== repo.path && $emit('select-repo', repo)"
+
             draggable="true"
             @dragstart="$emit('drag-start', repo)"
             @contextmenu.prevent="$emit('repo-context', $event, repo)"
@@ -78,7 +79,7 @@
           class="repo-item mt-1"
           :class="{ active: selectedRepoId === repo.id }"
           style="padding-left: 12px"
-          @dblclick="$emit('select-repo', repo)"
+          @dblclick="repositoryStore.repoPath !== repo.path && $emit('select-repo', repo)"
           draggable="true"
           @dragstart="$emit('drag-start', repo)"
           @contextmenu.prevent="$emit('repo-context', $event, repo)"
@@ -96,27 +97,36 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import {useRepositoryStore} from "@/stores/repositoryStore.js";
 
-const props = defineProps(['groups', 'repositories', 'selectedRepoId', 'isMenuOpen'])
+const repositoryStore = useRepositoryStore()
+const props = defineProps([
+  'groups',
+  'repositories',
+  'selectedRepoId',
+  'isMenuOpen'
+])
 
-defineEmits(['select-repo', 'toggle-group', 'drag-start', 'drop-repo', 'group-context', 'repo-context', 'open-menu'])
+defineEmits([
+  'select-repo',
+  'toggle-group',
+  'drag-start',
+  'drop-repo',
+  'group-context',
+  'repo-context',
+  'open-menu'
+])
 
 const repoFilter = ref('')
 
 const filteredView = computed(() => {
   const filter = repoFilter.value?.toLowerCase().trim() ?? ''
 
-  // 1. Map lại dữ liệu
   const mappedGroups = props.groups.map(group => {
-    // Lấy tất cả repo thuộc group này
-    const allReposInGroup = props.repositories.filter(r => (r?.groupId ?? null) === group.id)
 
-    // Kiểm tra xem Tên Group có khớp từ khóa search không?
+    const allReposInGroup = props.repositories.filter(r => (r?.groupId ?? null) === group.id)
     const isGroupNameMatch = group.name.toLowerCase().includes(filter)
 
-    // LOGIC QUAN TRỌNG:
-    // - Nếu tên Group khớp: Lấy TOÀN BỘ repo (để người dùng xem được nội dung bên trong).
-    // - Nếu tên Group KHÔNG khớp: Chỉ lấy những repo khớp từ khóa.
     let matched = []
     if (filter && isGroupNameMatch) {
       matched = allReposInGroup
@@ -127,18 +137,15 @@ const filteredView = computed(() => {
     return {
       ...group,
       matchedRepos: matched,
-      isNameMatch: isGroupNameMatch // Lưu lại cờ này để dùng cho hàm expand
+      isNameMatch: isGroupNameMatch
     }
   })
 
-  // 2. Lọc danh sách Group để hiển thị
   const filteredGroups = mappedGroups.filter(g => {
     if (!filter) return true
-    // Hiển thị nếu: Có repo con khớp HOẶC tên group khớp
     return g.matchedRepos.length > 0 || g.isNameMatch
   })
 
-  // 3. Standalone repos (Repo lẻ)
   const standalone = props.repositories
     .filter(r => (r?.groupId ?? null) === null)
     .filter(r => r?.name?.toLowerCase().includes(filter))
@@ -146,16 +153,11 @@ const filteredView = computed(() => {
   return { groups: filteredGroups, standalone }
 })
 
-// --- SỬA LOGIC EXPAND ---
 function isGroupExpanded(group) {
   const filter = repoFilter.value?.trim()
 
-  // Nếu đang không search thì dùng trạng thái collapsed của DB
   if (!filter) return !group.collapsed
 
-  // Nếu ĐANG SEARCH:
-  // Luôn mở group nếu có repo bên trong (matchedRepos > 0)
-  // hoặc chính tên group khớp (isNameMatch)
   if (group.matchedRepos.length > 0 || group.isNameMatch) {
     return true
   }
