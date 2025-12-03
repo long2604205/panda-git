@@ -7,31 +7,28 @@
       :style="{ top: `${y}px`, left: `${x}px`, display: 'block' }"
       @contextmenu.prevent
     >
-      <div class="ctx-item" @click="handleAction('rename')">
+      <div class="ctx-item" @click="handleAction('add-group')">
         <div class="ctx-left">
-          <i class="fa-solid fa-plus ctx-icon"/>
+          <i class="fa-solid fa-folder-plus ctx-icon"></i>
           <span>Add new group</span>
         </div>
-        <span class="ctx-shortcut">F2</span>
       </div>
       <!-- Rename -->
-      <div class="ctx-item" @click="handleAction('rename')">
+      <div class="ctx-item" @click="handleAction('rename-group')">
         <div class="ctx-left">
           <i class="fa-solid fa-pencil ctx-icon"/>
           <span>Rename</span>
         </div>
-        <span class="ctx-shortcut">F2</span>
       </div>
 
       <div class="menu-separator"></div>
 
       <!-- Remove -->
-      <div class="ctx-item" style="color: #ef4444;" @click="handleAction('rename')">
+      <div class="ctx-item" @click="handleAction('delete-group')">
         <div class="ctx-left">
            <i class="fa-solid fa-trash-can ctx-icon"/>
           <span>Remove</span>
         </div>
-        <span class="ctx-shortcut">Del</span>
       </div>
     </div>
   </Teleport>
@@ -45,18 +42,16 @@ const isVisible = ref(false);
 const x = ref(0);
 const y = ref(0);
 const menuRef = ref(null);
-const targetData = ref(null); // Lưu dữ liệu của item được click chuột phải (nếu cần)
+const targetData = ref(null);
 
 // --- EMITS ---
-// Bắn sự kiện ra ngoài component cha khi chọn một hành động
 const emit = defineEmits(['action-click']);
 
 // --- METHODS ---
-
 /**
- * Mở Context Menu
- * @param {MouseEvent} event - Sự kiện click chuột
- * @param {any} data - Dữ liệu của item (ví dụ: repo object)
+ * Open Context Menu
+ * @param {MouseEvent} event
+ * @param {any} data
  */
 const open = async (event, data = null) => {
   event.preventDefault();
@@ -65,11 +60,9 @@ const open = async (event, data = null) => {
   targetData.value = data;
   isVisible.value = true;
 
-  // Tính toán vị trí chuột
   x.value = event.pageX;
   y.value = event.pageY;
 
-  // (Optional) Logic ngăn menu tràn ra khỏi màn hình
   await nextTick();
   if (menuRef.value) {
     const { offsetWidth, offsetHeight } = menuRef.value;
@@ -85,27 +78,18 @@ const open = async (event, data = null) => {
   }
 };
 
-/**
- * Đóng Context Menu
- */
+
 const close = () => {
   isVisible.value = false;
 };
 
-/**
- * Xử lý khi click vào item trong menu
- */
 const handleAction = (actionName) => {
   emit('action-click', { action: actionName, data: targetData.value });
   close();
 };
 
-// --- LIFECYCLE ---
-// Lắng nghe sự kiện click toàn cục để đóng menu khi click ra ngoài
 const handleGlobalClick = (e) => {
   if (isVisible.value) {
-    // Nếu click vào trong menu thì không đóng (trừ khi click vào item action đã xử lý ở trên)
-    // Tuy nhiên logic menu chuẩn thường đóng luôn khi click bất kỳ đâu
     close();
   }
 };
@@ -113,7 +97,7 @@ const handleGlobalClick = (e) => {
 onMounted(() => {
   window.addEventListener('click', handleGlobalClick);
   window.addEventListener('resize', close);
-  window.addEventListener('scroll', close, true); // Đóng khi scroll
+  window.addEventListener('scroll', close, true);
 });
 
 onUnmounted(() => {
@@ -122,7 +106,6 @@ onUnmounted(() => {
   window.removeEventListener('scroll', close, true);
 });
 
-// Expose hàm open để component cha có thể gọi
 defineExpose({
   open,
   close
@@ -135,7 +118,6 @@ defineExpose({
   position: fixed;
   z-index: 1000;
   width: 200px;
-  /* Lưu ý: Các biến var(--menu-bg) cần được define ở global css hoặc parent component */
   background-color: var(--menu-bg, #1e2128);
   border: 1px solid var(--border-color, #2a2d35);
   border-radius: 6px;
@@ -185,24 +167,6 @@ defineExpose({
   height: 1px;
   background-color: var(--border-color, #2a2d35);
   margin: 4px 0;
-}
-
-/* Submenu Styling */
-.ctx-submenu {
-  display: none;
-  position: absolute;
-  left: 100%;
-  top: -4px;
-  width: 200px;
-  background-color: var(--menu-bg, #1e2128);
-  border: 1px solid var(--border-color, #2a2d35);
-  border-radius: 6px;
-  box-shadow: 0 4px 16px var(--ctx-shadow, rgba(0, 0, 0, 0.5));
-  padding: 4px 0;
-}
-
-.ctx-item:hover > .ctx-submenu {
-  display: block;
 }
 
 @keyframes fadeIn {

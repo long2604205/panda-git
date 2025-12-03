@@ -1,5 +1,10 @@
 <template>
-  <base-form ref="openForm" v-model="visible" title="add group" @opened="onOpened">
+  <base-form
+    ref="openForm"
+    v-model="visible"
+    :title="isEdit ? 'Rename group' : 'Add group'"
+    @opened="onOpened"
+  >
     <template #content>
       <label class="block text-xs text-[var(--p-text-muted)] mb-2">Group name</label>
       <div class="flex gap-2 mb-4">
@@ -21,26 +26,55 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import {onMounted, ref} from 'vue'
 import BaseForm from '@/components/common/BaseForm.vue'
 import mitter from '@/plugins/mitter.js'
+import {editGroup, findGroup} from "@/plugins/PandaDB.js";
+
+const props = defineProps({
+  params: {
+    type: Object,
+    default: () => ({})
+  }
+})
+
+onMounted(async () => {
+  if (props.params.id) {
+    isEdit.value = true
+    const group = await findGroup(props.params.id)
+    if (group) groupName.value = group.name
+  }
+})
 
 const visible = ref(false)
 const openForm = ref(null)
 const groupName = ref('')
+const isEdit = ref(false)
 
 const close = () => {
   openForm.value.close()
   groupName.value = ''
 }
 
-const save = () => {
+const save = async () => {
   if (!groupName.value.trim()) return
-  mitter.emit('add-group', {
-    id: `group-${Date.now()}`,
-    name: groupName.value,
-    collapsed: true,
-  })
+
+  if (isEdit.value) {
+    const group = await editGroup(props.params.id, {name: groupName.value})
+    mitter.emit('rename-group', {
+      id: group.id,
+      name: group.name,
+      collapsed: group.collapsed,
+    })
+  }
+  else {
+    mitter.emit('add-group', {
+      id: `group-${Date.now()}`,
+      name: groupName.value,
+      collapsed: true,
+    })
+  }
+
   close()
 }
 
@@ -65,7 +99,7 @@ const onOpened = () => {
 
 .btn-secondary {
   background-color: transparent;
-  border-color: var(--border-color);
+  border-color: var(--p-text-muted);
   color: var(--text-color);
 }
 

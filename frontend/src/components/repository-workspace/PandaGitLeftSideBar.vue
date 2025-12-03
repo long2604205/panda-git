@@ -5,7 +5,7 @@
     :style="{ width: sidebarWidth + 'px' }"
   >
     <div :style="{ height: paneHeight + 'px' }" class="overflow-hidden flex flex-col">
-      <SidebarRepositories
+      <side-bar-repositories
         :groups="groups"
         :repositories="repositories"
         :selected-repo-id="selectedRepo?.id"
@@ -28,7 +28,7 @@
     <div
       class="flex-1 flex flex-col border-t border-[var(--border-color)] bg-[var(--bg-side)] overflow-hidden"
     >
-      <SidebarBranches
+      <side-bar-branches
         ref="sidebarBranchesRef"
         :current-branch="currentBranch"
         :branches="selectedRepo?.branches"
@@ -66,6 +66,7 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import mitter from '@/plugins/mitter.js'
 import {
+  deleteGroup,
   findRepos,
   loadGroups,
   loadRepos,
@@ -80,9 +81,9 @@ import GroupContextMenu from '@/components/repository-workspace/components/Group
 import RepositoryContextMenu from '@/components/repository-workspace/components/RepositoryContextMenu.vue'
 import TeleportMenu from '@/components/common/TeleportMenu.vue'
 import { useSideBarResize } from '@/composables/use-side-bar-resize.js'
-import SidebarBranches from '@/components/repository-workspace/components/SidebarBranches.vue'
-import SidebarRepositories from '@/components/repository-workspace/components/SidebarRepositories.vue'
-import { addGroup, openRepository } from '@/composables/repositories-manager.js'
+import SideBarBranches from '@/components/repository-workspace/components/SideBarBranches.vue'
+import SideBarRepositories from '@/components/repository-workspace/components/SideBarRepositories.vue'
+import {addGroup, openRepository, renameGroup} from '@/composables/repositories-manager.js'
 import notify from '@/plugins/notify.js'
 import {useRepositoryStore} from "@/stores/repositoryStore.js";
 
@@ -162,19 +163,16 @@ const menuStyle = ref({ top: '0px', left: '0px' })
 const activeMenuType = ref('main')
 const sidebarEl = ref(null)
 
-// Define Actions cho từng loại Menu
 const menuActionsMain = [
   {
     value: 'add_repository',
     label: 'Add Repository...',
     icon: 'fa-solid fa-plus',
-    shortcut: 'Alt+A'
   },
   {
     value: 'add_group',
     label: 'Add Group...',
-    icon: 'fa-regular fa-folder',
-    shortcut: 'Alt+G'
+    icon: 'fa-solid fa-folder-plus',
   },
   {
     type: 'separator'
@@ -183,13 +181,11 @@ const menuActionsMain = [
     value: 'expand_all',
     label: 'Expand All',
     icon: 'fa-solid fa-up-right-and-down-left-from-center',
-    shortcut: 'Shift+E'
   },
   {
     value: 'collapse_all',
     label: 'Collapse All',
     icon: 'fa-solid fa-down-left-and-up-right-to-center',
-    shortcut: 'Shift+C'
   }
 ]
 
@@ -198,7 +194,6 @@ const menuActionsBranch = [
     value: 'add_branch',
     label: 'Add new branch...',
     icon: 'fa-solid fa-plus',
-    shortcut: 'Alt+A'
   },
   {
     type: 'separator'
@@ -207,13 +202,11 @@ const menuActionsBranch = [
     value: 'expand_all',
     label: 'Expand All',
     icon: 'fa-solid fa-up-right-and-down-left-from-center',
-    shortcut: 'Shift+E'
   },
   {
     value: 'collapse_all',
     label: 'Collapse All',
     icon: 'fa-solid fa-down-left-and-up-right-to-center',
-    shortcut: 'Shift+C'
   }
 ]
 
@@ -248,7 +241,19 @@ function closeAllMenus() {
   repositoryContextMenuRef.value?.close?.()
 }
 const handleGlobalClick = () => closeAllMenus()
-const handleGroupAction = ({ action, data }) => console.log(action, data)
+const handleGroupAction = ({ action, data }) => {
+  switch (action) {
+      case 'add-group':
+        addGroup()
+        break
+      case 'rename-group':
+        renameGroup(data.id)
+        break
+      case 'delete-group':
+        handleDeleteGroup(data.id)
+        break
+  }
+}
 const handleRepositoryAction = ({ action, data }) => {
   switch (action) {
     case 'open-repository':
@@ -293,6 +298,12 @@ const handleMenuAction = (action) => {
       }
     }
 }
+
+async function handleDeleteGroup(groupId) {
+  const { groups: newGroups, repos: newRepos } = await deleteGroup(groupId);
+  groups.value = newGroups;
+  repositories.value = newRepos;
+}
 // --- 6. LIFECYCLE ---
 onMounted(async () => {
   if (sidebarEl.value) {
@@ -308,6 +319,12 @@ onMounted(async () => {
   if(activeRepo) await selectRepo(activeRepo)
 
   mitter.on('add-group', (g) => { groups.value.push(g); saveGroups(groups.value) })
+  mitter.on('rename-group', (g) => {
+    const index = groups.value.findIndex((group) => group.id === g.id)
+    if (index !== -1) {
+      groups.value[index] = g
+    }
+  })
   mitter.on('open-repository', (r) => {
       const newRepo = reactive({ groupId: null, ...r })
       selectRepo(newRepo)

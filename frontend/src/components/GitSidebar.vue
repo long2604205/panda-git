@@ -5,7 +5,7 @@
     :style="{ width: sidebarWidth + 'px' }"
   >
     <div :style="{ height: paneHeight + 'px' }" class="overflow-hidden flex flex-col">
-      <SidebarRepositories
+      <SideBarRepositories
         :groups="groups"
         :repositories="repositories"
         :selected-repo-id="selectedRepo?.id"
@@ -28,7 +28,7 @@
     <div
       class="flex-1 flex flex-col border-t border-[var(--border-color)] bg-[var(--bg-side)] overflow-hidden"
     >
-      <SidebarBranches
+      <SideBarBranches
         ref="sidebarBranchesRef"
         :current-branch="currentBranch"
         :branches="selectedRepo?.branches"
@@ -74,8 +74,8 @@ import GroupContextMenu from '@/components/repository-workspace/components/Group
 import RepositoryContextMenu from '@/components/repository-workspace/components/RepositoryContextMenu.vue'
 import TeleportMenu from '@/components/common/TeleportMenu.vue'
 import { useSideBarResize } from '@/composables/use-side-bar-resize.js'
-import SidebarBranches from '@/components/repository-workspace/components/SidebarBranches.vue'
-import SidebarRepositories from '@/components/repository-workspace/components/SidebarRepositories.vue'
+import SideBarBranches from '@/components/repository-workspace/components/SideBarBranches.vue'
+import SideBarRepositories from '@/components/repository-workspace/components/SideBarRepositories.vue'
 import { addGroup, openRepository } from '@/composables/repositories-manager.js'
 
 // --- 1. RESIZE LOGIC (Từ Composable) ---
