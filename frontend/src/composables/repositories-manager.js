@@ -3,6 +3,7 @@ import { defineAsyncComponent } from 'vue'
 
 const openForm = defineAsyncComponent(() => import('@/components/common/OpenRepositoryForm.vue'))
 const groupForm = defineAsyncComponent(() => import('@/components/common/GroupForm.vue'))
+const branchForm = defineAsyncComponent(() => import('@/components/common/BranchForm.vue'))
 
 export function addGroup () {
   showPageInModal(groupForm, {}, { width: '20%' })
@@ -14,4 +15,8 @@ export function renameGroup (groupId) {
 
 export function openRepository () {
   showPageInModal(openForm, {}, {width: '30%'})
+}
+
+export function createBranch () {
+  showPageInModal(branchForm, {}, {width: '20%'})
 }

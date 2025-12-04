@@ -83,7 +83,7 @@ import TeleportMenu from '@/components/common/TeleportMenu.vue'
 import { useSideBarResize } from '@/composables/use-side-bar-resize.js'
 import SideBarBranches from '@/components/repository-workspace/components/SideBarBranches.vue'
 import SideBarRepositories from '@/components/repository-workspace/components/SideBarRepositories.vue'
-import {addGroup, openRepository, renameGroup} from '@/composables/repositories-manager.js'
+import {addGroup, createBranch, openRepository, renameGroup} from '@/composables/repositories-manager.js'
 import notify from '@/plugins/notify.js'
 import {useRepositoryStore} from "@/stores/repositoryStore.js";
 
@@ -165,12 +165,12 @@ const sidebarEl = ref(null)
 
 const menuActionsMain = [
   {
-    value: 'add_repository',
+    value: 'add-repository',
     label: 'Add Repository...',
     icon: 'fa-solid fa-plus',
   },
   {
-    value: 'add_group',
+    value: 'add-group',
     label: 'Add Group...',
     icon: 'fa-solid fa-folder-plus',
   },
@@ -178,12 +178,12 @@ const menuActionsMain = [
     type: 'separator'
   },
   {
-    value: 'expand_all',
+    value: 'expand-all',
     label: 'Expand All',
     icon: 'fa-solid fa-up-right-and-down-left-from-center',
   },
   {
-    value: 'collapse_all',
+    value: 'collapse-all',
     label: 'Collapse All',
     icon: 'fa-solid fa-down-left-and-up-right-to-center',
   }
@@ -191,7 +191,7 @@ const menuActionsMain = [
 
 const menuActionsBranch = [
   {
-    value: 'add_branch',
+    value: 'add-branch',
     label: 'Add new branch...',
     icon: 'fa-solid fa-plus',
   },
@@ -199,12 +199,12 @@ const menuActionsBranch = [
     type: 'separator'
   },
   {
-    value: 'expand_all',
+    value: 'expand-all',
     label: 'Expand All',
     icon: 'fa-solid fa-up-right-and-down-left-from-center',
   },
   {
-    value: 'collapse_all',
+    value: 'collapse-all',
     label: 'Collapse All',
     icon: 'fa-solid fa-down-left-and-up-right-to-center',
   }
@@ -271,27 +271,30 @@ const handleMenuAction = (action) => {
     closeAllMenus()
     if (activeMenuType.value === 'branch') {
       switch (action) {
-        case 'expand_all':
+        case 'add-branch':
+          createBranch()
+          break
+        case 'expand-all':
           sidebarBranchesRef.value?.callExpandAll()
           break
-        case 'collapse_all':
+        case 'collapse-all':
           sidebarBranchesRef.value?.callCollapseAll()
           break
         }
     }
     else {
       switch (action) {
-        case 'add_repository':
+        case 'add-repository':
           openRepository()
           break
-        case 'add_group':
+        case 'add-group':
           addGroup()
           break
-        case 'expand_all':
+        case 'expand-all':
           groups.value.forEach(g => g.collapsed = false)
           saveGroups(groups.value)
           break
-        case 'collapse_all':
+        case 'collapse-all':
           groups.value.forEach(g => g.collapsed = true)
           saveGroups(groups.value)
           break

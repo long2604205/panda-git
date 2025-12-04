@@ -18,7 +18,6 @@
 </template>
 
 <script setup>
-import { defineEmits } from 'vue';
 
 // Props
 defineProps({
