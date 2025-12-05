@@ -26,7 +26,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, defineExpose } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 
 const props = defineProps({
   id: { type: String, default: 'base-form-modal' },
