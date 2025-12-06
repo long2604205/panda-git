@@ -76,6 +76,57 @@
 
       <div class="menu-separator"></div>
 
+            <!-- Open Multi-level -->
+      <div class="ctx-item">
+        <div class="ctx-left">
+          <i class="fa-solid fa-up-down-left-right ctx-icon"></i>
+          <span>Move to</span>
+        </div>
+        <i class="fa-solid fa-chevron-right text-[10px]"></i>
+
+        <!-- Sub Menu -->
+        <div class="ctx-submenu">
+          <div class="ctx-item">
+            <div class="ctx-left">
+              <i class="fa-solid fa-code-branch ctx-icon"></i>
+              <span>Group</span>
+            </div>
+            <i class="fa-solid fa-chevron-right text-[10px]"></i>
+
+            <!-- Sub Menu -->
+            <div class="ctx-submenu">
+              <div class="ctx-item" @click="handleAction('git-pull')">
+                <div class="ctx-left">
+                  <sublime-text-icon size="5" class="ctx-icon"/>
+                  <span>Sublime Text</span>
+                </div>
+              </div>
+              <div class="ctx-item" @click="handleAction('git-pull')">
+                <div class="ctx-left">
+                  <visual-studio-code-icon class="ctx-icon"/>
+                  <span>Visual Studio Code</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="ctx-item" @click="handleAction('open-in-explorer')">
+            <div class="ctx-left">
+              <i class="fa-solid fa-folder-tree ctx-icon"/>
+              <span>No group</span>
+            </div>
+          </div>
+          <div class="menu-separator"></div>
+          <div class="ctx-item" @click="handleAction('open-in-explorer')">
+            <div class="ctx-left">
+              <i class="fa-solid fa-folder-tree ctx-icon"/>
+              <span>New group</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="menu-separator"></div>
+
       <!-- Copy Path -->
       <div class="ctx-item" @click="handleAction('copy-path')">
         <div class="ctx-left">

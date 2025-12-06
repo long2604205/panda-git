@@ -67,7 +67,6 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import mitter from '@/plugins/mitter.js'
 import {
   deleteGroup,
-  findRepos,
   loadGroups,
   loadRepos,
   saveGroups,
