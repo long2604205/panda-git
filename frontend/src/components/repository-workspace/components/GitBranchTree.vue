@@ -20,6 +20,7 @@
       :style="{ paddingLeft: `${5 + (depth * 16)}px` }"
       @click.stop="handleClick"
       @dblclick.stop="handleToggleIcon"
+      @contextmenu.prevent="handleRightClick"
     >
       <!-- 1. Chevron -->
       <span class="w-5 flex justify-center items-center cursor-pointer hover:text-white shrink-0" @click.stop="handleToggleIcon">
@@ -86,7 +87,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['select']);
+const emit = defineEmits(['select', 'branch-context']);
 
 // ==========================================
 // 1. LOGIC DÀNH CHO ROOT (Quản lý State)
@@ -119,6 +120,12 @@ if (isRoot.value) {
     _expandedPaths.value = new Set(_expandedPaths.value);
   };
   provide('rootHandleToggle', handleToggle);
+
+  const handleContextMenu = (event, path) => {
+    // Emit sự kiện kèm theo native event (để lấy toạ độ x,y) và path của branch
+    emit('branch-context', { event, path });
+  };
+  provide('rootHandleContextMenu', handleContextMenu);
 }
 
 // Inject state (Nhận lại từ chính mình nếu là Root, hoặc từ cha nếu là Node con)
@@ -127,6 +134,7 @@ const expandedPaths = inject('rootExpandedPaths');
 const selectedPath = inject('rootSelectedPath');
 const onSelect = inject('rootHandleSelect');
 const onToggle = inject('rootHandleToggle');
+
 
 // ==========================================
 // 2. XỬ LÝ DATA & PUBLIC METHODS (Cho cha gọi)
@@ -242,6 +250,16 @@ const handleClick = () => {
 const handleToggleIcon = (e) => {
   e.stopPropagation();
   if (hasChildren.value) onToggle(props.node.path);
+};
+
+const onContextMenu = inject('rootHandleContextMenu');
+
+const handleRightClick = (event) => {
+  // Chỉ hiện menu nếu đây là branch cụ thể (có fullPath), bỏ qua folder
+  // Nếu muốn menu cho cả folder thì bỏ check props.node.fullPath
+  if (props.node.fullPath && onContextMenu) {
+    onContextMenu(event, props.node.fullPath);
+  }
 };
 
 </script>

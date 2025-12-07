@@ -1,7 +1,7 @@
 <template>
     <Teleport to="body">
         <div class="toast-container">
-            <TransitionGroup name="toast" class="toast-list">
+            <TransitionGroup name="toast" class="toast-list" tag="div">
                 <div v-for="toast in toasts" :key="toast.id" :class="['toast', toast.type]">
                     <i :class="getIcon(toast.type)"></i>
 

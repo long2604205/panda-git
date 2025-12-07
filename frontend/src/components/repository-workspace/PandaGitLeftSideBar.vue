@@ -35,6 +35,7 @@
         :is-menu-open="isMenuOpen && activeMenuType === 'branch'"
         @select-branch="onBranchSelect"
         @open-menu="(e) => toggleMenu(e, 'branch')"
+        @branch-context="openBranchMenu"
       />
     </div>
   </aside>
@@ -46,6 +47,7 @@
 
   <group-context-menu ref="groupContextMenuRef" @action-click="handleGroupAction" />
   <repository-context-menu ref="repositoryContextMenuRef" @action-click="handleRepositoryAction" />
+  <branch-context-menu ref="branchContextMenuRef" @action-click="handleBranchAction" />
 
   <teleport-menu
     :is-open="isMenuOpen"
@@ -85,6 +87,7 @@ import SideBarRepositories from '@/components/repository-workspace/components/Si
 import {addGroup, createBranch, openRepository, renameGroup} from '@/composables/repositories-manager.js'
 import notify from '@/plugins/notify.js'
 import {useRepositoryStore} from "@/stores/repositoryStore.js";
+import BranchContextMenu from '@/components/repository-workspace/components/BranchContextMenu.vue'
 
 // --- 1. RESIZE LOGIC (Từ Composable) ---
 const { paneHeight, sidebarWidth, startRowResize, startColResize } = useSideBarResize()
@@ -157,6 +160,7 @@ const onBranchSelect = (path) => {
 // --- 5. MENUS (Context & Teleport) ---
 const groupContextMenuRef = ref(null)
 const repositoryContextMenuRef = ref(null)
+const branchContextMenuRef = ref(null)
 const isMenuOpen = ref(false)
 const menuStyle = ref({ top: '0px', left: '0px' })
 const activeMenuType = ref('main')
@@ -221,6 +225,10 @@ function openRepositoryMenu(event, repo) {
   closeAllMenus()
   repositoryContextMenuRef.value.open(event, repo)
 }
+function openBranchMenu(event, branch) {
+  closeAllMenus()
+  branchContextMenuRef.value.open(event, branch)
+}
 function toggleMenu(event, type) {
     const isThisMenuOpen = isMenuOpen.value && activeMenuType.value === type;
     closeAllMenus();
@@ -238,6 +246,7 @@ function closeAllMenus() {
   isMenuOpen.value = false
   groupContextMenuRef.value?.close?.()
   repositoryContextMenuRef.value?.close?.()
+  branchContextMenuRef.value?.close?.()
 }
 const handleGlobalClick = () => closeAllMenus()
 const handleGroupAction = ({ action, data }) => {
@@ -299,6 +308,10 @@ const handleMenuAction = (action) => {
           break
       }
     }
+}
+
+const handleBranchAction = ({ action, data }) => {
+  console.log(action, data)
 }
 
 async function handleDeleteGroup(groupId) {
