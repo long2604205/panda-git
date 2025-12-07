@@ -36,6 +36,12 @@
               <span>Explorer</span>
             </div>
           </div>
+          <div class="ctx-item" @click="handleAction('open-in-terminal')">
+            <div class="ctx-left">
+              <terminal-icon size="5" class="ctx-icon"/>
+              <span>Terminal</span>
+            </div>
+          </div>
           <div class="ctx-item">
             <div class="ctx-left">
               <i class="fa-solid fa-code-branch ctx-icon"></i>
@@ -63,12 +69,6 @@
                   <span>Visual Studio Code</span>
                 </div>
               </div>
-            </div>
-          </div>
-          <div class="ctx-item" @click="handleAction('open-in-terminal')">
-            <div class="ctx-left">
-              <terminal-icon size="5" class="ctx-icon"/>
-              <span>Terminal</span>
             </div>
           </div>
         </div>
@@ -210,7 +210,7 @@
       >
         <div class="ctx-left">
           <i class="fa-solid fa-trash-can ctx-icon"/>
-          <span>Remove</span>
+          <span>Delete</span>
         </div>
         <span class="ctx-shortcut">Del</span>
       </div>
@@ -229,7 +229,7 @@ const isVisible = ref(false);
 const x = ref(0);
 const y = ref(0);
 const menuRef = ref(null);
-const targetData = ref(null); // Lưu dữ liệu của item được click chuột phải (nếu cần)
+const targetData = ref(null);
 const isActiveRepo = ref(false)
 
 // --- EMITS ---

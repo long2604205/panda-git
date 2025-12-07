@@ -273,6 +273,9 @@ const handleRepositoryAction = ({ action, data }) => {
     case 'open-in-explorer':
       window.electronAPI.openInExplorer(data.path)
       break
+    case 'copy-path':
+      navigator.clipboard.writeText(data.path)
+      break
   }
 }
 const handleMenuAction = (action) => {
