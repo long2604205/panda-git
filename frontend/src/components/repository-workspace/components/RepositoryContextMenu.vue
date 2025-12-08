@@ -159,18 +159,6 @@
               <span>Push</span>
             </div>
           </div>
-          <div class="menu-separator"></div>
-          <div class="ctx-item">
-            <div class="ctx-left">
-              <i class="fa-solid fa-flask ctx-icon"></i>
-              <span>Experimental</span>
-            </div>
-            <i class="fa-solid fa-chevron-right text-[10px]"></i>
-            <!-- Level 3 -->
-            <div class="ctx-submenu">
-              <div class="ctx-item" @click="handleAction('gc-prune')">GC Prune</div>
-            </div>
-          </div>
         </div>
       </div>
 

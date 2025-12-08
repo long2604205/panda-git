@@ -304,6 +304,12 @@ const handleRepositoryAction = ({ action, data }) => {
     case 'refresh-repository':
       handleRefreshRepository(data)
       break
+    case 'fetch-repository':
+      handleFetchRepository(data)
+      break
+    case 'git-pull':
+      handlePullRepository(data)
+      break
   }
 }
 
@@ -315,6 +321,30 @@ async function handleRefreshRepository(repo) {
 
   if (res.success) notify.success("Refresh successfully")
   else notify.error("Refresh failed: " + res.error)
+}
+
+async function handlePullRepository(repo) {
+  try {
+    const loadingId = notify.loading("Pulling...")
+    const data = { repo_path: repo.path }
+    await commonApi.pull(data)
+
+    notify.remove(loadingId)
+    notify.info('All files are up to date')
+  } catch (error) {
+    notify.error(`Pull failed: ${error.message}`)
+    console.error(error)
+  }
+}
+
+async function handleFetchRepository(repo) {
+  const loadingId = notify.loading("Fetching...")
+  const res = await selectRepo(repo)
+
+  notify.remove(loadingId)
+
+  if (res.success) notify.success("Fetch successfully")
+  else notify.error("Fetch failed: " + res.error)
 }
 
 async function handleOpenRepository(repo) {
