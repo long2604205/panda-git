@@ -84,7 +84,13 @@ import TeleportMenu from '@/components/common/TeleportMenu.vue'
 import { useSideBarResize } from '@/composables/use-side-bar-resize.js'
 import SideBarBranches from '@/components/repository-workspace/components/SideBarBranches.vue'
 import SideBarRepositories from '@/components/repository-workspace/components/SideBarRepositories.vue'
-import {addGroup, createBranch, openRepository, renameGroup} from '@/composables/repositories-manager.js'
+import {
+  addGroup,
+  createBranch,
+  openRepository,
+  renameGroup,
+  renameRepository
+} from '@/composables/repositories-manager.js'
 import notify from '@/plugins/notify.js'
 import {useRepositoryStore} from "@/stores/repositoryStore.js";
 import BranchContextMenu from '@/components/repository-workspace/components/BranchContextMenu.vue'
@@ -103,7 +109,7 @@ const repositoriesStore = useRepositoryStore()
 
 // --- 3. REPOSITORY ACTIONS ---
 async function selectRepo(repo) {
-  const loadingId = notify.loading('Đang tải dữ liệu...')
+  // const loadingId = notify.loading('Đang tải dữ liệu...')
   try {
     const response = await commonApi.open({ repo_path: repo.path })
     const result = response.data
@@ -125,11 +131,13 @@ async function selectRepo(repo) {
     selectedRepo.value = result
     repositoriesStore.setActiveRepo(result)
     await saveRepos(repositories.value)
-    notify.remove(loadingId)
-    notify.info('Active successfully')
+    return { success: true, data: result }
+    // notify.remove(loadingId)
+    // notify.info('Active successfully')
   } catch (error) {
-    notify.remove(loadingId)
-    notify.error(`Failed: ${error.message}`)
+    return { success: false, error }
+    // notify.remove(loadingId)
+    // notify.error(`Failed: ${error.message}`)
   }
 }
 
@@ -263,9 +271,14 @@ const handleGroupAction = ({ action, data }) => {
   }
 }
 const handleRepositoryAction = ({ action, data }) => {
+  let context
+  if (action.includes('move-repository')) {
+    context = splitMoveToGroup(action)
+    action = context.action
+  }
   switch (action) {
     case 'open-repository':
-      selectRepo(data)
+      handleActiveRepository(data)
       break
     case 'open-in-terminal':
       window.electronAPI.openTerminal(data.path)
@@ -276,8 +289,61 @@ const handleRepositoryAction = ({ action, data }) => {
     case 'copy-path':
       navigator.clipboard.writeText(data.path)
       break
+    case 'move-repository':
+      changeRepoGroup(data, context)
+      break
+    case 'move-into-no-group':
+      changeRepoGroup(data)
+      break
+    case 'rename-repository':
+      renameRepository(data)
+      break
+    case 'delete-repository':
+      handleDeleteRepository(data.path)
+      break
+    case 'refresh-repository':
+      handleRefreshRepository(data)
+      break
   }
 }
+
+async function handleRefreshRepository(repo) {
+  const loadingId = notify.loading("Refreshing...")
+  const res = await selectRepo(repo)
+
+  notify.remove(loadingId)
+
+  if (res.success) notify.success("Refresh successfully")
+  else notify.error("Refresh failed: " + res.error)
+}
+
+async function handleOpenRepository(repo) {
+  const loadingId = notify.loading("Opening...")
+  const res = await selectRepo(repo)
+
+  notify.remove(loadingId)
+  if (res.success) notify.success("Open successfully")
+  else notify.error("Open failed: " + res.error)
+}
+
+
+async function handleDeleteRepository(repoPath) {
+  const index = repositories.value.findIndex(r => r.path === repoPath);
+  if (index !== -1) {
+    repositories.value.splice(index, 1);
+    await saveRepos(repositories.value);
+  }
+}
+
+async function changeRepoGroup(data, context = { group_id: null }) {
+  const index = repositories.value.findIndex(r => r.path === data.path);
+  repositories.value[index] = {
+    ...repositories.value[index],
+    groupId: context.group_id
+  };
+  await saveRepos(repositories.value);
+}
+
 const handleMenuAction = (action) => {
     closeAllMenus()
     if (activeMenuType.value === 'branch') {
@@ -322,6 +388,30 @@ async function handleDeleteGroup(groupId) {
   groups.value = newGroups;
   repositories.value = newRepos;
 }
+
+function splitMoveToGroup(str) {
+  const SEP = "-group-";
+  const idx = str.indexOf(SEP);
+
+  if (idx === -1) {
+    return { action: str, group_id: null };
+  }
+
+  return {
+    action: str.slice(0, idx),
+    group_id: str.slice(idx + 1)
+  };
+}
+
+async function handleActiveRepository(repo) {
+  const loadingId = notify.loading("Active...")
+  const res = await selectRepo(repo)
+
+  notify.remove(loadingId)
+  if (res.success) notify.success("Active successfully")
+  else notify.error("Active failed: " + res.error)
+}
+
 // --- 6. LIFECYCLE ---
 onMounted(async () => {
   if (sidebarEl.value) {
@@ -334,7 +424,7 @@ onMounted(async () => {
   groups.value = await loadGroups()
   repositories.value = await loadRepos()
   const activeRepo = repositories.value.find((r) => r.active)
-  if(activeRepo) await selectRepo(activeRepo)
+  if(activeRepo) await handleOpenRepository(activeRepo)
 
   mitter.on('add-group', (g) => { groups.value.push(g); saveGroups(groups.value) })
   mitter.on('rename-group', (g) => {
@@ -345,7 +435,19 @@ onMounted(async () => {
   })
   mitter.on('open-repository', (r) => {
       const newRepo = reactive({ groupId: null, ...r })
-      selectRepo(newRepo)
+      handleOpenRepository(newRepo)
+  })
+
+  mitter.on('repository-renamed', (r) => {
+    const index = repositories.value.findIndex((repo) => repo.path === r.oldPath)
+    if (index !== -1) {
+      repositories.value[index] = {
+        ...repositories.value[index],
+        path: r.path,
+        name: r.name
+      }
+    }
+    saveRepos(repositories.value)
   })
   window.addEventListener('click', handleGlobalClick)
 })
@@ -353,6 +455,7 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   mitter.off('add-group')
   mitter.off('open-repository')
+  mitter.off('repository-renamed')
   window.removeEventListener('click', handleGlobalClick)
 })
 </script>

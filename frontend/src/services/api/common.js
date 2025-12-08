@@ -6,6 +6,7 @@ const commonApi = {
   pull: (data) => api.post('/pull', data),
   push: (data) => api.post('/push', data),
   checkout: (data) => api.post('/checkout-branch', data),
+  rename: (data) => api.post('/rename', data),
 };
 
 export default commonApi;

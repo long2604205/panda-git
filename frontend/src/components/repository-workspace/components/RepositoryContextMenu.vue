@@ -95,21 +95,15 @@
 
             <!-- Sub Menu -->
             <div class="ctx-submenu">
-              <div class="ctx-item" @click="handleAction('git-pull')">
+              <div v-for="group in groups" :key="group.id" class="ctx-item" :class="{'disabled': targetData.groupId === group.id}" @click="handleAction(`move-repository-${group.id}`)">
                 <div class="ctx-left">
-                  <sublime-text-icon size="5" class="ctx-icon"/>
-                  <span>Sublime Text</span>
-                </div>
-              </div>
-              <div class="ctx-item" @click="handleAction('git-pull')">
-                <div class="ctx-left">
-                  <visual-studio-code-icon class="ctx-icon"/>
-                  <span>Visual Studio Code</span>
+                  <i class="fa-solid fa-folder-tree ctx-icon"/>
+                  <span>{{ group.name }}</span>
                 </div>
               </div>
             </div>
           </div>
-          <div class="ctx-item" @click="handleAction('open-in-explorer')">
+          <div :class="{'disabled': targetData.groupId === null}" class="ctx-item" @click="handleAction('move-into-no-group')">
             <div class="ctx-left">
               <i class="fa-solid fa-folder-tree ctx-icon"/>
               <span>No group</span>
@@ -128,7 +122,7 @@
       <div class="menu-separator"></div>
 
       <!-- Copy Path -->
-      <div class="ctx-item" @click="handleAction('copy-path')">
+      <div :class="{disabled: !isActiveRepo}" class="ctx-item" @click="handleAction('refresh-repository')">
         <div class="ctx-left">
           <i class="fa-solid fa-rotate ctx-icon"/>
           <span>Refresh</span>
@@ -192,7 +186,7 @@
       </div>
 
       <!-- Rename -->
-      <div class="ctx-item" @click="handleAction('rename')">
+      <div class="ctx-item" @click="handleAction('rename-repository')">
         <div class="ctx-left">
           <i class="fa-solid fa-pencil ctx-icon"/>
           <span>Rename...</span>
@@ -206,7 +200,7 @@
       <div
         :class="{ disabled: isActiveRepo }"
         class="ctx-item"
-        @click="handleAction('remove-repo')"
+        @click="handleAction('delete-repository')"
       >
         <div class="ctx-left">
           <i class="fa-solid fa-trash-can ctx-icon"/>
@@ -224,6 +218,7 @@ import TerminalIcon from '@/components/icons/TerminalIcon.vue'
 import PhpStormIcon from '@/components/icons/PhpStormIcon.vue'
 import VisualStudioCodeIcon from '@/components/icons/VisualStudioCodeIcon.vue'
 import SublimeTextIcon from '@/components/icons/SublimeTextIcon.vue'
+import {loadGroups} from "@/plugins/PandaDB.js";
 // --- STATE ---
 const isVisible = ref(false);
 const x = ref(0);
@@ -231,6 +226,7 @@ const y = ref(0);
 const menuRef = ref(null);
 const targetData = ref(null);
 const isActiveRepo = ref(false)
+const groups = ref([])
 
 // --- EMITS ---
 // Bắn sự kiện ra ngoài component cha khi chọn một hành động
@@ -251,6 +247,8 @@ const open = async (event, data = null) => {
   isVisible.value = true;
 
   isActiveRepo.value = data?.active ?? false
+
+  groups.value = await loadGroups()
 
   // Tính toán vị trí chuột
   x.value = event.pageX;
@@ -297,10 +295,10 @@ const handleGlobalClick = () => {
   }
 };
 
-onMounted(() => {
+onMounted(async () => {
   window.addEventListener('click', handleGlobalClick);
   window.addEventListener('resize', close);
-  window.addEventListener('scroll', close, true); // Đóng khi scroll
+  window.addEventListener('scroll', close, true);
 });
 
 onUnmounted(() => {
