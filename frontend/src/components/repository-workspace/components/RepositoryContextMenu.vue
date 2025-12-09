@@ -132,7 +132,7 @@
 
       <div class="menu-separator"></div>
       <!-- Multi-level Item -->
-      <div class="ctx-item">
+      <div class="ctx-item" :class="{disabled: !isActiveRepo}">
         <div class="ctx-left">
           <i class="fa-solid fa-code-branch ctx-icon"></i>
           <span>Git</span>
