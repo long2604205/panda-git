@@ -33,7 +33,7 @@
 <script setup>
 defineProps({
   selectedBranch: String,
-});
+})
 
-defineEmits(["change-theme"]);
+defineEmits(["change-theme"])
 </script>

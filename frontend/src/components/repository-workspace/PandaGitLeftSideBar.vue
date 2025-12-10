@@ -92,7 +92,7 @@ import {
   renameRepository
 } from '@/composables/repositories-manager.js'
 import notify from '@/plugins/notify.js'
-import {useRepositoryStore} from "@/stores/repositoryStore.js";
+import {useRepositoryStore} from "@/stores/repositoryStore.js"
 import BranchContextMenu from '@/components/repository-workspace/components/BranchContextMenu.vue'
 
 // --- 1. RESIZE LOGIC (Từ Composable) ---
@@ -161,9 +161,9 @@ async function onDropRepo(group) {
 
 // --- 4. BRANCH ACTIONS ---
 const onBranchSelect = (path) => {
-  console.log('Selected Branch:', path);
+  console.log('Selected Branch:', path)
   // Logic checkout branch...
-};
+}
 
 // --- 5. MENUS (Context & Teleport) ---
 const groupContextMenuRef = ref(null)
@@ -238,8 +238,8 @@ function openBranchMenu(event, branch) {
   branchContextMenuRef.value.open(event, branch)
 }
 function toggleMenu(event, type) {
-    const isThisMenuOpen = isMenuOpen.value && activeMenuType.value === type;
-    closeAllMenus();
+    const isThisMenuOpen = isMenuOpen.value && activeMenuType.value === type
+    closeAllMenus()
     if (!isThisMenuOpen) {
         activeMenuType.value = type
         const rect = event.currentTarget.getBoundingClientRect()
@@ -247,7 +247,7 @@ function toggleMenu(event, type) {
             top: `${rect.top}px`,
             left: `${rect.right + 1}px`
         }
-        isMenuOpen.value = true;
+        isMenuOpen.value = true
     }
 }
 function closeAllMenus() {
@@ -364,20 +364,20 @@ async function handleOpenRepository(repo) {
 
 
 async function handleDeleteRepository(repoPath) {
-  const index = repositories.value.findIndex(r => r.path === repoPath);
+  const index = repositories.value.findIndex(r => r.path === repoPath)
   if (index !== -1) {
-    repositories.value.splice(index, 1);
-    await saveRepos(repositories.value);
+    repositories.value.splice(index, 1)
+    await saveRepos(repositories.value)
   }
 }
 
 async function changeRepoGroup(data, context = { group_id: null }) {
-  const index = repositories.value.findIndex(r => r.path === data.path);
+  const index = repositories.value.findIndex(r => r.path === data.path)
   repositories.value[index] = {
     ...repositories.value[index],
     groupId: context.group_id
-  };
-  await saveRepos(repositories.value);
+  }
+  await saveRepos(repositories.value)
 }
 
 const handleMenuAction = (action) => {
@@ -420,23 +420,23 @@ const handleBranchAction = ({ action, data }) => {
 }
 
 async function handleDeleteGroup(groupId) {
-  const { groups: newGroups, repos: newRepos } = await deleteGroup(groupId);
-  groups.value = newGroups;
-  repositories.value = newRepos;
+  const { groups: newGroups, repos: newRepos } = await deleteGroup(groupId)
+  groups.value = newGroups
+  repositories.value = newRepos
 }
 
 function splitMoveToGroup(str) {
-  const SEP = "-group-";
-  const idx = str.indexOf(SEP);
+  const SEP = "-group-"
+  const idx = str.indexOf(SEP)
 
   if (idx === -1) {
-    return { action: str, group_id: null };
+    return { action: str, group_id: null }
   }
 
   return {
     action: str.slice(0, idx),
     group_id: str.slice(idx + 1)
-  };
+  }
 }
 
 async function handleActiveRepository(repo) {
@@ -462,7 +462,10 @@ onMounted(async () => {
   const activeRepo = repositories.value.find((r) => r.active)
   if(activeRepo) await handleOpenRepository(activeRepo)
 
-  mitter.on('add-group', (g) => { groups.value.push(g); saveGroups(groups.value) })
+  mitter.on('add-group', (g) => {
+    groups.value.push(g)
+    saveGroups(groups.value)
+  })
   mitter.on('rename-group', (g) => {
     const index = groups.value.findIndex((group) => group.id === g.id)
     if (index !== -1) {
