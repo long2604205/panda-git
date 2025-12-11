@@ -19,8 +19,18 @@
       </div>
     </template>
     <template #footer>
-      <button class="btn btn-secondary" @click="close">Close</button>
-      <button class="btn btn-primary" @click="save">Save</button>
+      <button
+        class="btn btn-secondary"
+        @click="close"
+      >
+        <span>Close</span>
+      </button>
+      <button
+        class="btn btn-primary"
+        @click="save"
+      >
+        <span>Save</span>
+      </button>
     </template>
   </base-form>
 </template>
@@ -29,9 +39,9 @@
 import {onMounted, ref} from 'vue'
 import BaseForm from '@/components/common/BaseForm.vue'
 import mitter from '@/plugins/mitter.js'
-import {findRepos, saveRepos} from "@/plugins/PandaDB.js";
-import notify from "@/plugins/notify.js";
-import commonApi from "@/services/api/common.js";
+import {findRepos} from '@/plugins/PandaDB.js'
+import notify from '@/plugins/notify.js'
+import commonApi from '@/services/api/common.js'
 
 const props = defineProps({
   params: {

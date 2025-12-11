@@ -39,15 +39,12 @@ const emit = defineEmits(['update:modelValue', 'close'])
 
 const overlay = ref(null)
 
-// mở modal
 const open = () => {
   const el = overlay.value
   if (!el) return
 
-  // reset trạng thái trước
   el.classList.remove('open')
 
-  // đợi browser render xong frame đầu
   requestAnimationFrame(() => {
     el.classList.add('open')
   })
@@ -57,7 +54,6 @@ const open = () => {
   }, 200)
 }
 
-// đóng modal
 const close = () => {
   overlay.value?.classList.remove('open')
   emit('update:modelValue', false)
@@ -68,7 +64,6 @@ onMounted(() => {
   if (props.modelValue) open()
 })
 
-// watch v-model để mở / tắt
 watch(
   () => props.modelValue,
   (val) => {
@@ -76,7 +71,6 @@ watch(
   }
 )
 
-// để form cha gọi openForm.value.close()
 defineExpose({ open, close })
 </script>
 

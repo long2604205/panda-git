@@ -19,8 +19,18 @@
       </div>
     </template>
     <template #footer>
-      <button class="btn btn-secondary" @click="close">Close</button>
-      <button class="btn btn-primary" @click="save">Save</button>
+      <button
+        class="btn btn-secondary"
+        @click="close"
+      >
+        <span>Close</span>
+      </button>
+      <button
+        class="btn btn-primary"
+        @click="save"
+      >
+        <span>Save</span>
+      </button>
     </template>
   </base-form>
 </template>
