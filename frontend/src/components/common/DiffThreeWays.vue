@@ -918,21 +918,32 @@ onMounted(() => {
 
   // Sync Scrolling
   let isSyncing = false;
-  const sync = (src) => {
-    if (!isSyncing) {
-      isSyncing = true;
-      const t = src.getScrollTop();
-      [editorLeft, editorCenter, editorRight].forEach(
-        (e) => e !== src && e.setScrollTop(t)
-      );
-      drawLayerElements();
-      updateActionButtons();
-      isSyncing = false;
-    }
-  };
-  [editorLeft, editorCenter, editorRight].forEach((e) =>
-    e.onDidScrollChange(() => sync(e))
-  );
+    const sync = (src) => {
+      if (!isSyncing) {
+        isSyncing = true;
+
+        // 1. Lấy vị trí cả dọc (Top) và ngang (Left)
+        const top = src.getScrollTop();
+        const left = src.getScrollLeft();
+
+        [editorLeft, editorCenter, editorRight].forEach((e) => {
+          if (e !== src) {
+            // 2. Set lại cho các editor khác
+            e.setScrollTop(top);
+            e.setScrollLeft(left);
+          }
+        });
+
+        drawLayerElements();
+        updateActionButtons();
+        isSyncing = false;
+      }
+    };
+
+    // Đăng ký sự kiện
+    [editorLeft, editorCenter, editorRight].forEach((e) =>
+      e.onDidScrollChange(() => sync(e))
+    );
 
   // Resize
   resizeObserver = new ResizeObserver(() => {
