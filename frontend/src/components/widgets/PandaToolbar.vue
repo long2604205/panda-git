@@ -77,6 +77,14 @@
             <i class="fa-solid fa-retweet"/>
             <span>Fetch</span>
           </button>
+          <div class="toolbar-divider"/>
+          <button
+            class="control-btn"
+            @click="openConflict"
+          >
+            <i class="fa-solid fa-retweet"/>
+            <span>Conflict</span>
+          </button>
         </div>
       </div>
     </div>
@@ -97,9 +105,11 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, defineAsyncComponent } from 'vue';
 import {useRepositoryStore} from "@/stores/repositoryStore.js";
+import { showPageInModal } from '@/services/modals.js'
 
+const conflictForm = defineAsyncComponent(() => import('@/components/common/DiffThreeWaysForm.vue'))
 const repositoryStore = useRepositoryStore()
 
 const repoInitials = computed(() => {
@@ -141,6 +151,10 @@ const emit = defineEmits([
   'push',
   'open-settings',
 ]);
+
+function openConflict () {
+  showPageInModal(conflictForm, {}, {width: '90%'})
+}
 </script>
 
 <style scoped>
