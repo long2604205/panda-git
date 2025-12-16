@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col h-screen overflow-hidden" :data-theme="theme">
+  <div class="flex flex-col h-screen overflow-hidden" :data-theme="themeStore.theme">
     <panda-navigation/>
     <panda-toolbar
       @fetch="handleFetch"
@@ -8,28 +8,20 @@
       @open-settings="handleOpenSettings"
     />
     <panda-workspace />
-    <panda-footer :selected-branch="selectedBranch" @change-theme="setTheme" />
+    <panda-footer :selected-branch="selectedBranch" @change-theme="themeStore.setTheme" />
   </div>
 </template>
 
 <script setup>
-import { onMounted, ref, watch } from 'vue'
+import {ref} from 'vue'
 import PandaFooter from '@/components/widgets/PandaFooter.vue'
 import PandaWorkspace from '@/components/PandaWorkspace.vue'
 import PandaNavigation from "@/components/widgets/PandaNavigation.vue";
 import PandaToolbar from "@/components/widgets/PandaToolbar.vue";
+import {useThemeStore} from "@/stores/theme.store.js";
 
-const theme = ref('dark')
-function setTheme(t) {
-  theme.value = t
-}
+const themeStore = useThemeStore()
 const selectedBranch = ref('main')
-onMounted(() => {
-  document.documentElement.setAttribute('data-theme', theme.value)
-})
-watch(theme, (newTheme) => {
-  document.documentElement.setAttribute('data-theme', newTheme)
-})
 
 // ==================== EVENT HANDLERS (LOG ONLY) ====================
 const handleFetch = () => {

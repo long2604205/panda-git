@@ -14,21 +14,29 @@
               <button
                 class="control-btn"
                 @click="triggerPrev"
-                :disabled="!diffThreeWays?.canNavNext"
+                :disabled="!diffThreeWayRef?.canNavNext"
               >
                 <i class="fa-solid fa-arrow-up"/>
               </button>
               <button
                 class="control-btn"
-                @click="triggerPrev"
-                :disabled="!diffThreeWays?.canNavPrev"
+                @click="triggerNext"
+                :disabled="!diffThreeWayRef?.canNavPrev"
               >
                 <i class="fa-solid fa-arrow-down"/>
               </button>
+              <div class="toolbar-divider"/>
               <button
                 class="control-btn"
+                @click="triggerAcceptLocal"
               >
-                <i class="fa-solid fa-file-code"/>
+                <i class="fa-solid fa-angles-left"/>
+              </button>
+              <button
+                class="control-btn"
+                @click="triggerAcceptRemote"
+              >
+                <i class="fa-solid fa-angles-right"/>
               </button>
               <div class="toolbar-divider"/>
               <panda-select-option
@@ -60,7 +68,7 @@
         </div>
       </div>
       <diff-three-ways
-        ref="diffThreeWays"
+        ref="diffThreeWayRef"
         :merge-segments="segments"
       />
     </template>
@@ -93,7 +101,7 @@ defineProps({
     default: () => ({})
   }
 })
-const diffThreeWays = ref(null)
+const diffThreeWayRef = ref(null)
 
 const visible = ref(false)
 const openForm = ref(null)
@@ -107,23 +115,22 @@ const save = async () => {
 }
 
 const modeView = ref('all')
-
 // 2. Các hành động của Cha (chỉ đơn giản là gọi hàm của con)
 const triggerNext = () => {
   // "Ê con, chạy hàm goNext đi!"
-  diffThreeWays.value?.goNext();
+  diffThreeWayRef.value?.goNext();
 };
 
 const triggerPrev = () => {
-  diffThreeWays.value?.goPrev();
+  diffThreeWayRef.value?.goPrev();
 };
 
 const triggerAcceptLocal = () => {
-  diffThreeWays.value?.acceptLocal();
+  diffThreeWayRef.value?.acceptLocal();
 };
 
 const triggerAcceptRemote = () => {
-  diffThreeWays.value?.acceptRemote();
+  diffThreeWayRef.value?.acceptRemote();
 };
 
 const segments = [

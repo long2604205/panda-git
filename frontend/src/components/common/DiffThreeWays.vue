@@ -1,62 +1,8 @@
 <template>
   <div
     class="merge-editor-wrapper"
-    :class="currentTheme === 'dark' ? 'dark-theme' : 'light-theme'"
+    :class="themeStore.theme === 'dark' ? 'dark-theme' : 'light-theme'"
   >
-    <div class="toolbar">
-      <div class="flex-center" style="gap: 8px; color: var(--text-color)">
-        <span style="font-weight: bold; font-size: 13px"
-          >Monaco 3-Way Merge Vue (Fixed Nav)</span
-        >
-      </div>
-      <div class="flex-center">
-        <button
-          class="accept-all-btn"
-          @click="acceptAllConflicts('left')"
-          title="Accept all UNRESOLVED conflicts from LEFT"
-        >
-          Accept Local
-        </button>
-        <button
-          class="accept-all-btn"
-          @click="acceptAllConflicts('right')"
-          title="Accept all UNRESOLVED conflicts from RIGHT"
-        >
-          Accept Remote
-        </button>
-
-        <button
-          class="nav-btn"
-          @click="goToChange('prev')"
-          :disabled="!canNavPrev"
-          title="Previous change"
-        >
-          &lt;
-        </button>
-        <button
-          class="nav-btn"
-          @click="goToChange('next')"
-          :disabled="!canNavNext"
-          title="Next change"
-        >
-          &gt;
-        </button>
-
-        <span
-          class="theme-toggle"
-          @click="toggleTheme"
-          title="Toggle Dark/Light Mode"
-        >
-          Chủ đề: {{ currentTheme === "dark" ? "Tối" : "Sáng" }}
-        </span>
-
-        <div class="legend-group">
-          <span style="color: #8e24aa">■ Edit</span>
-          <span style="color: #d32f2f">■ Conflict</span>
-          <span style="color: #1976d2">■ Auto-Merge</span>
-        </div>
-      </div>
-    </div>
 
     <div class="header">
       <div class="header-col flex-1 border-r">Local Changes</div>
@@ -87,7 +33,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, nextTick } from "vue";
+import {ref, onMounted, onBeforeUnmount, nextTick, watch} from "vue";
 // --- IMPORT PACKAGES ---
 import * as monaco from "monaco-editor";
 import DiffMatchPatch from "diff-match-patch";
@@ -98,6 +44,7 @@ import jsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
 import cssWorker from "monaco-editor/esm/vs/language/css/css.worker?worker";
 import htmlWorker from "monaco-editor/esm/vs/language/html/html.worker?worker";
 import tsWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker";
+import {useThemeStore} from "@/stores/theme.store.js";
 
 self.MonacoEnvironment = {
   getWorker(_, label) {
@@ -120,6 +67,15 @@ const props = defineProps({
   },
 });
 
+const themeStore = useThemeStore()
+
+watch(
+  () => themeStore.theme,
+  (t) => {
+    monaco.editor.setTheme(t === 'dark' ? 'vs-dark' : 'vs')
+  },
+  { immediate: true }
+)
 // --- STATE ---
 const currentTheme = ref("light");
 const canNavPrev = ref(false);
@@ -866,7 +822,7 @@ onMounted(() => {
 
   const commonOpts = {
     language: "java",
-    theme: "vs",
+    theme: themeStore.theme === "dark" ? "vs-dark" : "vs",
     scrollBeyondLastLine: false,
     minimap: { enabled: false },
     lineNumbers: "on",
@@ -990,7 +946,6 @@ defineExpose({
 /* CSS Variables Scope */
 .merge-editor-wrapper {
   --bg-body: #ededed;
-  --bg-toolbar: #f2f2f2;
   --border-light: #d1d1d1;
   --border-medium: #c0c0c0;
   --bg-gap: #f0f0f0;
@@ -1018,7 +973,6 @@ defineExpose({
 
 .merge-editor-wrapper.dark-theme {
   --bg-body: #1e1e1e;
-  --bg-toolbar: #2d2d30;
   --border-light: #3c3c3c;
   --border-medium: #4e4e4e;
   --bg-gap: #252526;
@@ -1052,17 +1006,6 @@ defineExpose({
   border-right: 1px solid var(--border-light);
 }
 
-/* Toolbar */
-.toolbar {
-  height: 40px;
-  background-color: var(--bg-toolbar);
-  border-bottom: 1px solid var(--border-light);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 16px;
-  z-index: 30;
-}
 .header {
   height: 28px;
   background-color: var(--bg-header);
