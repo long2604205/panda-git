@@ -1,5 +1,5 @@
 <template>
-  <div class="custom-select-container">
+  <div class="custom-select-container" ref="containerRef">
     <!-- Trigger -->
     <div
       class="custom-select-trigger"
@@ -31,7 +31,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from "vue";
+import {ref, computed, watch, onMounted, onUnmounted} from "vue";
 
 const props = defineProps({
   modelValue: [String, Number, null],
@@ -45,6 +45,8 @@ const props = defineProps({
   /** giá trị mặc định nếu chưa chọn */
   valueDefault: { type: [String, Number, null], default: null }
 });
+// -- REF --
+const containerRef = ref(null);
 
 const emit = defineEmits(["update:modelValue"]);
 
@@ -56,6 +58,16 @@ const choose = (item) => {
   emit("update:modelValue", item[props.value]);
   open.value = false;
 };
+
+// -- CLICK OUTSIDE (Để đóng menu khi click ra ngoài) --
+const handleClickOutside = (event) => {
+  if (containerRef.value && !containerRef.value.contains(event.target)) {
+    open.value = false;
+  }
+};
+
+onMounted(() => { document.addEventListener('click', handleClickOutside); });
+onUnmounted(() => { document.removeEventListener('click', handleClickOutside); });
 
 /** Tự gán valueDefault nếu modelValue chưa có */
 watch(

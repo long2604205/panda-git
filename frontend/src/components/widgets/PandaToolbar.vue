@@ -44,49 +44,29 @@
       <div class="section-separator"/>
 
       <!-- --- 2. ACTIONS --- -->
-      <div class="actions-group">
-        <div class="control-group-transparent">
-          <button
-            class="control-btn"
-            @click="$emit('fetch')"
-          >
-            <i class="fa-solid fa-cloud-arrow-down"/>
-            <span>Clone</span>
-          </button>
-          <div class="toolbar-divider"/>
-          <button
-            class="control-btn"
-            @click="$emit('pull')"
-          >
-            <i class="fa-solid fa-arrow-down-long"/>
-            <span>Pull</span>
-          </button>
-          <div class="toolbar-divider"/>
-          <button
-            class="control-btn"
-            @click="$emit('push')"
-          >
-            <i class="fa-solid fa-arrow-up-long"/>
-            <span>Push</span>
-          </button>
-          <div class="toolbar-divider"/>
-          <button
-            class="control-btn"
-            @click="$emit('fetch')"
-          >
-            <i class="fa-solid fa-retweet"/>
-            <span>Fetch</span>
-          </button>
-          <div class="toolbar-divider"/>
-          <button
-            class="control-btn"
-            @click="openConflict"
-          >
-            <i class="fa-solid fa-retweet"/>
-            <span>Conflict</span>
-          </button>
-        </div>
-      </div>
+      <!-- Main Actions -->
+      <button class="toolbar-btn" title="Fetch from origin">
+        <i class="fa-solid fa-cloud-arrow-down text-[var(--p-text-muted)]"/>
+        <span>Clone</span>
+      </button>
+      <div class="section-separator"/>
+      <button class="toolbar-btn" title="Pull changes">
+        <i class="fa-solid fa-arrow-down text-[#22d3ee]"></i>
+        <span>Pull</span>
+      </button>
+      <button class="toolbar-btn" title="Push changes">
+        <i class="fa-solid fa-arrow-up text-[#34d399]"></i>
+        <span>Push</span>
+      </button>
+      <button class="toolbar-btn" title="Fetch from origin">
+        <i class="fa-solid fa-retweet text-[var(--p-text-muted)]"/>
+        <span>Fetch</span>
+      </button>
+      <div class="section-separator"/>
+      <button class="toolbar-btn" title="Fetch from origin" @click="openConflict">
+        <i class="fa-solid fa-retweet text-[var(--p-text-muted)]"/>
+        <span>Conflict</span>
+      </button>
     </div>
 
     <!-- RIGHT: Tools & Layout -->
@@ -109,7 +89,7 @@ import { computed, defineAsyncComponent } from 'vue';
 import {useRepositoryStore} from "@/stores/repositoryStore.js";
 import { showPageInModal } from '@/services/modals.js'
 
-const conflictForm = defineAsyncComponent(() => import('@/components/common/DiffThreeWaysForm.vue'))
+const conflictForm = defineAsyncComponent(() => import('@/components/common/DiffForm.vue'))
 const repositoryStore = useRepositoryStore()
 
 const repoInitials = computed(() => {
@@ -268,77 +248,6 @@ function openConflict () {
   display: inline-block;
 }
 
-/* --- ACTIONS GROUP --- */
-.actions-group {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.control-group-transparent {
-  display: flex;
-  align-items: center;
-  gap: 0;
-}
-
-.control-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 0 16px;
-  height: 42px;
-  border-radius: 6px;
-  cursor: pointer;
-  color: var(--p-text-muted);
-  transition: all 0.2s;
-  min-width: 64px;
-  position: relative;
-  background: none;
-  border: none;
-}
-
-.control-btn:hover {
-  background-color: var(--p-hover);
-  color: var(--text-color);
-}
-
-.control-btn:active {
-  transform: scale(0.98);
-  background-color: var(--p-selection);
-}
-
-.control-btn i {
-  font-size: 16px;
-  margin-bottom: 2px;
-}
-
-.control-btn span {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-.toolbar-divider {
-  width: 1px;
-  height: 20px;
-  background-color: var(--border-color);
-  margin: 0 4px;
-  opacity: 0.5;
-}
-
-.badge-dot {
-  position: absolute;
-  top: 6px;
-  right: 18px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: var(--accent-color);
-  box-shadow: 0 0 5px var(--accent-color);
-  animation: pulse-glow 2s infinite;
-}
-
 @keyframes pulse-glow {
   0% {
     opacity: 0.6;
@@ -420,4 +329,39 @@ function openConflict () {
   border-left: 1px solid var(--border-color);
   z-index: 10;
 }
+
+/* --- TOOLBAR STYLES (NEW) --- */
+        .toolbar-btn {
+            height: 32px;
+            padding: 0 12px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-color);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        .toolbar-btn:hover {
+            background-color: var(--p-hover);
+        }
+        .toolbar-btn:active {
+            background-color: var(--p-selection);
+            border-color: var(--accent-color);
+        }
+        .toolbar-btn.icon-only {
+            padding: 0;
+            width: 32px;
+            justify-content: center;
+        }
+        .toolbar-btn.disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
+        .toolbar-btn.disabled:hover {
+            background-color: transparent;
+        }
 </style>

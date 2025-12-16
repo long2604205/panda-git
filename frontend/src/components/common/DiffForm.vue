@@ -5,8 +5,64 @@
     title="Merge Conflict"
   >
     <template #content>
-<!--      <draft-merge-conflict :merge-segments="segments"/>-->
-      <diff-three-ways :merge-segments="segments"/>
+      <div class="git-toolbar">
+        <!-- MAIN LEFT GROUP (Repo Info + Actions) -->
+        <div class="toolbar-left">
+          <!-- --- 2. ACTIONS --- -->
+          <div class="actions-group">
+            <div class="control-group-transparent">
+              <button
+                class="control-btn"
+                @click="triggerPrev"
+                :disabled="!diffThreeWays?.canNavNext"
+              >
+                <i class="fa-solid fa-arrow-up"/>
+              </button>
+              <button
+                class="control-btn"
+                @click="triggerPrev"
+                :disabled="!diffThreeWays?.canNavPrev"
+              >
+                <i class="fa-solid fa-arrow-down"/>
+              </button>
+              <button
+                class="control-btn"
+              >
+                <i class="fa-solid fa-file-code"/>
+              </button>
+              <div class="toolbar-divider"/>
+              <panda-select-option
+                style="width: 160px"
+                v-model="modeView"
+                :options="[
+                  { id: 'all', label: 'Side-by-side viewer' },
+                  { id: 'hcm', label: 'Unified viewer' },
+                ]"
+                value="id"
+                text="label"
+                value-default="all"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Tools & Layout -->
+        <div class="toolbar-right">
+          <!-- Tools Group -->
+          <div class="tools-group">
+            <button
+              class="icon-only-btn"
+              @click="$emit('open-settings')"
+            >
+              <i class="fa-solid fa-gear text-sm"/>
+            </button>
+          </div>
+        </div>
+      </div>
+      <diff-three-ways
+        ref="diffThreeWays"
+        :merge-segments="segments"
+      />
     </template>
     <template #footer>
       <button
@@ -28,8 +84,8 @@
 <script setup>
 import {ref} from 'vue'
 import BaseForm from '@/components/common/BaseForm.vue'
-// import DraftMergeConflict from '@/components/common/DraftMergeConflict.vue'
 import DiffThreeWays from '@/components/common/DiffThreeWays.vue'
+import PandaSelectOption from "@/components/common/PandaSelectOption.vue";
 
 defineProps({
   params: {
@@ -37,6 +93,7 @@ defineProps({
     default: () => ({})
   }
 })
+const diffThreeWays = ref(null)
 
 const visible = ref(false)
 const openForm = ref(null)
@@ -48,6 +105,26 @@ const close = () => {
 const save = async () => {
   close()
 }
+
+const modeView = ref('all')
+
+// 2. Các hành động của Cha (chỉ đơn giản là gọi hàm của con)
+const triggerNext = () => {
+  // "Ê con, chạy hàm goNext đi!"
+  diffThreeWays.value?.goNext();
+};
+
+const triggerPrev = () => {
+  diffThreeWays.value?.goPrev();
+};
+
+const triggerAcceptLocal = () => {
+  diffThreeWays.value?.acceptLocal();
+};
+
+const triggerAcceptRemote = () => {
+  diffThreeWays.value?.acceptRemote();
+};
 
 const segments = [
   // ================= HEADER =================
@@ -297,7 +374,11 @@ const segments = [
 
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+:deep(.modal-body) {
+  padding: 0 !important;
+}
+
 .btn {
   padding: 6px 16px;
   border-radius: 4px;
@@ -327,5 +408,176 @@ const segments = [
 .btn-primary:hover {
   filter: brightness(1.1);
   box-shadow: 0 0 10px var(--p-selection);
+}
+</style>
+<style scoped>
+/* --- MAIN TOOLBAR CONTAINER --- */
+.git-toolbar {
+  height: 40px;
+  background-color: var(--bg-header);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  user-select: none;
+  position: relative;
+}
+
+/* --- LEFT SECTION --- */
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  margin-right: auto;
+}
+
+/* --- ACTIONS GROUP --- */
+.actions-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.control-group-transparent {
+  margin-left: 5px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.control-btn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--p-text-muted);
+  transition: all 0.2s;
+  position: relative;
+  background: none;
+  border: none;
+}
+
+.control-btn:hover {
+  background-color: var(--p-hover);
+  color: var(--text-color);
+}
+
+.control-btn:active {
+  transform: scale(0.98);
+  background-color: var(--p-selection);
+}
+
+.control-btn i {
+  font-size: 14px;
+}
+
+.control-btn span {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 20px;
+  background-color: var(--border-color);
+  margin: 0 4px;
+  opacity: 0.5;
+}
+
+.badge-dot {
+  position: absolute;
+  top: 6px;
+  right: 18px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--accent-color);
+  box-shadow: 0 0 5px var(--accent-color);
+  animation: pulse-glow 2s infinite;
+}
+
+@keyframes pulse-glow {
+  0% {
+    opacity: 0.6;
+    box-shadow: 0 0 2px var(--accent-color);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 8px var(--accent-color);
+  }
+  100% {
+    opacity: 0.6;
+    box-shadow: 0 0 2px var(--accent-color);
+  }
+}
+
+.action-spacer {
+  width: 16px;
+}
+
+/* --- RIGHT SECTION --- */
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-left: auto;
+}
+
+.tools-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-only-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  color: var(--p-text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  background: none;
+  border: none;
+}
+
+.icon-only-btn:hover {
+  background-color: var(--p-hover);
+  color: var(--text-color);
+}
+
+.icon-only-btn.active {
+  background-color: var(--p-selection);
+  color: var(--accent-color);
+}
+.tooltip-arrow-box {
+  @apply absolute top-full mt-1 left-1/2 -translate-x-1/2 z-50
+         whitespace-nowrap rounded-md px-3 py-1.5 text-[11px] font-semibold
+         opacity-0 group-hover:opacity-100 transition-all duration-200 ease-out
+         -translate-y-1 group-hover:translate-y-0 pointer-events-none;
+
+  background-color: var(--bg-header);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.tooltip-arrow-box::before {
+  content: "";
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 9px;
+  height: 9px;
+  background-color: var(--bg-header);
+  border-top: 1px solid var(--border-color);
+  border-left: 1px solid var(--border-color);
+  z-index: 10;
 }
 </style>

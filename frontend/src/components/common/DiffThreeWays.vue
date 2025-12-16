@@ -974,6 +974,16 @@ onBeforeUnmount(() => {
   if (editorRight) editorRight.dispose();
   if (resizeObserver) resizeObserver.disconnect();
 });
+
+defineExpose({
+  goNext: () => goToChange('next'),
+  goPrev: () => goToChange('prev'),
+  acceptLocal: () => acceptAllConflicts('left'),
+  acceptRemote: () => acceptAllConflicts('right'),
+  // (Optional) Expose biến state để Cha biết đường disable nút
+  canNavNext,
+  canNavPrev
+});
 </script>
 
 <style scoped>
