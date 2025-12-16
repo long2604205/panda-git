@@ -1,6 +1,9 @@
 <template>
-  <div class="flex flex-col h-screen overflow-hidden" :data-theme="themeStore.theme">
-    <panda-navigation/>
+  <div
+    class="flex flex-col h-screen overflow-hidden"
+    :data-theme="themeStore.theme"
+  >
+    <panda-navigation />
     <panda-toolbar
       @fetch="handleFetch"
       @pull="handlePull"
@@ -8,37 +11,35 @@
       @open-settings="handleOpenSettings"
     />
     <panda-workspace />
-    <panda-footer :selected-branch="selectedBranch" @change-theme="themeStore.setTheme" />
+    <panda-footer />
   </div>
 </template>
 
 <script setup>
-import {ref} from 'vue'
 import PandaFooter from '@/components/widgets/PandaFooter.vue'
 import PandaWorkspace from '@/components/PandaWorkspace.vue'
-import PandaNavigation from "@/components/widgets/PandaNavigation.vue";
-import PandaToolbar from "@/components/widgets/PandaToolbar.vue";
-import {useThemeStore} from "@/stores/theme.store.js";
+import PandaNavigation from '@/components/widgets/PandaNavigation.vue'
+import PandaToolbar from '@/components/widgets/PandaToolbar.vue'
+import {useThemeStore} from '@/stores/theme.store.js'
 
 const themeStore = useThemeStore()
-const selectedBranch = ref('main')
 
 // ==================== EVENT HANDLERS (LOG ONLY) ====================
 const handleFetch = () => {
-  console.log('🔄 FETCH: Fetching from remote...');
-};
+  console.log('🔄 FETCH: Fetching from remote...')
+}
 
 const handlePull = () => {
-  console.log('⬇️ PULL: Pulling changes from remote...');
-};
+  console.log('⬇️ PULL: Pulling changes from remote...')
+}
 
 const handlePush = () => {
-  console.log('⬆️ PUSH: Pushing changes to remote...');
-};
+  console.log('⬆️ PUSH: Pushing changes to remote...')
+}
 
 const handleOpenSettings = () => {
-  console.log('⚙️ OPEN SETTINGS: Opening settings panel...');
-};
+  console.log('⚙️ OPEN SETTINGS: Opening settings panel...')
+}
 
 </script>
 <!--https://heroicons.com/solid-->

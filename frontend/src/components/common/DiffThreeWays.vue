@@ -3,69 +3,90 @@
     class="merge-editor-wrapper"
     :class="themeStore.theme === 'dark' ? 'dark-theme' : 'light-theme'"
   >
-
     <div class="header">
-      <div class="header-col flex-1 border-r">Local Changes</div>
-      <div class="header-col gap-header border-r"></div>
-      <div class="header-col header-center border-r">Merged Result</div>
-      <div class="header-col gap-header border-r"></div>
-      <div class="header-col flex-1">Remote Changes</div>
+      <div class="header-col flex-1 border-r">
+        Local Changes
+      </div>
+      <div class="header-col gap-header border-r" />
+      <div class="header-col header-center border-r">
+        Result (Working tree)
+      </div>
+      <div class="header-col gap-header border-r" />
+      <div class="header-col flex-1">
+        Remote Changes
+      </div>
     </div>
 
-    <div ref="mainContainerRef" id="main-container">
-      <svg ref="svgLayerRef" id="svg-layer"></svg>
+    <div
+      id="main-container"
+      ref="mainContainerRef"
+    >
+      <svg
+        id="svg-layer"
+        ref="svgLayerRef"
+      />
 
       <div
         ref="containerLeftRef"
         class="editor-container flex-1 border-r"
-      ></div>
-      <div class="gap-col"></div>
+      />
+      <div class="gap-col" />
       <div
         ref="containerCenterRef"
         class="editor-container editor-center border-r"
-      ></div>
-      <div class="gap-col"></div>
-      <div ref="containerRightRef" class="editor-container flex-1"></div>
+      />
+      <div class="gap-col" />
+      <div
+        ref="containerRightRef"
+        class="editor-container flex-1"
+      />
 
-      <div ref="actionsOverlayRef" class="action-overlay"></div>
+      <div
+        ref="actionsOverlayRef"
+        class="action-overlay"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
-import {ref, onMounted, onBeforeUnmount, nextTick, watch} from "vue";
+import {ref, onMounted, onBeforeUnmount, nextTick, watch} from 'vue'
 // --- IMPORT PACKAGES ---
-import * as monaco from "monaco-editor";
-import DiffMatchPatch from "diff-match-patch";
+import * as monaco from 'monaco-editor'
+import DiffMatchPatch from 'diff-match-patch'
 
 // --- CẤU HÌNH WORKER (VITE) ---
-import editorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
-import jsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
-import cssWorker from "monaco-editor/esm/vs/language/css/css.worker?worker";
-import htmlWorker from "monaco-editor/esm/vs/language/html/html.worker?worker";
-import tsWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker";
-import {useThemeStore} from "@/stores/theme.store.js";
+import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
+import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker'
+import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker'
+import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker'
+import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
+import {useThemeStore} from '@/stores/theme.store.js'
 
 self.MonacoEnvironment = {
   getWorker(_, label) {
-    if (label === "json") return new jsonWorker();
-    if (label === "css" || label === "scss" || label === "less")
-      return new cssWorker();
-    if (label === "html" || label === "handlebars" || label === "razor")
-      return new htmlWorker();
-    if (label === "typescript" || label === "javascript") return new tsWorker();
-    return new editorWorker();
+    if (label === 'json') return new jsonWorker()
+    if (label === 'css' || label === 'scss' || label === 'less')
+      return new cssWorker()
+    if (label === 'html' || label === 'handlebars' || label === 'razor')
+      return new htmlWorker()
+    if (label === 'typescript' || label === 'javascript') return new tsWorker()
+    return new editorWorker()
   },
-};
+}
 
 // --- PROPS ---
 const props = defineProps({
   mergeSegments: {
     type: Array,
-    required: true,
+    required: false,
     default: () => [],
   },
-});
+  navMode: {
+    type: String,
+    default: 'changes' // 'changes' | 'conflict'
+  }
+})
 
 const themeStore = useThemeStore()
 
@@ -77,146 +98,148 @@ watch(
   { immediate: true }
 )
 // --- STATE ---
-const currentTheme = ref("light");
-const canNavPrev = ref(false);
-const canNavNext = ref(false);
+const canNavPrev = ref(false)
+const canNavNext = ref(false)
+
+const totalConflicts = ref(0)
+const totalChanges = ref(0)
 
 // DOM Refs
-const mainContainerRef = ref(null);
-const containerLeftRef = ref(null);
-const containerCenterRef = ref(null);
-const containerRightRef = ref(null);
-const svgLayerRef = ref(null);
-const actionsOverlayRef = ref(null);
+const mainContainerRef = ref(null)
+const containerLeftRef = ref(null)
+const containerCenterRef = ref(null)
+const containerRightRef = ref(null)
+const svgLayerRef = ref(null)
+const actionsOverlayRef = ref(null)
 
 // Logic variables
-let editorLeft, editorCenter, editorRight;
+let editorLeft, editorCenter, editorRight
 let decorationsLeft = [],
   decorationsCenter = [],
-  decorationsRight = [];
+  decorationsRight = []
 let LEFT_LINES = [],
   CENTER_LINES_INIT = [],
   RIGHT_LINES = [],
-  DIFF_MAPPING = [];
-let currentChangeIndex = -1;
-let resizeObserver = null;
-const resolvedStateHistory = new Map();
+  DIFF_MAPPING = []
+let currentChangeIndex = -1
+let resizeObserver = null
+const resolvedStateHistory = new Map()
 
 // --- CORE LOGIC ---
 
 // 1. Data Processing
 const processSegments = () => {
-  LEFT_LINES = [];
-  CENTER_LINES_INIT = [];
-  RIGHT_LINES = [];
-  DIFF_MAPPING = [];
+  LEFT_LINES = []
+  CENTER_LINES_INIT = []
+  RIGHT_LINES = []
+  DIFF_MAPPING = []
   let leftIdx = 0,
     centerIdx = 0,
     rightIdx = 0,
-    conflictId = 1;
+    conflictId = 1
 
   props.mergeSegments.forEach((seg) => {
-    if (seg.type === "common") {
+    if (seg.type === 'common') {
       seg.text.forEach((l) => {
-        LEFT_LINES.push(l);
-        CENTER_LINES_INIT.push(l);
-        RIGHT_LINES.push(l);
-      });
-      leftIdx += seg.text.length;
-      centerIdx += seg.text.length;
-      rightIdx += seg.text.length;
-    } else if (seg.type === "conflict") {
-      seg.local.forEach((l) => LEFT_LINES.push(l));
-      seg.remote.forEach((l) => RIGHT_LINES.push(l));
+        LEFT_LINES.push(l)
+        CENTER_LINES_INIT.push(l)
+        RIGHT_LINES.push(l)
+      })
+      leftIdx += seg.text.length
+      centerIdx += seg.text.length
+      rightIdx += seg.text.length
+    } else if (seg.type === 'conflict') {
+      seg.local.forEach((l) => LEFT_LINES.push(l))
+      seg.remote.forEach((l) => RIGHT_LINES.push(l))
 
-      const startC = centerIdx;
-      CENTER_LINES_INIT.push("<<<<<<< HEAD");
-      seg.local.forEach((l) => CENTER_LINES_INIT.push(l));
-      CENTER_LINES_INIT.push("=======");
-      seg.remote.forEach((l) => CENTER_LINES_INIT.push(l));
-      CENTER_LINES_INIT.push(">>>>>>> feature/branch");
+      const startC = centerIdx
+      CENTER_LINES_INIT.push('<<<<<<< HEAD')
+      seg.local.forEach((l) => CENTER_LINES_INIT.push(l))
+      CENTER_LINES_INIT.push('=======')
+      seg.remote.forEach((l) => CENTER_LINES_INIT.push(l))
+      CENTER_LINES_INIT.push('>>>>>>> feature/branch')
 
-      const lenC = 1 + seg.local.length + 1 + seg.remote.length + 1;
+      const lenC = 1 + seg.local.length + 1 + seg.remote.length + 1
 
       DIFF_MAPPING.push({
         id: conflictId++,
-        type: "conflict",
+        type: 'conflict',
         left: { start: leftIdx, end: leftIdx + seg.local.length - 1 },
         center: { start: startC, end: startC + lenC - 1 },
         right: { start: rightIdx, end: rightIdx + seg.remote.length - 1 },
-        color: "rgba(255, 100, 100, 0.25)",
-        bgClass: "diff-conflict",
+        color: 'rgba(255, 100, 100, 0.25)',
+        bgClass: 'diff-conflict',
         resolvedSide: null,
         finalized: false,
         leftDiffers: true,
         rightDiffers: true,
-      });
-      leftIdx += seg.local.length;
-      rightIdx += seg.remote.length;
-      centerIdx += lenC;
-    } else if (seg.type === "auto-merge-right") {
+      })
+      leftIdx += seg.local.length
+      rightIdx += seg.remote.length
+      centerIdx += lenC
+    } else if (seg.type === 'auto-merge-right') {
       seg.text.forEach((l) => {
-        RIGHT_LINES.push(l);
-        CENTER_LINES_INIT.push(l);
-      });
+        RIGHT_LINES.push(l)
+        CENTER_LINES_INIT.push(l)
+      })
       DIFF_MAPPING.push({
         id: conflictId++,
-        type: "auto-merge",
+        type: 'auto-merge',
         left: null,
         center: { start: centerIdx, end: centerIdx + seg.text.length - 1 },
         right: { start: rightIdx, end: rightIdx + seg.text.length - 1 },
-        color: "rgba(50, 150, 255, 0.2)",
-        bgClass: "diff-auto-merge-blue",
-        resolvedSide: "auto",
+        color: 'rgba(50, 150, 255, 0.2)',
+        bgClass: 'diff-auto-merge-blue',
+        resolvedSide: 'auto',
         rejected: false,
-      });
-      rightIdx += seg.text.length;
-      centerIdx += seg.text.length;
-    } else if (seg.type === "edit-left") {
-      seg.local.forEach((l) => LEFT_LINES.push(l));
+      })
+      rightIdx += seg.text.length
+      centerIdx += seg.text.length
+    } else if (seg.type === 'edit-left') {
+      seg.local.forEach((l) => LEFT_LINES.push(l))
       seg.remote.forEach((l) => {
-        RIGHT_LINES.push(l);
-        CENTER_LINES_INIT.push(l);
-      });
+        RIGHT_LINES.push(l)
+        CENTER_LINES_INIT.push(l)
+      })
       DIFF_MAPPING.push({
         id: conflictId++,
-        type: "edit",
-        source: "left",
+        type: 'edit',
+        source: 'left',
         left: { start: leftIdx, end: leftIdx + seg.local.length - 1 },
         center: { start: centerIdx, end: centerIdx + seg.remote.length - 1 },
         right: { start: rightIdx, end: rightIdx + seg.remote.length - 1 },
-        color: "rgba(155, 89, 182, 0.25)",
-        bgClass: "diff-edit-purple",
+        color: 'rgba(155, 89, 182, 0.25)',
+        bgClass: 'diff-edit-purple',
         resolvedSide: null,
         rejected: false,
-      });
-      leftIdx += seg.local.length;
-      rightIdx += seg.remote.length;
-      centerIdx += seg.remote.length;
-    } else if (seg.type === "edit-right") {
+      })
+      leftIdx += seg.local.length
+      rightIdx += seg.remote.length
+      centerIdx += seg.remote.length
+    } else if (seg.type === 'edit-right') {
       seg.local.forEach((l) => {
-        LEFT_LINES.push(l);
-        CENTER_LINES_INIT.push(l);
-      });
-      seg.remote.forEach((l) => RIGHT_LINES.push(l));
+        LEFT_LINES.push(l)
+        CENTER_LINES_INIT.push(l)
+      })
+      seg.remote.forEach((l) => RIGHT_LINES.push(l))
       DIFF_MAPPING.push({
         id: conflictId++,
-        type: "edit",
-        source: "right",
+        type: 'edit',
+        source: 'right',
         left: { start: leftIdx, end: leftIdx + seg.local.length - 1 },
         center: { start: centerIdx, end: centerIdx + seg.local.length - 1 },
         right: { start: rightIdx, end: rightIdx + seg.remote.length - 1 },
-        color: "rgba(155, 89, 182, 0.25)",
-        bgClass: "diff-edit-purple",
+        color: 'rgba(155, 89, 182, 0.25)',
+        bgClass: 'diff-edit-purple',
         resolvedSide: null,
         rejected: false,
-      });
-      leftIdx += seg.local.length;
-      rightIdx += seg.remote.length;
-      centerIdx += seg.local.length;
+      })
+      leftIdx += seg.local.length
+      rightIdx += seg.remote.length
+      centerIdx += seg.local.length
     }
-  });
-};
+  })
+}
 
 // 2. Diff Logic & UI Helpers
 const computeCharLevelDiffs = (
@@ -226,150 +249,150 @@ const computeCharLevelDiffs = (
   sideStartLine,
   isConflict = false
 ) => {
-  const dmp = new DiffMatchPatch();
-  const diffs = dmp.diff_main(centerText, sideText);
-  dmp.diff_cleanupSemantic(diffs);
+  const dmp = new DiffMatchPatch()
+  const diffs = dmp.diff_main(centerText, sideText)
+  dmp.diff_cleanupSemantic(diffs)
 
-  const decosCenter = [];
-  const decosSide = [];
-  const clsAdd = isConflict ? "diff-char-diff" : "diff-char-add";
-  const clsDel = isConflict ? "diff-char-diff" : "diff-char-del";
+  const decosCenter = []
+  const decosSide = []
+  const clsAdd = isConflict ? 'diff-char-diff' : 'diff-char-add'
+  const clsDel = isConflict ? 'diff-char-diff' : 'diff-char-del'
 
   let cLine = centerStartLine + 1,
-    cCol = 1;
+    cCol = 1
   let sLine = sideStartLine + 1,
-    sCol = 1;
+    sCol = 1
 
   diffs.forEach(([op, text]) => {
-    const lines = text.split("\n");
-    const lineCount = lines.length;
+    const lines = text.split('\n')
+    const lineCount = lines.length
     const processText = (startL, startC, targetArray, className) => {
       let curL = startL,
-        curC = startC;
+        curC = startC
       lines.forEach((lineContent, i) => {
-        const len = lineContent.length;
+        const len = lineContent.length
         if (len > 0 && className) {
           targetArray.push({
             range: new monaco.Range(curL, curC, curL, curC + len),
             options: { inlineClassName: className },
-          });
+          })
         }
         if (i < lineCount - 1) {
-          curL++;
-          curC = 1;
+          curL++
+          curC = 1
         } else {
-          curC += len;
+          curC += len
         }
-      });
-      return { l: curL, c: curC };
-    };
+      })
+      return { l: curL, c: curC }
+    }
 
     if (op === 0) {
-      const resC = processText(cLine, cCol, [], null);
-      cLine = resC.l;
-      cCol = resC.c;
-      const resS = processText(sLine, sCol, [], null);
-      sLine = resS.l;
-      sCol = resS.c;
+      const resC = processText(cLine, cCol, [], null)
+      cLine = resC.l
+      cCol = resC.c
+      const resS = processText(sLine, sCol, [], null)
+      sLine = resS.l
+      sCol = resS.c
     } else if (op === -1) {
-      const res = processText(cLine, cCol, decosCenter, clsDel);
-      cLine = res.l;
-      cCol = res.c;
+      const res = processText(cLine, cCol, decosCenter, clsDel)
+      cLine = res.l
+      cCol = res.c
     } else if (op === 1) {
-      const res = processText(sLine, sCol, decosSide, clsAdd);
-      cLine = res.l;
-      cCol = res.c;
+      const res = processText(sLine, sCol, decosSide, clsAdd)
+      cLine = res.l
+      cCol = res.c
     }
-  });
-  return { center: decosCenter, side: decosSide };
-};
+  })
+  return { center: decosCenter, side: decosSide }
+}
 
 const hasMarkersInContent = (diff, model) => {
-  const lineCount = model.getLineCount();
-  const start = Math.max(1, diff.center.start + 1);
-  const end = Math.min(lineCount, diff.center.end + 1);
-  if (start > end) return false;
+  const lineCount = model.getLineCount()
+  const start = Math.max(1, diff.center.start + 1)
+  const end = Math.min(lineCount, diff.center.end + 1)
+  if (start > end) return false
   const rangeContent = model.getValueInRange(
     new monaco.Range(start, 1, end, 9999)
-  );
-  return rangeContent.includes("<<<<<<<") && rangeContent.includes(">>>>>>>");
-};
+  )
+  return rangeContent.includes('<<<<<<<') && rangeContent.includes('>>>>>>>')
+}
 
 const captureResolvedState = (versionId) => {
-  const state = {};
+  const state = {}
   DIFF_MAPPING.forEach((d) => {
-    const s = {};
-    if (d.resolvedSide) s.resolvedSide = d.resolvedSide;
-    if (d.rejected) s.rejected = true;
-    if (d.finalized) s.finalized = true;
-    if (Object.keys(s).length > 0) state[d.id] = s;
-  });
-  resolvedStateHistory.set(versionId, state);
-};
+    const s = {}
+    if (d.resolvedSide) s.resolvedSide = d.resolvedSide
+    if (d.rejected) s.rejected = true
+    if (d.finalized) s.finalized = true
+    if (Object.keys(s).length > 0) state[d.id] = s
+  })
+  resolvedStateHistory.set(versionId, state)
+}
 
 const restoreResolvedState = (versionId) => {
-  const state = resolvedStateHistory.get(versionId) || {};
+  const state = resolvedStateHistory.get(versionId) || {}
   DIFF_MAPPING.forEach((d) => {
-    const s = state[d.id] || {};
-    d.resolvedSide = s.resolvedSide || null;
-    d.rejected = !!s.rejected;
-    d.finalized = !!s.finalized;
-  });
-};
+    const s = state[d.id] || {}
+    d.resolvedSide = s.resolvedSide || null
+    d.rejected = !!s.rejected
+    d.finalized = !!s.finalized
+  })
+}
 
 // --- VISUAL UPDATES ---
 
 const updateDecorations = () => {
-  if (!editorCenter) return;
+  if (!editorCenter) return
   const createDeco = (range, className) => ({
     range: new monaco.Range(range.start + 1, 1, range.end + 1, 1),
     options: { isWholeLine: true, className },
-  });
-  const model = editorCenter.getModel();
-  const txt = model.getValue().split("\n");
-  const LC = model.getLineCount();
+  })
+  const model = editorCenter.getModel()
+  const txt = model.getValue().split('\n')
+  const LC = model.getLineCount()
   let dl = [],
     dc = [],
-    dr = [];
+    dr = []
 
   DIFF_MAPPING.forEach((d) => {
-    if (d.rejected || d.finalized) return;
+    if (d.rejected || d.finalized) return
     if (
       d.center.start < 0 ||
       d.center.end >= LC ||
       d.center.start > d.center.end
     )
-      return;
+      return
 
-    if (d.type === "auto-merge") {
-      const blueClass = "diff-auto-merge-blue";
-      dc.push(createDeco(d.center, blueClass));
-      if (d.right) dr.push(createDeco(d.right, blueClass));
-    } else if (d.type === "edit") {
-      if (d.resolvedSide) return;
-      const purpleClass = "diff-edit-purple";
-      if (d.source === "left") {
-        dl.push(createDeco(d.left, purpleClass));
-        dc.push(createDeco(d.center, purpleClass));
+    if (d.type === 'auto-merge') {
+      const blueClass = 'diff-auto-merge-blue'
+      dc.push(createDeco(d.center, blueClass))
+      if (d.right) dr.push(createDeco(d.right, blueClass))
+    } else if (d.type === 'edit') {
+      if (d.resolvedSide) return
+      const purpleClass = 'diff-edit-purple'
+      if (d.source === 'left') {
+        dl.push(createDeco(d.left, purpleClass))
+        dc.push(createDeco(d.center, purpleClass))
       } else {
-        dr.push(createDeco(d.right, purpleClass));
-        dc.push(createDeco(d.center, purpleClass));
+        dr.push(createDeco(d.right, purpleClass))
+        dc.push(createDeco(d.center, purpleClass))
       }
       const centerRange = new monaco.Range(
         d.center.start + 1,
         1,
         d.center.end + 1,
         9999
-      );
-      const centerText = model.getValueInRange(centerRange);
-      let sideText = "",
-        sideStartLine = 0;
-      if (d.source === "left") {
-        sideStartLine = d.left.start;
-        sideText = LEFT_LINES.slice(d.left.start, d.left.end + 1).join("\n");
+      )
+      const centerText = model.getValueInRange(centerRange)
+      let sideText = '',
+        sideStartLine = 0
+      if (d.source === 'left') {
+        sideStartLine = d.left.start
+        sideText = LEFT_LINES.slice(d.left.start, d.left.end + 1).join('\n')
       } else {
-        sideStartLine = d.right.start;
-        sideText = RIGHT_LINES.slice(d.right.start, d.right.end + 1).join("\n");
+        sideStartLine = d.right.start
+        sideText = RIGHT_LINES.slice(d.right.start, d.right.end + 1).join('\n')
       }
       const charDiffs = computeCharLevelDiffs(
         centerText,
@@ -377,196 +400,196 @@ const updateDecorations = () => {
         d.center.start,
         sideStartLine,
         false
-      );
-      dc.push(...charDiffs.center);
-      if (d.source === "left") dl.push(...charDiffs.side);
-      else dr.push(...charDiffs.side);
-    } else if (d.type === "conflict") {
-      const markersExist = hasMarkersInContent(d, model);
+      )
+      dc.push(...charDiffs.center)
+      if (d.source === 'left') dl.push(...charDiffs.side)
+      else dr.push(...charDiffs.side)
+    } else if (d.type === 'conflict') {
+      const markersExist = hasMarkersInContent(d, model)
       const centerRange = new monaco.Range(
         d.center.start + 1,
         1,
         d.center.end + 1,
         9999
-      );
-      const centerText = model.getValueInRange(centerRange);
+      )
+      const centerText = model.getValueInRange(centerRange)
 
       // Left compare
       const leftText = LEFT_LINES.slice(d.left.start, d.left.end + 1).join(
-        "\n"
-      );
+        '\n'
+      )
       if (leftText !== centerText || markersExist) {
-        d.leftDiffers = true;
-        const baseClass = markersExist ? "diff-conflict" : "diff-block-base";
-        dl.push(createDeco(d.left, baseClass));
+        d.leftDiffers = true
+        const baseClass = markersExist ? 'diff-conflict' : 'diff-block-base'
+        dl.push(createDeco(d.left, baseClass))
         if (!markersExist) {
-          dc.push(createDeco(d.center, "diff-block-base"));
+          dc.push(createDeco(d.center, 'diff-block-base'))
           const chars = computeCharLevelDiffs(
             centerText,
             leftText,
             d.center.start,
             d.left.start,
             true
-          );
-          dc.push(...chars.center);
-          dl.push(...chars.side);
-        } else dc.push(createDeco(d.center, "diff-conflict"));
-      } else d.leftDiffers = false;
+          )
+          dc.push(...chars.center)
+          dl.push(...chars.side)
+        } else dc.push(createDeco(d.center, 'diff-conflict'))
+      } else d.leftDiffers = false
 
       // Right compare
       const rightText = RIGHT_LINES.slice(d.right.start, d.right.end + 1).join(
-        "\n"
-      );
+        '\n'
+      )
       if (rightText !== centerText || markersExist) {
-        d.rightDiffers = true;
-        const baseClass = markersExist ? "diff-conflict" : "diff-block-base";
-        dr.push(createDeco(d.right, baseClass));
+        d.rightDiffers = true
+        const baseClass = markersExist ? 'diff-conflict' : 'diff-block-base'
+        dr.push(createDeco(d.right, baseClass))
         if (!markersExist) {
-          if (!d.leftDiffers) dc.push(createDeco(d.center, "diff-block-base"));
+          if (!d.leftDiffers) dc.push(createDeco(d.center, 'diff-block-base'))
           const chars = computeCharLevelDiffs(
             centerText,
             rightText,
             d.center.start,
             d.right.start,
             true
-          );
-          dc.push(...chars.center);
-          dr.push(...chars.side);
+          )
+          dc.push(...chars.center)
+          dr.push(...chars.side)
         } else if (!d.leftDiffers)
-          dc.push(createDeco(d.center, "diff-conflict"));
-      } else d.rightDiffers = false;
+          dc.push(createDeco(d.center, 'diff-conflict'))
+      } else d.rightDiffers = false
 
       if (markersExist) {
-        const end = Math.min(d.center.end, txt.length - 1);
+        const end = Math.min(d.center.end, txt.length - 1)
         for (let i = d.center.start; i <= end; i++) {
-          if ((txt[i] || "").match(/^(<<<<<<<|=======|>>>>>>>)/)) {
+          if ((txt[i] || '').match(/^(<<<<<<<|=======|>>>>>>>)/)) {
             dc.push({
               range: new monaco.Range(i + 1, 1, i + 1, 1),
-              options: { isWholeLine: true, className: "diff-marker" },
-            });
+              options: { isWholeLine: true, className: 'diff-marker' },
+            })
           }
         }
       }
     }
-  });
+  })
 
-  decorationsLeft = editorLeft.deltaDecorations(decorationsLeft, dl);
-  decorationsCenter = editorCenter.deltaDecorations(decorationsCenter, dc);
-  decorationsRight = editorRight.deltaDecorations(decorationsRight, dr);
-  updateNavState();
-};
+  decorationsLeft = editorLeft.deltaDecorations(decorationsLeft, dl)
+  decorationsCenter = editorCenter.deltaDecorations(decorationsCenter, dc)
+  decorationsRight = editorRight.deltaDecorations(decorationsRight, dr)
+  updateNavState()
+}
 
 const drawLayerElements = () => {
-  if (!editorLeft || !svgLayerRef.value) return;
-  const getH = (e) => e.getOption(monaco.editor.EditorOption.lineHeight);
+  if (!editorLeft || !svgLayerRef.value) return
+  const getH = (e) => e.getOption(monaco.editor.EditorOption.lineHeight)
 
   // Use container refs for dimensions
-  const rL = containerLeftRef.value.getBoundingClientRect();
-  const rC = containerCenterRef.value.getBoundingClientRect();
-  const rR = containerRightRef.value.getBoundingClientRect();
-  const rMain = mainContainerRef.value.getBoundingClientRect();
+  const rL = containerLeftRef.value.getBoundingClientRect()
+  const rC = containerCenterRef.value.getBoundingClientRect()
+  const rR = containerRightRef.value.getBoundingClientRect()
+  const rMain = mainContainerRef.value.getBoundingClientRect()
 
-  const xL_end = rL.width;
-  const xC_start = rC.left - rMain.left;
-  const xC_end = xC_start + rC.width;
-  const xR_start = rR.left - rMain.left;
+  const xL_end = rL.width
+  const xC_start = rC.left - rMain.left
+  const xC_end = xC_start + rC.width
+  const xR_start = rR.left - rMain.left
 
-  let svg = "";
-  const model = editorCenter.getModel();
-  const LC = model.getLineCount();
-  const cssStyle = getComputedStyle(document.body);
+  let svg = ''
+  const model = editorCenter.getModel()
+  const LC = model.getLineCount()
+  const cssStyle = getComputedStyle(document.body)
   const autoMergeColor =
-    cssStyle.getPropertyValue("--color-auto-merge").trim() ||
-    "rgba(50, 150, 255, 0.2)";
+    cssStyle.getPropertyValue('--color-auto-merge').trim() ||
+    'rgba(50, 150, 255, 0.2)'
   const editColor =
-    cssStyle.getPropertyValue("--color-edit").trim() ||
-    "rgba(155, 89, 182, 0.15)";
+    cssStyle.getPropertyValue('--color-edit').trim() ||
+    'rgba(155, 89, 182, 0.15)'
   const conflictColor =
-    cssStyle.getPropertyValue("--color-conflict-block").trim() ||
-    "rgba(255, 100, 100, 0.1)";
+    cssStyle.getPropertyValue('--color-conflict-block').trim() ||
+    'rgba(255, 100, 100, 0.1)'
 
   DIFF_MAPPING.forEach((d) => {
-    if (d.rejected || d.finalized) return;
+    if (d.rejected || d.finalized) return
     const getY = (ed, idx) =>
-      ed.getTopForLineNumber(idx + 1) - ed.getScrollTop();
+      ed.getTopForLineNumber(idx + 1) - ed.getScrollTop()
     if (
       d.center.start < 0 ||
       d.center.end >= LC ||
       d.center.start > d.center.end
     )
-      return;
+      return
 
-    const yc1 = getY(editorCenter, d.center.start);
-    const yc2 = getY(editorCenter, d.center.end) + getH(editorCenter);
+    const yc1 = getY(editorCenter, d.center.start)
+    const yc2 = getY(editorCenter, d.center.end) + getH(editorCenter)
     const mkFillPath = (x1, y1a, y1b, x2, y2a, y2b, fill) => {
-      const cp = (x2 - x1) * 0.5;
+      const cp = (x2 - x1) * 0.5
       return `<path d="M ${x1} ${y1a} C ${x1 + cp} ${y1a}, ${
         x2 - cp
       } ${y2a}, ${x2} ${y2a} L ${x2} ${y2b} C ${x2 - cp} ${y2b}, ${
         x1 + cp
-      } ${y1b}, ${x1} ${y1b} Z" fill="${fill}" />`;
-    };
+      } ${y1b}, ${x1} ${y1b} Z" fill="${fill}" />`
+    }
 
-    if (d.type === "auto-merge" && d.right) {
-      const yr1 = getY(editorRight, d.right.start);
-      const yr2 = getY(editorRight, d.right.end) + getH(editorRight);
-      svg += mkFillPath(xC_end, yc1, yc2, xR_start, yr1, yr2, autoMergeColor);
-    } else if (d.type === "edit" && !d.resolvedSide) {
-      if (d.source === "left") {
-        const yl1 = getY(editorLeft, d.left.start);
-        const yl2 = getY(editorLeft, d.left.end) + getH(editorLeft);
-        svg += mkFillPath(xL_end, yl1, yl2, xC_start, yc1, yc2, editColor);
+    if (d.type === 'auto-merge' && d.right) {
+      const yr1 = getY(editorRight, d.right.start)
+      const yr2 = getY(editorRight, d.right.end) + getH(editorRight)
+      svg += mkFillPath(xC_end, yc1, yc2, xR_start, yr1, yr2, autoMergeColor)
+    } else if (d.type === 'edit' && !d.resolvedSide) {
+      if (d.source === 'left') {
+        const yl1 = getY(editorLeft, d.left.start)
+        const yl2 = getY(editorLeft, d.left.end) + getH(editorLeft)
+        svg += mkFillPath(xL_end, yl1, yl2, xC_start, yc1, yc2, editColor)
       } else {
-        const yr1 = getY(editorRight, d.right.start);
-        const yr2 = getY(editorRight, d.right.end) + getH(editorRight);
-        svg += mkFillPath(xC_end, yc1, yc2, xR_start, yr1, yr2, editColor);
+        const yr1 = getY(editorRight, d.right.start)
+        const yr2 = getY(editorRight, d.right.end) + getH(editorRight)
+        svg += mkFillPath(xC_end, yc1, yc2, xR_start, yr1, yr2, editColor)
       }
-    } else if (d.type === "conflict") {
+    } else if (d.type === 'conflict') {
       if (d.leftDiffers) {
-        const yl1 = getY(editorLeft, d.left.start);
-        const yl2 = getY(editorLeft, d.left.end) + getH(editorLeft);
-        svg += mkFillPath(xL_end, yl1, yl2, xC_start, yc1, yc2, conflictColor);
+        const yl1 = getY(editorLeft, d.left.start)
+        const yl2 = getY(editorLeft, d.left.end) + getH(editorLeft)
+        svg += mkFillPath(xL_end, yl1, yl2, xC_start, yc1, yc2, conflictColor)
       }
       if (d.rightDiffers) {
-        const yr1 = getY(editorRight, d.right.start);
-        const yr2 = getY(editorRight, d.right.end) + getH(editorRight);
-        svg += mkFillPath(xC_end, yc1, yc2, xR_start, yr1, yr2, conflictColor);
+        const yr1 = getY(editorRight, d.right.start)
+        const yr2 = getY(editorRight, d.right.end) + getH(editorRight)
+        svg += mkFillPath(xC_end, yc1, yc2, xR_start, yr1, yr2, conflictColor)
       }
     }
-  });
-  svgLayerRef.value.innerHTML = svg;
-};
+  })
+  svgLayerRef.value.innerHTML = svg
+}
 
 // --- BUTTONS OVERLAY ---
 
-const createActionBtn = (top, left, d, type, icon, extraClass = "") => {
-  const btn = document.createElement("div");
-  btn.className = `action-btn ${extraClass}`;
-  btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icon}</svg>`;
-  btn.style.top = top + "px";
-  btn.style.left = left + "px";
+const createActionBtn = (top, left, d, type, icon, extraClass = '') => {
+  const btn = document.createElement('div')
+  btn.className = `action-btn ${extraClass}`
+  btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icon}</svg>`
+  btn.style.top = top + 'px'
+  btn.style.left = left + 'px'
 
   btn.onclick = (e) => {
-    e.stopPropagation();
-    if (type === "reject-auto") rejectAutoMerge(d.id);
-    else if (type === "finalize") finalizeConflict(d.id);
-    else resolveConflict(d.id, type);
-  };
-  return btn;
-};
+    e.stopPropagation()
+    if (type === 'reject-auto') rejectAutoMerge(d.id)
+    else if (type === 'finalize') finalizeConflict(d.id)
+    else resolveConflict(d.id, type)
+  }
+  return btn
+}
 
 const updateActionButtons = () => {
-  if (!actionsOverlayRef.value || !editorLeft) return;
-  actionsOverlayRef.value.innerHTML = "";
+  if (!actionsOverlayRef.value || !editorLeft) return
+  actionsOverlayRef.value.innerHTML = ''
 
-  const rL = containerLeftRef.value.getBoundingClientRect();
-  const rC = containerCenterRef.value.getBoundingClientRect();
-  const rR = containerRightRef.value.getBoundingClientRect();
-  const rMain = mainContainerRef.value.getBoundingClientRect();
+  const rL = containerLeftRef.value.getBoundingClientRect()
+  const rC = containerCenterRef.value.getBoundingClientRect()
+  const rR = containerRightRef.value.getBoundingClientRect()
+  const rMain = mainContainerRef.value.getBoundingClientRect()
   const btnSz = 24,
-    padding = 8;
-  const model = editorCenter.getModel();
-  const LC = model.getLineCount();
+    padding = 8
+  const model = editorCenter.getModel()
+  const LC = model.getLineCount()
 
   const getYCenter = (s, e) =>
     editorCenter.getTopForLineNumber(s + 1) -
@@ -574,362 +597,423 @@ const updateActionButtons = () => {
     ((e - s + 1) *
       editorCenter.getOption(monaco.editor.EditorOption.lineHeight)) /
       2 -
-    btnSz / 2;
+    btnSz / 2
   const getYSource = (ed, s, e) =>
     ed.getTopForLineNumber(s + 1) +
     ((e - s + 1) * ed.getOption(monaco.editor.EditorOption.lineHeight)) / 2 -
     btnSz / 2 -
-    ed.getScrollTop();
+    ed.getScrollTop()
 
-  const gapLeftX = rC.left - rMain.left - btnSz - padding;
-  const gapRightX = rC.right - rMain.left + padding;
+  const gapLeftX = rC.left - rMain.left - btnSz - padding
+  const gapRightX = rC.right - rMain.left + padding
 
   DIFF_MAPPING.forEach((d) => {
-    if (d.rejected || d.finalized) return;
-    if (d.center.start < 0 || d.center.end >= LC) return;
+    if (d.rejected || d.finalized) return
+    if (d.center.start < 0 || d.center.end >= LC) return
 
-    if (d.type === "auto-merge") {
-      const top = getYCenter(d.center.start, d.center.end);
+    if (d.type === 'auto-merge') {
+      const top = getYCenter(d.center.start, d.center.end)
       if (top > -btnSz && top < rMain.height) {
         actionsOverlayRef.value.appendChild(
           createActionBtn(
             top,
             rC.right - rMain.left + 4,
             d,
-            "reject-auto",
+            'reject-auto',
             '<path d="M18 6L6 18M6 6l12 12"></path>',
-            "reject-btn"
+            'reject-btn'
           )
-        );
+        )
       }
-    } else if (d.type === "edit" && !d.resolvedSide) {
-      const top = getYCenter(d.center.start, d.center.end);
-      if (top < -btnSz || top > rMain.height) return;
-      if (d.source === "left") {
+    } else if (d.type === 'edit' && !d.resolvedSide) {
+      const top = getYCenter(d.center.start, d.center.end)
+      if (top < -btnSz || top > rMain.height) return
+      if (d.source === 'left') {
         actionsOverlayRef.value.appendChild(
           createActionBtn(
             top,
             gapLeftX,
             d,
-            "left",
+            'left',
             '<path d="M13 17l5-5-5-5M6 17l5-5-5-5"></path>',
-            "edit-btn"
+            'edit-btn'
           )
-        );
+        )
       } else {
         actionsOverlayRef.value.appendChild(
           createActionBtn(
             top,
             gapRightX,
             d,
-            "right",
+            'right',
             '<path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"></path>',
-            "edit-btn"
+            'edit-btn'
           )
-        );
+        )
       }
-    } else if (d.type === "conflict") {
-      const markersExist = hasMarkersInContent(d, model);
+    } else if (d.type === 'conflict') {
+      const markersExist = hasMarkersInContent(d, model)
       if (d.left && d.leftDiffers) {
-        const top = getYSource(editorLeft, d.left.start, d.left.end);
+        const top = getYSource(editorLeft, d.left.start, d.left.end)
         if (top > -btnSz && top < rMain.height) {
-          const arrowX = rL.right - rMain.left + padding;
+          const arrowX = rL.right - rMain.left + padding
           actionsOverlayRef.value.appendChild(
             createActionBtn(
               top,
               arrowX,
               d,
-              "left",
+              'left',
               '<path d="M13 17l5-5-5-5M6 17l5-5-5-5"></path>'
             )
-          );
+          )
           if (!markersExist)
             actionsOverlayRef.value.appendChild(
               createActionBtn(
                 top,
                 arrowX + btnSz + 2,
                 d,
-                "finalize",
+                'finalize',
                 '<path d="M18 6L6 18M6 6l12 12"></path>',
-                "finalize-btn"
+                'finalize-btn'
               )
-            );
+            )
         }
       }
       if (d.right && d.rightDiffers) {
-        const top = getYSource(editorRight, d.right.start, d.right.end);
+        const top = getYSource(editorRight, d.right.start, d.right.end)
         if (top > -btnSz && top < rMain.height) {
-          const arrowX = rR.left - rMain.left - btnSz - padding;
+          const arrowX = rR.left - rMain.left - btnSz - padding
           actionsOverlayRef.value.appendChild(
             createActionBtn(
               top,
               arrowX,
               d,
-              "right",
+              'right',
               '<path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"></path>'
             )
-          );
+          )
           if (!markersExist)
             actionsOverlayRef.value.appendChild(
               createActionBtn(
                 top,
                 arrowX - btnSz - 2,
                 d,
-                "finalize",
+                'finalize',
                 '<path d="M18 6L6 18M6 6l12 12"></path>',
-                "finalize-btn"
+                'finalize-btn'
               )
-            );
+            )
         }
       }
     }
-  });
-};
+  })
+}
 
 // --- ACTIONS & EVENTS ---
 
 const resolveConflict = (id, side) => {
-  const idx = DIFF_MAPPING.findIndex((d) => d.id === id);
-  if (idx === -1) return;
-  const d = DIFF_MAPPING[idx];
-  d.resolvedSide = side;
+  const idx = DIFF_MAPPING.findIndex((d) => d.id === id)
+  if (idx === -1) return
+  const d = DIFF_MAPPING[idx]
+  d.resolvedSide = side
 
   const txt = (
-    side === "left"
+    side === 'left'
       ? LEFT_LINES.slice(d.left.start, d.left.end + 1)
       : RIGHT_LINES.slice(d.right.start, d.right.end + 1)
-  ).join("\n");
-  const range = new monaco.Range(d.center.start + 1, 1, d.center.end + 1, 9999);
+  ).join('\n')
+  const range = new monaco.Range(d.center.start + 1, 1, d.center.end + 1, 9999)
 
-  editorCenter.pushUndoStop();
-  editorCenter.executeEdits("merge", [
+  editorCenter.pushUndoStop()
+  editorCenter.executeEdits('merge', [
     { range, text: txt, forceMoveMarkers: true },
-  ]);
-  editorCenter.pushUndoStop();
+  ])
+  editorCenter.pushUndoStop()
 
-  captureResolvedState(editorCenter.getModel().getAlternativeVersionId());
-  refreshUI();
+  captureResolvedState(editorCenter.getModel().getAlternativeVersionId())
+  refreshUI()
   // ĐÃ XÓA: goToChange("next", false); -> Để con trỏ đứng yên
-};
+}
 
 const rejectAutoMerge = (id) => {
-  const idx = DIFF_MAPPING.findIndex((d) => d.id === id);
-  if (idx === -1) return;
-  DIFF_MAPPING[idx].rejected = true;
+  const idx = DIFF_MAPPING.findIndex((d) => d.id === id)
+  if (idx === -1) return
+  DIFF_MAPPING[idx].rejected = true
 
-  const d = DIFF_MAPPING[idx];
-  const range = new monaco.Range(d.center.start + 1, 1, d.center.end + 1, 9999);
-  editorCenter.pushUndoStop();
-  editorCenter.executeEdits("reject", [
-    { range, text: "", forceMoveMarkers: true },
-  ]);
-  editorCenter.pushUndoStop();
+  const d = DIFF_MAPPING[idx]
+  const range = new monaco.Range(d.center.start + 1, 1, d.center.end + 1, 9999)
+  editorCenter.pushUndoStop()
+  editorCenter.executeEdits('reject', [
+    { range, text: '', forceMoveMarkers: true },
+  ])
+  editorCenter.pushUndoStop()
 
-  captureResolvedState(editorCenter.getModel().getAlternativeVersionId());
-  refreshUI();
+  captureResolvedState(editorCenter.getModel().getAlternativeVersionId())
+  refreshUI()
   // ĐÃ XÓA: goToChange("next", false);
-};
+}
 
 const finalizeConflict = (id) => {
-  const idx = DIFF_MAPPING.findIndex((d) => d.id === id);
+  const idx = DIFF_MAPPING.findIndex((d) => d.id === id)
   if (idx !== -1) {
-    DIFF_MAPPING[idx].finalized = true;
-    captureResolvedState(editorCenter.getModel().getAlternativeVersionId());
-    refreshUI();
+    DIFF_MAPPING[idx].finalized = true
+    captureResolvedState(editorCenter.getModel().getAlternativeVersionId())
+    refreshUI()
     // ĐÃ XÓA: goToChange("next", false);
   }
-};
+}
 
 const acceptAllConflicts = (side) => {
-  editorCenter.pushUndoStop();
-  const edits = [];
+  editorCenter.pushUndoStop()
+  const edits = []
   DIFF_MAPPING.filter(
-    (d) => d.type === "conflict" && !d.finalized && !d.resolvedSide
+    (d) => d.type === 'conflict' && !d.finalized && !d.resolvedSide
   ).forEach((d) => {
-    d.resolvedSide = side;
+    d.resolvedSide = side
     const txt =
-      side === "left"
-        ? LEFT_LINES.slice(d.left.start, d.left.end + 1).join("\n")
-        : RIGHT_LINES.slice(d.right.start, d.right.end + 1).join("\n");
+      side === 'left'
+        ? LEFT_LINES.slice(d.left.start, d.left.end + 1).join('\n')
+        : RIGHT_LINES.slice(d.right.start, d.right.end + 1).join('\n')
     edits.push({
       range: new monaco.Range(d.center.start + 1, 1, d.center.end + 1, 9999),
       text: txt,
       forceMoveMarkers: true,
-    });
-  });
-  editorCenter.executeEdits("merge-all", edits);
-  editorCenter.pushUndoStop();
-  captureResolvedState(editorCenter.getModel().getAlternativeVersionId());
-  refreshUI();
-};
+    })
+  })
+  editorCenter.executeEdits('merge-all', edits)
+  editorCenter.pushUndoStop()
+  captureResolvedState(editorCenter.getModel().getAlternativeVersionId())
+  refreshUI()
+}
 
 // --- NAVIGATION ---
 
 const getActiveChangeBlocks = () => {
-  return DIFF_MAPPING.filter(
+  // Lọc ra CÁC BLOCK CHƯA FINALIZED (chưa nhấn nút X), bất kể resolvedSide có giá trị hay không.
+  let active = DIFF_MAPPING.filter(
     (d) =>
-      (d.type === "auto-merge" && !d.rejected) ||
-      (d.type === "edit" && !d.resolvedSide) ||
-      (d.type === "conflict" && !d.finalized && !d.resolvedSide)
-  ).sort((a, b) => a.center.start - b.center.start);
-};
+      // Chỉ loại trừ nếu đã finalized (hoặc bị rejected nếu là auto-merge)
+      !(d.finalized || d.rejected)
+  ).sort((a, b) => a.center.start - b.center.start)
+
+  // Áp dụng filter theo navMode như cũ
+  if (props.navMode === 'conflict') {
+    active = active.filter(d => d.type === 'conflict')
+  }
+
+  return active // Mảng này chứa A, B, C (dù A đã resolveSide, miễn là chưa finalized)
+}
+
+const calculateCounts = () => {
+  let conflictCount = 0
+  let totalActiveChangeCount = 0
+
+  DIFF_MAPPING.forEach((d) => {
+
+    // 1. LOGIC ĐẾM CONFLICTS (Conflicts CÒN CHƯA RESOLVE)
+    // Conflict được coi là ĐÃ RESOLVE (Xong) nếu:
+    // a) Đã Finalized (d.finalized = true)
+    // b) Hoặc đã chọn bên (d.resolvedSide có giá trị)
+    if (d.type === 'conflict' && !d.finalized && !d.resolvedSide) {
+      conflictCount++
+    }
+
+    // 2. LOGIC ĐẾM TỔNG CHANGES (Active Blocks)
+
+    let isChangeActive = false
+
+    if (d.type === 'conflict') {
+      // Conflict vẫn active cho đến khi FINALIZED
+      if (!d.finalized) {
+        isChangeActive = true
+      }
+    } else if (d.type === 'edit') {
+      // Edit (left/right): Active cho đến khi RESOLVED (đã chọn 1 bên) hoặc FINALIZED (nếu có nút X)
+      // Dựa trên cấu trúc code của bạn: Edit không có nút X, chỉ có nút Accept (resolve).
+      // Coi như đã xong nếu d.resolvedSide có giá trị (người dùng đã hành động).
+      if (!d.resolvedSide) {
+         isChangeActive = true
+      }
+
+      // *** CẢNH BÁO: Nếu bạn muốn nút Next/Prev dừng lại ở Edit ngay cả khi đã chọn bên,
+      //     thì hãy dùng điều kiện !d.finalized (và bạn cần thêm cơ chế finalize cho Edit block).
+      //     Hiện tại, tôi giả định Edit block được đánh dấu là "xử lý xong" ngay khi RESOLVED.
+
+    } else if (d.type === 'auto-merge') {
+      // Auto-Merge: Active cho đến khi REJECTED (Chỉ có nút X/Reject cho Auto-Merge)
+      if (!d.rejected) {
+        isChangeActive = true
+      }
+    }
+
+    if (isChangeActive) {
+      totalActiveChangeCount++
+    }
+  })
+
+  totalConflicts.value = conflictCount
+  totalChanges.value = totalActiveChangeCount
+}
+
+watch(
+  () => props.navMode,
+  () => {
+    currentChangeIndex = -1
+    updateNavState()
+  }
+)
 
 const updateNavState = () => {
-  const active = getActiveChangeBlocks();
-  canNavPrev.value = active.length > 0;
-  canNavNext.value = active.length > 0;
-};
+  const active = getActiveChangeBlocks()
+  canNavPrev.value = active.length > 0
+  canNavNext.value = active.length > 0
+}
 
 const goToChange = (direction, initial = false) => {
-  const activeBlocks = getActiveChangeBlocks();
+  const activeBlocks = getActiveChangeBlocks()
   if (activeBlocks.length === 0) {
-    currentChangeIndex = -1;
-    return;
+    currentChangeIndex = -1
+    return
   }
 
-  let newIndex = currentChangeIndex;
-  if (initial) newIndex = 0;
-  else if (direction === "next")
-    newIndex = newIndex + 1 >= activeBlocks.length ? 0 : newIndex + 1;
-  else if (direction === "prev")
-    newIndex = newIndex - 1 < 0 ? activeBlocks.length - 1 : newIndex - 1;
+  let newIndex = currentChangeIndex
+  if (initial) newIndex = 0
+  else if (direction === 'next')
+    newIndex = newIndex + 1 >= activeBlocks.length ? 0 : newIndex + 1
+  else if (direction === 'prev')
+    newIndex = newIndex - 1 < 0 ? activeBlocks.length - 1 : newIndex - 1
 
-  currentChangeIndex = newIndex;
+  currentChangeIndex = newIndex
   if (activeBlocks[newIndex]) {
-    const line = activeBlocks[newIndex].center.start + 1;
-    editorCenter.revealLineInCenter(line);
-    editorCenter.setPosition({ lineNumber: line, column: 1 });
-    editorCenter.focus();
+    const line = activeBlocks[newIndex].center.start + 1
+    editorCenter.revealLineInCenter(line)
+    editorCenter.setPosition({ lineNumber: line, column: 1 })
+    editorCenter.focus()
   }
-};
+}
 
 const refreshUI = () => {
-  updateDecorations();
-  drawLayerElements();
-  updateActionButtons();
-};
-
-const toggleTheme = () => {
-  currentTheme.value = currentTheme.value === "light" ? "dark" : "light";
-  monaco.editor.setTheme(currentTheme.value === "dark" ? "vs-dark" : "vs");
-  nextTick(() => refreshUI());
-};
+  updateDecorations()
+  drawLayerElements()
+  updateActionButtons()
+  calculateCounts()
+}
 
 // --- LIFECYCLE ---
 
 onMounted(() => {
-  processSegments();
+  processSegments()
 
   const commonOpts = {
-    language: "java",
-    theme: themeStore.theme === "dark" ? "vs-dark" : "vs",
+    language: 'java',
+    theme: themeStore.theme === 'dark' ? 'vs-dark' : 'vs',
     scrollBeyondLastLine: false,
     minimap: { enabled: false },
-    lineNumbers: "on",
-    renderLineHighlight: "none",
-    scrollbar: { vertical: "hidden", horizontal: "auto" },
+    lineNumbers: 'on',
+    renderLineHighlight: 'none',
+    scrollbar: { vertical: 'auto', horizontal: 'auto' },
     readOnly: true,
     folding: false,
-  };
+  }
 
   editorLeft = monaco.editor.create(containerLeftRef.value, {
-    value: LEFT_LINES.join("\n"),
+    value: LEFT_LINES.join('\n'),
     ...commonOpts,
-  });
+  })
   editorCenter = monaco.editor.create(containerCenterRef.value, {
-    value: CENTER_LINES_INIT.join("\n"),
+    value: CENTER_LINES_INIT.join('\n'),
     ...commonOpts,
     readOnly: false,
-  });
+  })
   editorRight = monaco.editor.create(containerRightRef.value, {
-    value: RIGHT_LINES.join("\n"),
+    value: RIGHT_LINES.join('\n'),
     ...commonOpts,
-  });
+  })
 
   // Event Listeners
   editorCenter.onDidChangeModelContent((e) => {
-    const versionId = editorCenter.getModel().getAlternativeVersionId();
+    const versionId = editorCenter.getModel().getAlternativeVersionId()
     e.changes.forEach((change) => {
-      const linesAdded = (change.text.match(/\n/g) || []).length;
+      const linesAdded = (change.text.match(/\n/g) || []).length
       const linesRemoved =
-        change.range.endLineNumber - change.range.startLineNumber;
-      const delta = linesAdded - linesRemoved;
+        change.range.endLineNumber - change.range.startLineNumber
+      const delta = linesAdded - linesRemoved
       if (delta !== 0) {
         DIFF_MAPPING.forEach((d) => {
-          const diffStartLine = d.center.start + 1;
-          const diffEndLine = d.center.end + 1;
+          const diffStartLine = d.center.start + 1
+          const diffEndLine = d.center.end + 1
           if (change.range.endLineNumber < diffStartLine) {
-            d.center.start += delta;
-            d.center.end += delta;
+            d.center.start += delta
+            d.center.end += delta
           } else if (change.range.endLineNumber <= diffEndLine) {
-            d.center.end += delta;
+            d.center.end += delta
           }
-        });
+        })
       }
-    });
-    if (e.isUndoing || e.isRedoing) restoreResolvedState(versionId);
-    else captureResolvedState(versionId);
-    refreshUI();
-  });
+    })
+    if (e.isUndoing || e.isRedoing) restoreResolvedState(versionId)
+    else captureResolvedState(versionId)
+    refreshUI()
+  })
 
   // Sync Scrolling
-  let isSyncing = false;
+  let isSyncing = false
     const sync = (src) => {
       if (!isSyncing) {
-        isSyncing = true;
+        isSyncing = true
 
         // 1. Lấy vị trí cả dọc (Top) và ngang (Left)
-        const top = src.getScrollTop();
+        const top = src.getScrollTop()
         const left = src.getScrollLeft();
 
         [editorLeft, editorCenter, editorRight].forEach((e) => {
           if (e !== src) {
             // 2. Set lại cho các editor khác
-            e.setScrollTop(top);
-            e.setScrollLeft(left);
+            e.setScrollTop(top)
+            e.setScrollLeft(left)
           }
-        });
+        })
 
-        drawLayerElements();
-        updateActionButtons();
-        isSyncing = false;
+        drawLayerElements()
+        updateActionButtons()
+        isSyncing = false
       }
     };
 
     // Đăng ký sự kiện
     [editorLeft, editorCenter, editorRight].forEach((e) =>
       e.onDidScrollChange(() => sync(e))
-    );
+    )
 
   // Resize
   resizeObserver = new ResizeObserver(() => {
-    [editorLeft, editorCenter, editorRight].forEach((e) => e && e.layout());
-    refreshUI();
-  });
-  resizeObserver.observe(mainContainerRef.value);
+    [editorLeft, editorCenter, editorRight].forEach((e) => e && e.layout())
+    refreshUI()
+  })
+  resizeObserver.observe(mainContainerRef.value)
 
   // Init state
-  captureResolvedState(editorCenter.getModel().getAlternativeVersionId());
+  captureResolvedState(editorCenter.getModel().getAlternativeVersionId())
 
-  refreshUI();
+  refreshUI()
   nextTick(() => {
-    [editorLeft, editorCenter, editorRight].forEach((e) => e.layout());
-    refreshUI();
-  });
+    [editorLeft, editorCenter, editorRight].forEach((e) => e.layout())
+    refreshUI()
+  })
 
   setTimeout(() => {
-    [editorLeft, editorCenter, editorRight].forEach((e) => e.layout());
-    refreshUI();
-    goToChange("next", true);
-  }, 300);
-});
+    [editorLeft, editorCenter, editorRight].forEach((e) => e.layout())
+    refreshUI()
+    goToChange('next', true)
+  }, 300)
+})
 
 onBeforeUnmount(() => {
-  if (editorLeft) editorLeft.dispose();
-  if (editorCenter) editorCenter.dispose();
-  if (editorRight) editorRight.dispose();
-  if (resizeObserver) resizeObserver.disconnect();
-});
+  if (editorLeft) editorLeft.dispose()
+  if (editorCenter) editorCenter.dispose()
+  if (editorRight) editorRight.dispose()
+  if (resizeObserver) resizeObserver.disconnect()
+})
 
 defineExpose({
   goNext: () => goToChange('next'),
@@ -938,8 +1022,10 @@ defineExpose({
   acceptRemote: () => acceptAllConflicts('right'),
   // (Optional) Expose biến state để Cha biết đường disable nút
   canNavNext,
-  canNavPrev
-});
+  canNavPrev,
+  totalConflicts, // Gửi ra ngoài
+  totalChanges    // Gửi ra ngoài
+})
 </script>
 
 <style scoped>

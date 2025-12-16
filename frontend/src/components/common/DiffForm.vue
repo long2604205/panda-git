@@ -13,35 +13,53 @@
             <div class="control-group-transparent">
               <button
                 class="control-btn"
+                :disabled="
+                  (nextBlock === 'conflict' && diffThreeWayRef?.totalConflicts === 0) ||
+                    (nextBlock === 'changes' && diffThreeWayRef?.totalChanges === 0)"
                 @click="triggerPrev"
-                :disabled="!diffThreeWayRef?.canNavNext"
               >
-                <i class="fa-solid fa-arrow-up"/>
+                <i class="fa-solid fa-arrow-up" />
               </button>
               <button
                 class="control-btn"
+                :disabled="
+                  (nextBlock === 'conflict' && diffThreeWayRef?.totalConflicts === 0) ||
+                    (nextBlock === 'changes' && diffThreeWayRef?.totalChanges === 0)
+                "
                 @click="triggerNext"
-                :disabled="!diffThreeWayRef?.canNavPrev"
               >
-                <i class="fa-solid fa-arrow-down"/>
+                <i class="fa-solid fa-arrow-down" />
               </button>
-              <div class="toolbar-divider"/>
+              <div class="toolbar-divider" />
               <button
                 class="control-btn"
+                :disabled="diffThreeWayRef?.totalConflicts === 0"
                 @click="triggerAcceptLocal"
               >
-                <i class="fa-solid fa-angles-left"/>
+                <i class="fa-solid fa-angles-left" />
               </button>
               <button
                 class="control-btn"
+                :disabled="diffThreeWayRef?.totalConflicts === 0"
                 @click="triggerAcceptRemote"
               >
-                <i class="fa-solid fa-angles-right"/>
+                <i class="fa-solid fa-angles-right" />
               </button>
-              <div class="toolbar-divider"/>
+              <div class="toolbar-divider" />
               <panda-select-option
-                style="width: 160px"
+                v-model="nextBlock"
+                style="width: 100px"
+                :options="[
+                  { id: 'changes', label: 'Changes' },
+                  { id: 'conflict', label: 'Conflict' },
+                ]"
+                value="id"
+                text="label"
+                value-default="changes"
+              />
+              <panda-select-option
                 v-model="modeView"
+                style="width: 160px"
                 :options="[
                   { id: 'all', label: 'Side-by-side viewer' },
                   { id: 'hcm', label: 'Unified viewer' },
@@ -57,19 +75,17 @@
         <!-- RIGHT: Tools & Layout -->
         <div class="toolbar-right">
           <!-- Tools Group -->
-          <div class="tools-group">
-            <button
-              class="icon-only-btn"
-              @click="$emit('open-settings')"
-            >
-              <i class="fa-solid fa-gear text-sm"/>
-            </button>
+          <div class="tools-group mr-4">
+            <span style="font-size: 12px; color: var(--p-text-muted);">
+              {{ diffThreeWayRef?.totalConflicts }} conflicts, {{ diffThreeWayRef?.totalChanges }} Total Changes
+            </span>
           </div>
         </div>
       </div>
       <diff-three-ways
         ref="diffThreeWayRef"
         :merge-segments="segments"
+        :nav-mode="nextBlock"
       />
     </template>
     <template #footer>
@@ -80,10 +96,11 @@
         <span>Close</span>
       </button>
       <button
+        :disabled="diffThreeWayRef?.totalConflicts > 0"
         class="btn btn-primary"
         @click="save"
       >
-        <span>Save</span>
+        <span>Apply</span>
       </button>
     </template>
   </base-form>
@@ -93,7 +110,7 @@
 import {ref} from 'vue'
 import BaseForm from '@/components/common/BaseForm.vue'
 import DiffThreeWays from '@/components/common/DiffThreeWays.vue'
-import PandaSelectOption from "@/components/common/PandaSelectOption.vue";
+import PandaSelectOption from '@/components/common/PandaSelectOption.vue'
 
 defineProps({
   params: {
@@ -114,38 +131,39 @@ const save = async () => {
   close()
 }
 
+const nextBlock = ref('changes')
 const modeView = ref('all')
 // 2. Các hành động của Cha (chỉ đơn giản là gọi hàm của con)
 const triggerNext = () => {
   // "Ê con, chạy hàm goNext đi!"
-  diffThreeWayRef.value?.goNext();
-};
+  diffThreeWayRef.value?.goNext()
+}
 
 const triggerPrev = () => {
-  diffThreeWayRef.value?.goPrev();
-};
+  diffThreeWayRef.value?.goPrev()
+}
 
 const triggerAcceptLocal = () => {
-  diffThreeWayRef.value?.acceptLocal();
-};
+  diffThreeWayRef.value?.acceptLocal()
+}
 
 const triggerAcceptRemote = () => {
-  diffThreeWayRef.value?.acceptRemote();
-};
+  diffThreeWayRef.value?.acceptRemote()
+}
 
 const segments = [
   // ================= HEADER =================
   {
     type: 'common',
     text: [
-      "package com.example.service;",
-      "",
-      "import java.util.*;",
-      "import java.util.stream.Collectors;",
-      "import org.slf4j.Logger;",
-      "import org.slf4j.LoggerFactory;",
-      "import org.springframework.transaction.annotation.Transactional;",
-      ""
+      'package com.example.service;',
+      '',
+      'import java.util.*;',
+      'import java.util.stream.Collectors;',
+      'import org.slf4j.Logger;',
+      'import org.slf4j.LoggerFactory;',
+      'import org.springframework.transaction.annotation.Transactional;',
+      ''
     ]
   },
 
@@ -153,24 +171,24 @@ const segments = [
   {
     type: 'edit-left',
     local: [
-      "// [LOCAL] Logger initialized",
-      "private static final Logger log = LoggerFactory.getLogger(UserService.class);"
+      '// [LOCAL] Logger initialized',
+      'private static final Logger log = LoggerFactory.getLogger(UserService.class);'
     ],
     remote: [
-      "// [REMOTE] Logger not used",
-      "private static final Logger log = null;"
+      '// [REMOTE] Logger not used',
+      'private static final Logger log = null;'
     ]
   },
 
   {
     type: 'common',
     text: [
-      "",
-      "public class UserService {",
-      "",
-      "    private final UserRepository repo;",
-      "    private final NotificationService notifier;",
-      ""
+      '',
+      'public class UserService {',
+      '',
+      '    private final UserRepository repo;',
+      '    private final NotificationService notifier;',
+      ''
     ]
   },
 
@@ -178,27 +196,27 @@ const segments = [
   {
     type: 'conflict',
     local: [
-      "    // Local: Constructor Injection",
-      "    public UserService(UserRepository repo, NotificationService notifier) {",
-      "        this.repo = repo;",
-      "        this.notifier = notifier;",
-      "    }"
+      '    // Local: Constructor Injection',
+      '    public UserService(UserRepository repo, NotificationService notifier) {',
+      '        this.repo = repo;',
+      '        this.notifier = notifier;',
+      '    }'
     ],
     remote: [
-      "    // Remote: Manual instantiation",
-      "    public UserService(UserRepository repo) {",
-      "        this.repo = repo;",
-      "        this.notifier = new EmailService();",
-      "    }"
+      '    // Remote: Manual instantiation',
+      '    public UserService(UserRepository repo) {',
+      '        this.repo = repo;',
+      '        this.notifier = new EmailService();',
+      '    }'
     ]
   },
 
   {
     type: 'common',
     text: [
-      "",
-      "    // ================= QUERY =================",
-      ""
+      '',
+      '    // ================= QUERY =================',
+      ''
     ]
   },
 
@@ -206,62 +224,62 @@ const segments = [
   {
     type: 'auto-merge-right',
     text: [
-      "    public Optional<User> findById(String id) {",
-      "        return repo.findById(id);",
-      "    }"
+      '    public Optional<User> findById(String id) {',
+      '        return repo.findById(id);',
+      '    }'
     ]
   },
 
   {
     type: 'common',
-    text: [""]
+    text: ['']
   },
 
   // ================= EDIT RIGHT =================
   {
     type: 'edit-right',
     local: [
-      "    public List<User> findAll() {",
-      "        return repo.findAll();",
-      "    }"
+      '    public List<User> findAll() {',
+      '        return repo.findAll();',
+      '    }'
     ],
     remote: [
-      "    public List<User> findAll() {",
-      "        return repo.findAllActive();",
-      "    }"
+      '    public List<User> findAll() {',
+      '        return repo.findAllActive();',
+      '    }'
     ]
   },
 
   {
     type: 'common',
-    text: [""]
+    text: ['']
   },
 
   // ================= CONFLICT 2 =================
   {
     type: 'conflict',
     local: [
-      "    public User create(User user) {",
-      "        validate(user);",
-      "        return repo.save(user);",
-      "    }"
+      '    public User create(User user) {',
+      '        validate(user);',
+      '        return repo.save(user);',
+      '    }'
     ],
     remote: [
-      "    public User create(User user) {",
-      "        if (repo.existsByEmail(user.getEmail())) {",
-      "            throw new DuplicateUserException();",
-      "        }",
-      "        return repo.save(user);",
-      "    }"
+      '    public User create(User user) {',
+      '        if (repo.existsByEmail(user.getEmail())) {',
+      '            throw new DuplicateUserException();',
+      '        }',
+      '        return repo.save(user);',
+      '    }'
     ]
   },
 
   {
     type: 'common',
     text: [
-      "",
-      "    // ================= UPDATE =================",
-      ""
+      '',
+      '    // ================= UPDATE =================',
+      ''
     ]
   },
 
@@ -269,47 +287,47 @@ const segments = [
   {
     type: 'conflict',
     local: [
-      "    @Transactional",
-      "    public User update(String id, User payload) {",
-      "        User u = repo.findById(id).orElseThrow();",
-      "        u.setName(payload.getName());",
-      "        return repo.save(u);",
-      "    }"
+      '    @Transactional',
+      '    public User update(String id, User payload) {',
+      '        User u = repo.findById(id).orElseThrow();',
+      '        u.setName(payload.getName());',
+      '        return repo.save(u);',
+      '    }'
     ],
     remote: [
-      "    public User update(String id, User payload) {",
-      "        return repo.updatePartial(id, payload);",
-      "    }"
+      '    public User update(String id, User payload) {',
+      '        return repo.updatePartial(id, payload);',
+      '    }'
     ]
   },
 
   {
     type: 'common',
-    text: [""]
+    text: ['']
   },
 
   // ================= EDIT LEFT =================
   {
     type: 'edit-left',
     local: [
-      "    public void notifyUser(User user) {",
-      "        log.info(\"Notify user {}\", user.getEmail());",
-      "        notifier.send(user);",
-      "    }"
+      '    public void notifyUser(User user) {',
+      '        log.info("Notify user {}", user.getEmail());',
+      '        notifier.send(user);',
+      '    }'
     ],
     remote: [
-      "    public void notifyUser(User user) {",
-      "        notifier.send(user);",
-      "    }"
+      '    public void notifyUser(User user) {',
+      '        notifier.send(user);',
+      '    }'
     ]
   },
 
   {
     type: 'common',
     text: [
-      "",
-      "    // ================= DELETE =================",
-      ""
+      '',
+      '    // ================= DELETE =================',
+      ''
     ]
   },
 
@@ -317,44 +335,44 @@ const segments = [
   {
     type: 'edit-right',
     local: [
-      "    public void delete(String id) {",
-      "        repo.deleteById(id);",
-      "    }"
+      '    public void delete(String id) {',
+      '        repo.deleteById(id);',
+      '    }'
     ],
     remote: [
-      "    public void delete(String id) {",
-      "        repo.softDelete(id, true);",
-      "    }"
+      '    public void delete(String id) {',
+      '        repo.softDelete(id, true);',
+      '    }'
     ]
   },
 
   {
     type: 'common',
-    text: [""]
+    text: ['']
   },
 
   // ================= CONFLICT 4 =================
   {
     type: 'conflict',
     local: [
-      "    public void deleteUser(String id) {",
-      "        repo.deleteById(id);",
-      "    }"
+      '    public void deleteUser(String id) {',
+      '        repo.deleteById(id);',
+      '    }'
     ],
     remote: [
-      "    public void deleteUser(String id) {",
-      "        repo.softDelete(id);",
-      "        notifier.sendDeletionNotice(id);",
-      "    }"
+      '    public void deleteUser(String id) {',
+      '        repo.softDelete(id);',
+      '        notifier.sendDeletionNotice(id);',
+      '    }'
     ]
   },
 
   {
     type: 'common',
     text: [
-      "",
-      "    // ================= UTIL =================",
-      ""
+      '',
+      '    // ================= UTIL =================',
+      ''
     ]
   },
 
@@ -362,22 +380,22 @@ const segments = [
   {
     type: 'auto-merge-right',
     text: [
-      "    private void validate(User user) {",
-      "        if (user.getEmail() == null) {",
-      "            throw new IllegalArgumentException(\"email required\");",
-      "        }",
-      "    }"
+      '    private void validate(User user) {',
+      '        if (user.getEmail() == null) {',
+      '            throw new IllegalArgumentException("email required");',
+      '        }',
+      '    }'
     ]
   },
 
   {
     type: 'common',
     text: [
-      "",
-      "}"
+      '',
+      '}'
     ]
   }
-];
+]
 
 </script>
 
@@ -410,6 +428,12 @@ const segments = [
   background-color: var(--accent-color);
   color: #000;
   font-weight: 600;
+}
+
+.btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .btn-primary:hover {
@@ -464,6 +488,12 @@ const segments = [
   position: relative;
   background: none;
   border: none;
+}
+
+.control-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .control-btn:hover {

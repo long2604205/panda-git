@@ -3,7 +3,7 @@ import globals from 'globals'
 import js from '@eslint/js'
 import pluginVue from 'eslint-plugin-vue'
 import pluginVitest from '@vitest/eslint-plugin'
-import skipFormatting from '@vue/eslint-config-prettier/skip-formatting'
+// import skipFormatting from '@vue/eslint-config-prettier/skip-formatting'
 
 export default defineConfig([
   {
@@ -22,11 +22,19 @@ export default defineConfig([
   },
 
   js.configs.recommended,
-  ...pluginVue.configs['flat/essential'],
-  
+  ...pluginVue.configs['flat/recommended'],
+
   {
     ...pluginVitest.configs.recommended,
     files: ['src/**/__tests__/*'],
   },
-  skipFormatting,
+
+  {
+    rules: {
+      'quotes': ['error', 'single', { 'avoidEscape': true }],
+      'vue/html-quotes': ['error', 'double'],
+      'semi': ['error', 'never'],
+    }
+  }
+  // skipFormatting,
 ])

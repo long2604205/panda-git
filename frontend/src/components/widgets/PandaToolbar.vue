@@ -2,7 +2,6 @@
   <div class="git-toolbar">
     <!-- MAIN LEFT GROUP (Repo Info + Actions) -->
     <div class="toolbar-left">
-
       <!-- --- 1. REPO & BRANCH --- -->
       <div class="info-group">
         <!-- Repo Dropdown Trigger -->
@@ -21,13 +20,13 @@
         </div>
 
         <!-- Vertical Separator -->
-        <div class="vertical-separator"/>
+        <div class="vertical-separator" />
 
         <!-- Branch Dropdown Trigger -->
         <div class="dropdown-wrapper w-56">
           <div class="info-trigger group relative">
             <div class="branch-avatar">
-              <i class="fa-solid fa-code-branch text-sm"/>
+              <i class="fa-solid fa-code-branch text-sm" />
             </div>
             <div class="info-content">
               <span class="info-label">Current Branch</span>
@@ -35,36 +34,54 @@
                 <span class="value-text">{{ repositoryStore.branchName }}</span>
               </div>
             </div>
-            <div class="tooltip-arrow-box">{{ repositoryStore.branchName }}</div>
+            <div class="tooltip-arrow-box">
+              {{ repositoryStore.branchName }}
+            </div>
           </div>
         </div>
       </div>
 
       <!-- Vertical Separator between Info and Actions -->
-      <div class="section-separator"/>
+      <div class="section-separator" />
 
       <!-- --- 2. ACTIONS --- -->
       <!-- Main Actions -->
-      <button class="toolbar-btn" title="Fetch from origin">
-        <i class="fa-solid fa-cloud-arrow-down text-[var(--p-text-muted)]"/>
+      <button
+        class="toolbar-btn"
+        title="Fetch from origin"
+      >
+        <i class="fa-solid fa-cloud-arrow-down text-[var(--p-text-muted)]" />
         <span>Clone</span>
       </button>
-      <div class="section-separator"/>
-      <button class="toolbar-btn" title="Pull changes">
-        <i class="fa-solid fa-arrow-down text-[#22d3ee]"></i>
+      <div class="section-separator" />
+      <button
+        class="toolbar-btn"
+        title="Pull changes"
+      >
+        <i class="fa-solid fa-arrow-down text-[#22d3ee]" />
         <span>Pull</span>
       </button>
-      <button class="toolbar-btn" title="Push changes">
-        <i class="fa-solid fa-arrow-up text-[#34d399]"></i>
+      <button
+        class="toolbar-btn"
+        title="Push changes"
+      >
+        <i class="fa-solid fa-arrow-up text-[#34d399]" />
         <span>Push</span>
       </button>
-      <button class="toolbar-btn" title="Fetch from origin">
-        <i class="fa-solid fa-retweet text-[var(--p-text-muted)]"/>
+      <button
+        class="toolbar-btn"
+        title="Fetch from origin"
+      >
+        <i class="fa-solid fa-retweet text-[var(--p-text-muted)]" />
         <span>Fetch</span>
       </button>
-      <div class="section-separator"/>
-      <button class="toolbar-btn" title="Fetch from origin" @click="openConflict">
-        <i class="fa-solid fa-retweet text-[var(--p-text-muted)]"/>
+      <div class="section-separator" />
+      <button
+        class="toolbar-btn"
+        title="Fetch from origin"
+        @click="openConflict"
+      >
+        <i class="fa-solid fa-retweet text-[var(--p-text-muted)]" />
         <span>Conflict</span>
       </button>
     </div>
@@ -77,7 +94,7 @@
           class="icon-only-btn"
           @click="$emit('open-settings')"
         >
-          <i class="fa-solid fa-gear text-sm"/>
+          <i class="fa-solid fa-gear text-sm" />
         </button>
       </div>
     </div>
@@ -85,44 +102,44 @@
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent } from 'vue';
-import {useRepositoryStore} from "@/stores/repositoryStore.js";
+import { computed, defineAsyncComponent } from 'vue'
+import {useRepositoryStore} from '@/stores/repositoryStore.js'
 import { showPageInModal } from '@/services/modals.js'
 
 const conflictForm = defineAsyncComponent(() => import('@/components/common/DiffForm.vue'))
 const repositoryStore = useRepositoryStore()
 
 const repoInitials = computed(() => {
-  const name = repositoryStore.repoName;
-  if (!name) return '';
+  const name = repositoryStore.repoName
+  if (!name) return ''
 
-  let cleanName = name.replace(/[-_]/g, ' ');
-  cleanName = cleanName.replace(/([a-z])([A-Z])/g, '$1 $2');
-  const words = cleanName.trim().split(/\s+/);
+  let cleanName = name.replace(/[-_]/g, ' ')
+  cleanName = cleanName.replace(/([a-z])([A-Z])/g, '$1 $2')
+  const words = cleanName.trim().split(/\s+/)
 
-  const firstInitial = words[0].charAt(0).toUpperCase();
+  const firstInitial = words[0].charAt(0).toUpperCase()
 
   if (words.length === 1) {
-    return firstInitial;
+    return firstInitial
   }
 
-  const lastWord = words[words.length - 1];
-  const lastWordInitial = lastWord.charAt(0).toUpperCase();
+  const lastWord = words[words.length - 1]
+  const lastWordInitial = lastWord.charAt(0).toUpperCase()
 
   if (firstInitial !== lastWordInitial) {
-    return firstInitial + lastWordInitial;
+    return firstInitial + lastWordInitial
   }
 
   for (let i = lastWord.length - 1; i > 0; i--) {
-    const char = lastWord.charAt(i).toUpperCase();
+    const char = lastWord.charAt(i).toUpperCase()
 
     if (char !== firstInitial) {
-      return firstInitial + char;
+      return firstInitial + char
     }
   }
 
-  return firstInitial;
-});
+  return firstInitial
+})
 
 // Emits
 const emit = defineEmits([
@@ -130,7 +147,7 @@ const emit = defineEmits([
   'pull',
   'push',
   'open-settings',
-]);
+])
 
 function openConflict () {
   showPageInModal(conflictForm, {}, {width: '90%'})
