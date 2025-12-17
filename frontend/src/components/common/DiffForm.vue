@@ -18,7 +18,10 @@
                     (nextBlock === 'changes' && diffThreeWayRef?.totalChanges === 0)"
                 @click="triggerPrev"
               >
-                <i class="fa-solid fa-arrow-up" />
+                <i
+                  class="fa-solid fa-arrow-up"
+                  style="color: rgb(52, 211, 153)"
+                />
               </button>
               <button
                 class="control-btn"
@@ -28,22 +31,38 @@
                 "
                 @click="triggerNext"
               >
-                <i class="fa-solid fa-arrow-down" />
+                <i
+                  class="fa-solid fa-arrow-down"
+                  style="color: rgb(52, 211, 153)"
+                />
               </button>
               <div class="toolbar-divider" />
               <button
                 class="control-btn"
                 :disabled="diffThreeWayRef?.totalConflicts === 0"
-                @click="triggerAcceptLocal"
+                @click="triggerAcceptRemote"
               >
-                <i class="fa-solid fa-angles-left" />
+                <i
+                  class="fa-solid fa-angles-right"
+                  style="color: rgb(52, 211, 153)"
+                />
               </button>
               <button
                 class="control-btn"
                 :disabled="diffThreeWayRef?.totalConflicts === 0"
-                @click="triggerAcceptRemote"
+                @click="triggerAcceptAllBoth"
               >
-                <i class="fa-solid fa-angles-right" />
+                <angles-merge-icon style="color: rgb(52, 211, 153)" />
+              </button>
+              <button
+                class="control-btn"
+                :disabled="diffThreeWayRef?.totalConflicts === 0"
+                @click="triggerAcceptLocal"
+              >
+                <i
+                  class="fa-solid fa-angles-left"
+                  style="color: rgb(52, 211, 153)"
+                />
               </button>
               <div class="toolbar-divider" />
               <panda-select-option
@@ -76,7 +95,7 @@
         <div class="toolbar-right">
           <!-- Tools Group -->
           <div class="tools-group mr-4">
-            <span style="font-size: 12px; color: var(--p-text-muted);">
+            <span style="font-size: 11px; color: var(--p-text-muted);">
               {{ diffThreeWayRef?.totalConflicts }} conflicts, {{ diffThreeWayRef?.totalChanges }} Total Changes
             </span>
           </div>
@@ -90,17 +109,17 @@
     </template>
     <template #footer>
       <button
-        class="btn btn-secondary"
-        @click="close"
-      >
-        <span>Close</span>
-      </button>
-      <button
         :disabled="diffThreeWayRef?.totalConflicts > 0"
         class="btn btn-primary"
         @click="save"
       >
         <span>Apply</span>
+      </button>
+      <button
+        class="btn btn-secondary"
+        @click="close"
+      >
+        <span>Close</span>
       </button>
     </template>
   </base-form>
@@ -111,6 +130,7 @@ import {ref} from 'vue'
 import BaseForm from '@/components/common/BaseForm.vue'
 import DiffThreeWays from '@/components/common/DiffThreeWays.vue'
 import PandaSelectOption from '@/components/common/PandaSelectOption.vue'
+import AnglesMergeIcon from '@/components/icons/AnglesMergeIcon.vue'
 
 defineProps({
   params: {
@@ -149,6 +169,9 @@ const triggerAcceptLocal = () => {
 
 const triggerAcceptRemote = () => {
   diffThreeWayRef.value?.acceptRemote()
+}
+const triggerAcceptAllBoth = () => {
+  diffThreeWayRef.value?.acceptAllBoth()
 }
 
 const segments = [

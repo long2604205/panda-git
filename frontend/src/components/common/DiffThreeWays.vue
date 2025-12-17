@@ -587,7 +587,7 @@ const updateActionButtons = () => {
   const rR = containerRightRef.value.getBoundingClientRect()
   const rMain = mainContainerRef.value.getBoundingClientRect()
   const btnSz = 24,
-    padding = 8
+    padding = -3
   const model = editorCenter.getModel()
   const LC = model.getLineCount()
 
@@ -617,7 +617,7 @@ const updateActionButtons = () => {
         actionsOverlayRef.value.appendChild(
           createActionBtn(
             top,
-            rC.right - rMain.left + 4,
+            rC.right - rMain.left,
             d,
             'reject-auto',
             '<path d="M18 6L6 18M6 6l12 12"></path>',
@@ -670,7 +670,7 @@ const updateActionButtons = () => {
             actionsOverlayRef.value.appendChild(
               createActionBtn(
                 top,
-                arrowX + btnSz + 2,
+                arrowX + btnSz,
                 d,
                 'finalize',
                 '<path d="M18 6L6 18M6 6l12 12"></path>',
@@ -899,6 +899,47 @@ const refreshUI = () => {
   calculateCounts()
 }
 
+const acceptAllBoth = () => {
+  // 1. Kiểm tra xem editor đã được khởi tạo chưa
+  if (!editorCenter) return
+
+  editorCenter.pushUndoStop()
+  const edits = []
+
+  // 2. Lọc các block là 'conflict' và chưa được xử lý (finalized/resolved)
+  DIFF_MAPPING.filter(
+    (d) => d.type === 'conflict' && !d.finalized && !d.resolvedSide
+  ).forEach((d) => {
+    // Đánh dấu trạng thái là đã resolve
+    d.resolvedSide = 'both'
+
+    // 3. Lấy text từ cả 2 bên Local và Remote
+    const leftTxt = LEFT_LINES.slice(d.left.start, d.left.end + 1).join('\n')
+    const rightTxt = RIGHT_LINES.slice(d.right.start, d.right.end + 1).join('\n')
+
+    // Nối code (thường Local trên, Remote dưới)
+    const combinedTxt = leftTxt + (leftTxt && rightTxt ? '\n' : '') + rightTxt
+
+    // 4. Tạo edit operation cho Monaco
+    edits.push({
+      range: new monaco.Range(d.center.start + 1, 1, d.center.end + 1, 9999),
+      text: combinedTxt,
+      forceMoveMarkers: true,
+    })
+  })
+
+  // 5. Thực thi tất cả các thay đổi cùng một lúc (Atomic Update)
+  if (edits.length > 0) {
+    editorCenter.executeEdits('merge-all-both', edits)
+    editorCenter.pushUndoStop()
+
+    // Cập nhật lại lịch sử để hỗ trợ Undo/Redo
+    captureResolvedState(editorCenter.getModel().getAlternativeVersionId())
+
+    // Làm mới UI (vẽ lại SVG, cập nhật đếm số lượng)
+    refreshUI()
+  }
+}
 // --- LIFECYCLE ---
 
 onMounted(() => {
@@ -931,7 +972,7 @@ onMounted(() => {
     ...commonOpts,
   })
 
-  // Event Listeners
+// Event Listeners
   editorCenter.onDidChangeModelContent((e) => {
     const versionId = editorCenter.getModel().getAlternativeVersionId()
     e.changes.forEach((change) => {
@@ -1021,6 +1062,7 @@ defineExpose({
   goPrev: () => goToChange('prev'),
   acceptLocal: () => acceptAllConflicts('left'),
   acceptRemote: () => acceptAllConflicts('right'),
+  acceptAllBoth: () => acceptAllBoth(),
   // (Optional) Expose biến state để Cha biết đường disable nút
   canNavNext,
   canNavPrev,
@@ -1215,7 +1257,6 @@ defineExpose({
   position: absolute;
   width: 24px;
   height: 24px;
-  border-radius: 50%;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1223,32 +1264,7 @@ defineExpose({
   color: var(--text-color);
   pointer-events: auto;
   background: transparent;
-  transition: all 0.2s ease;
   z-index: 60;
-}
-:deep(.action-btn:hover) {
-  background: var(--bg-editor);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-  transform: scale(1.1);
-  color: #1976d2;
-}
-:deep(.reject-btn:hover) {
-  color: #d32f2f;
-  background: #fff0f0;
-}
-:deep(.dark-theme .reject-btn:hover) {
-  color: #ff8a80;
-  background: #3d0000;
-}
-:deep(.edit-btn) {
-  color: #8e24aa;
-}
-:deep(.edit-btn:hover) {
-  color: #8e24aa;
-  background: #f3e5f5;
-}
-:deep(.finalize-btn:hover) {
-  color: #d32f2f;
 }
 
 /* Dynamic Monaco Classes */
