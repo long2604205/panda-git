@@ -914,6 +914,7 @@ onMounted(() => {
     scrollbar: { vertical: 'auto', horizontal: 'auto' },
     readOnly: true,
     folding: false,
+    quickSuggestions: false,
   }
 
   editorLeft = monaco.editor.create(containerLeftRef.value, {
