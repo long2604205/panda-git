@@ -26,7 +26,10 @@
         <div class="dropdown-wrapper w-56">
           <div class="info-trigger group relative">
             <div class="branch-avatar">
-              <i class="fa-solid fa-code-branch text-sm" />
+              <panda-icon
+                name="code-branch"
+                size="16px"
+              />
             </div>
             <div class="info-content">
               <span class="info-label">Current Branch</span>
@@ -50,7 +53,11 @@
         class="toolbar-btn"
         title="Fetch from origin"
       >
-        <i class="fa-solid fa-cloud-arrow-down text-[var(--p-text-muted)]" />
+        <panda-icon
+          name="cloud-arrow-down"
+          size="12px"
+          color="var(--p-text-muted)"
+        />
         <span>Clone</span>
       </button>
       <div class="section-separator" />
@@ -58,21 +65,33 @@
         class="toolbar-btn"
         title="Pull changes"
       >
-        <i class="fa-solid fa-arrow-down text-[#22d3ee]" />
+        <panda-icon
+          name="arrow-down"
+          size="12px"
+          color="#22d3ee"
+        />
         <span>Pull</span>
       </button>
       <button
         class="toolbar-btn"
         title="Push changes"
       >
-        <i class="fa-solid fa-arrow-up text-[#34d399]" />
+        <panda-icon
+          name="arrow-up"
+          size="12px"
+          color="#34d399"
+        />
         <span>Push</span>
       </button>
       <button
         class="toolbar-btn"
         title="Fetch from origin"
       >
-        <i class="fa-solid fa-retweet text-[var(--p-text-muted)]" />
+        <panda-icon
+          name="retweet"
+          size="12px"
+          color="var(--p-text-muted)"
+        />
         <span>Fetch</span>
       </button>
       <div class="section-separator" />
@@ -105,6 +124,7 @@
 import { computed, defineAsyncComponent } from 'vue'
 import {useRepositoryStore} from '@/stores/repositoryStore.js'
 import { showPageInModal } from '@/services/modals.js'
+import PandaIcon from '@/components/icons/PandaIcon.vue'
 
 const conflictForm = defineAsyncComponent(() => import('@/components/common/DiffForm.vue'))
 const repositoryStore = useRepositoryStore()

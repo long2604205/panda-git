@@ -12,57 +12,76 @@
           <div class="actions-group">
             <div class="control-group-transparent">
               <button
-                class="control-btn"
+                class="control-btn group"
                 :disabled="
                   (nextBlock === 'conflict' && diffThreeWayRef?.totalConflicts === 0) ||
                     (nextBlock === 'changes' && diffThreeWayRef?.totalChanges === 0)"
                 @click="triggerPrev"
               >
-                <i
-                  class="fa-solid fa-arrow-up"
-                  style="color: rgb(52, 211, 153)"
+                <panda-icon
+                  name="arrow-up"
+                  size="12px"
+                  color="#22d3ee"
                 />
+                <span class="tooltip-arrow-box">
+                  Previous changes
+                </span>
               </button>
               <button
-                class="control-btn"
+                class="control-btn group"
                 :disabled="
                   (nextBlock === 'conflict' && diffThreeWayRef?.totalConflicts === 0) ||
                     (nextBlock === 'changes' && diffThreeWayRef?.totalChanges === 0)
                 "
                 @click="triggerNext"
               >
-                <i
-                  class="fa-solid fa-arrow-down"
-                  style="color: rgb(52, 211, 153)"
+                <panda-icon
+                  name="arrow-down"
+                  size="12px"
+                  color="#22d3ee"
                 />
+                <span class="tooltip-arrow-box">
+                  Next changes
+                </span>
               </button>
               <div class="toolbar-divider" />
               <button
-                class="control-btn"
+                class="control-btn group"
                 :disabled="diffThreeWayRef?.totalConflicts === 0"
-                @click="triggerAcceptRemote"
+                @click="triggerAcceptLocal"
               >
-                <i
-                  class="fa-solid fa-angles-right"
-                  style="color: rgb(52, 211, 153)"
+                <panda-icon
+                  name="angles-right"
+                  size="12px"
+                  color="rgb(52, 211, 153)"
                 />
+                <span class="tooltip-arrow-box">
+                  Accept left
+                </span>
               </button>
               <button
-                class="control-btn"
+                class="control-btn group"
                 :disabled="diffThreeWayRef?.totalConflicts === 0"
                 @click="triggerAcceptAllBoth"
               >
                 <angles-merge-icon style="color: rgb(52, 211, 153)" />
+                <span class="tooltip-arrow-box">
+                  Accept both
+                </span>
               </button>
               <button
-                class="control-btn"
+                class="control-btn group"
                 :disabled="diffThreeWayRef?.totalConflicts === 0"
-                @click="triggerAcceptLocal"
+                @click="triggerAcceptRemote"
               >
-                <i
-                  class="fa-solid fa-angles-left"
-                  style="color: rgb(52, 211, 153)"
+                <panda-icon
+                  name="angles-left"
+                  size="12px"
+                  color="rgb(52, 211, 153)"
                 />
+                <span class="tooltip-arrow-box">
+                  Accept right
+                </span>
               </button>
               <div class="toolbar-divider" />
               <panda-select-option
@@ -131,6 +150,7 @@ import BaseForm from '@/components/common/BaseForm.vue'
 import DiffThreeWays from '@/components/common/DiffThreeWays.vue'
 import PandaSelectOption from '@/components/common/PandaSelectOption.vue'
 import AnglesMergeIcon from '@/components/icons/AnglesMergeIcon.vue'
+import PandaIcon from '@/components/icons/PandaIcon.vue'
 
 defineProps({
   params: {
@@ -529,6 +549,12 @@ const segments = [
   background-color: var(--p-selection);
 }
 
+.control-btn:active .tooltip-arrow-box {
+  opacity: 0 !important;
+  transition: none !important;
+  visibility: hidden;
+}
+
 .control-btn i {
   font-size: 14px;
 }
@@ -592,34 +618,11 @@ const segments = [
   gap: 8px;
 }
 
-.icon-only-btn {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  color: var(--p-text-muted);
-  cursor: pointer;
-  transition: all 0.2s;
-  background: none;
-  border: none;
-}
-
-.icon-only-btn:hover {
-  background-color: var(--p-hover);
-  color: var(--text-color);
-}
-
-.icon-only-btn.active {
-  background-color: var(--p-selection);
-  color: var(--accent-color);
-}
 .tooltip-arrow-box {
-  @apply absolute top-full mt-1 left-1/2 -translate-x-1/2 z-50
+  @apply absolute top-full mt-1 left-0 z-50
          whitespace-nowrap rounded-md px-3 py-1.5 text-[11px] font-semibold
          opacity-0 group-hover:opacity-100 transition-all duration-200 ease-out
-         -translate-y-1 group-hover:translate-y-0 pointer-events-none;
+         -translate-y-1 group-hover:translate-y-0 pointer-events-none group-hover:delay-700;
 
   background-color: var(--bg-header);
   color: var(--text-color);
@@ -631,7 +634,7 @@ const segments = [
   content: "";
   position: absolute;
   top: -5px;
-  left: 50%;
+  left: 12px;
   transform: translateX(-50%) rotate(45deg);
   width: 9px;
   height: 9px;
