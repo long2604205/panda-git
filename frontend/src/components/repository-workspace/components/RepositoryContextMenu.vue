@@ -2,8 +2,8 @@
   <Teleport to="body">
     <div
       v-if="isVisible"
-      ref="menuRef"
       id="context-menu"
+      ref="menuRef"
       :style="{ top: `${y}px`, left: `${x}px`, display: 'block' }"
       @contextmenu.prevent
     >
@@ -14,7 +14,7 @@
         @click="handleAction('open-repository')"
       >
         <div class="ctx-left">
-          <i class="fa-regular fa-circle-check ctx-icon"></i>
+          <i class="fa-regular fa-circle-check ctx-icon" />
           <span>Active</span>
         </div>
         <span class="ctx-shortcut">Alt+T</span>
@@ -23,49 +23,73 @@
       <!-- Open Multi-level -->
       <div class="ctx-item">
         <div class="ctx-left">
-          <i class="fa-solid fa-folder-open ctx-icon"></i>
+          <i class="fa-solid fa-folder-open ctx-icon" />
           <span>Open In</span>
         </div>
-        <i class="fa-solid fa-chevron-right text-[10px]"></i>
+        <i class="fa-solid fa-chevron-right text-[10px]" />
 
         <!-- Sub Menu -->
         <div class="ctx-submenu">
-          <div class="ctx-item" @click="handleAction('open-in-explorer')">
+          <div
+            class="ctx-item"
+            @click="handleAction('open-in-explorer')"
+          >
             <div class="ctx-left">
-              <i class="fa-solid fa-folder-tree ctx-icon"/>
+              <i class="fa-solid fa-folder-tree ctx-icon" />
               <span>Explorer</span>
             </div>
           </div>
-          <div class="ctx-item" @click="handleAction('open-in-terminal')">
+          <div
+            class="ctx-item"
+            @click="handleAction('open-in-terminal')"
+          >
             <div class="ctx-left">
-              <terminal-icon size="5" class="ctx-icon"/>
+              <terminal-icon
+                size="5"
+                class="ctx-icon"
+              />
               <span>Terminal</span>
             </div>
           </div>
           <div class="ctx-item">
             <div class="ctx-left">
-              <i class="fa-solid fa-code-branch ctx-icon"></i>
+              <i class="fa-solid fa-code-branch ctx-icon" />
               <span>Open with</span>
             </div>
-            <i class="fa-solid fa-chevron-right text-[10px]"></i>
+            <i class="fa-solid fa-chevron-right text-[10px]" />
 
             <!-- Sub Menu -->
             <div class="ctx-submenu">
-              <div class="ctx-item" @click="handleAction('git-fetch')">
+              <div
+                class="ctx-item"
+                @click="handleAction('git-fetch')"
+              >
                 <div class="ctx-left">
-                  <php-storm-icon size="5" class="ctx-icon"/>
+                  <php-storm-icon
+                    size="5"
+                    class="ctx-icon"
+                  />
                   <span>PhpStorm</span>
                 </div>
               </div>
-              <div class="ctx-item" @click="handleAction('git-pull')">
+              <div
+                class="ctx-item"
+                @click="handleAction('git-pull')"
+              >
                 <div class="ctx-left">
-                  <sublime-text-icon size="5" class="ctx-icon"/>
+                  <sublime-text-icon
+                    size="5"
+                    class="ctx-icon"
+                  />
                   <span>Sublime Text</span>
                 </div>
               </div>
-              <div class="ctx-item" @click="handleAction('git-pull')">
+              <div
+                class="ctx-item"
+                @click="handleAction('git-pull')"
+              >
                 <div class="ctx-left">
-                  <visual-studio-code-icon class="ctx-icon"/>
+                  <visual-studio-code-icon class="ctx-icon" />
                   <span>Visual Studio Code</span>
                 </div>
               </div>
@@ -74,115 +98,150 @@
         </div>
       </div>
 
-      <div class="menu-separator"></div>
+      <div class="menu-separator" />
 
-            <!-- Open Multi-level -->
+      <!-- Open Multi-level -->
       <div class="ctx-item">
         <div class="ctx-left">
-          <i class="fa-solid fa-up-down-left-right ctx-icon"></i>
+          <i class="fa-solid fa-up-down-left-right ctx-icon" />
           <span>Move to</span>
         </div>
-        <i class="fa-solid fa-chevron-right text-[10px]"></i>
+        <i class="fa-solid fa-chevron-right text-[10px]" />
 
         <!-- Sub Menu -->
         <div class="ctx-submenu">
           <div class="ctx-item">
             <div class="ctx-left">
-              <i class="fa-solid fa-code-branch ctx-icon"></i>
+              <i class="fa-solid fa-code-branch ctx-icon" />
               <span>Group</span>
             </div>
-            <i class="fa-solid fa-chevron-right text-[10px]"></i>
+            <i class="fa-solid fa-chevron-right text-[10px]" />
 
             <!-- Sub Menu -->
             <div class="ctx-submenu">
-              <div v-for="group in groups" :key="group.id" class="ctx-item" :class="{'disabled': targetData.groupId === group.id}" @click="handleAction(`move-repository-${group.id}`)">
+              <div
+                v-for="group in groups"
+                :key="group.id"
+                class="ctx-item"
+                :class="{'disabled': targetData.groupId === group.id}"
+                @click="handleAction(`move-repository-${group.id}`)"
+              >
                 <div class="ctx-left">
-                  <i class="fa-solid fa-folder-tree ctx-icon"/>
+                  <i class="fa-solid fa-folder-tree ctx-icon" />
                   <span>{{ group.name }}</span>
                 </div>
               </div>
             </div>
           </div>
-          <div :class="{'disabled': targetData.groupId === null}" class="ctx-item" @click="handleAction('move-into-no-group')">
+          <div
+            :class="{'disabled': targetData.groupId === null}"
+            class="ctx-item"
+            @click="handleAction('move-into-no-group')"
+          >
             <div class="ctx-left">
-              <i class="fa-solid fa-folder-tree ctx-icon"/>
+              <i class="fa-solid fa-folder-tree ctx-icon" />
               <span>No group</span>
             </div>
           </div>
-          <div class="menu-separator"></div>
-          <div class="ctx-item" @click="handleAction('open-in-explorer')">
+          <div class="menu-separator" />
+          <div
+            class="ctx-item"
+            @click="handleAction('open-in-explorer')"
+          >
             <div class="ctx-left">
-              <i class="fa-solid fa-folder-tree ctx-icon"/>
+              <i class="fa-solid fa-folder-tree ctx-icon" />
               <span>New group</span>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="menu-separator"></div>
+      <div class="menu-separator" />
 
       <!-- Copy Path -->
-      <div :class="{disabled: !isActiveRepo}" class="ctx-item" @click="handleAction('refresh-repository')">
+      <div
+        :class="{disabled: !isActiveRepo}"
+        class="ctx-item"
+        @click="handleAction('refresh-repository')"
+      >
         <div class="ctx-left">
-          <i class="fa-solid fa-rotate ctx-icon"/>
+          <i class="fa-solid fa-rotate ctx-icon" />
           <span>Refresh</span>
         </div>
         <span class="ctx-shortcut">F5</span>
       </div>
 
-      <div class="menu-separator"></div>
+      <div class="menu-separator" />
       <!-- Multi-level Item -->
-      <div class="ctx-item" :class="{disabled: !isActiveRepo}">
+      <div
+        class="ctx-item"
+        :class="{disabled: !isActiveRepo}"
+      >
         <div class="ctx-left">
-          <i class="fa-solid fa-code-branch ctx-icon"></i>
+          <i class="fa-solid fa-code-branch ctx-icon" />
           <span>Git</span>
         </div>
-        <i class="fa-solid fa-chevron-right text-[10px]"></i>
+        <i class="fa-solid fa-chevron-right text-[10px]" />
 
         <!-- Sub Menu -->
         <div class="ctx-submenu">
-          <div class="ctx-item" @click="handleAction('git-fetch')">
+          <div
+            class="ctx-item"
+            @click="handleAction('git-fetch')"
+          >
             <div class="ctx-left">
-              <i class="fa-solid fa-download ctx-icon"></i>
+              <i class="fa-solid fa-download ctx-icon" />
               <span>Fetch</span>
             </div>
           </div>
-          <div class="ctx-item" @click="handleAction('git-pull')">
+          <div
+            class="ctx-item"
+            @click="handleAction('git-pull')"
+          >
             <div class="ctx-left">
-              <i class="fa-solid fa-arrow-down ctx-icon"></i>
+              <i class="fa-solid fa-arrow-down ctx-icon" />
               <span>Pull</span>
             </div>
           </div>
-          <div class="ctx-item" @click="handleAction('git-push')">
+          <div
+            class="ctx-item"
+            @click="handleAction('git-push')"
+          >
             <div class="ctx-left">
-              <i class="fa-solid fa-arrow-up ctx-icon"></i>
+              <i class="fa-solid fa-arrow-up ctx-icon" />
               <span>Push</span>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="menu-separator"></div>
+      <div class="menu-separator" />
 
       <!-- Copy Path -->
-      <div class="ctx-item" @click="handleAction('copy-path')">
+      <div
+        class="ctx-item"
+        @click="handleAction('copy-path')"
+      >
         <div class="ctx-left">
-          <i class="fa-solid fa-copy ctx-icon"></i>
+          <i class="fa-solid fa-copy ctx-icon" />
           <span>Copy Path</span>
         </div>
         <span class="ctx-shortcut">Ctrl+C</span>
       </div>
 
       <!-- Rename -->
-      <div class="ctx-item" @click="handleAction('rename-repository')">
+      <div
+        class="ctx-item"
+        @click="handleAction('rename-repository')"
+      >
         <div class="ctx-left">
-          <i class="fa-solid fa-pencil ctx-icon"/>
+          <i class="fa-solid fa-pencil ctx-icon" />
           <span>Rename...</span>
         </div>
         <span class="ctx-shortcut">F2</span>
       </div>
 
-      <div class="menu-separator"></div>
+      <div class="menu-separator" />
 
       <!-- Remove -->
       <div
@@ -191,7 +250,7 @@
         @click="handleAction('delete-repository')"
       >
         <div class="ctx-left">
-          <i class="fa-solid fa-trash-can ctx-icon"/>
+          <i class="fa-solid fa-trash-can ctx-icon" />
           <span>Delete</span>
         </div>
         <span class="ctx-shortcut">Del</span>
@@ -201,24 +260,24 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import TerminalIcon from '@/components/icons/TerminalIcon.vue'
 import PhpStormIcon from '@/components/icons/PhpStormIcon.vue'
 import VisualStudioCodeIcon from '@/components/icons/VisualStudioCodeIcon.vue'
 import SublimeTextIcon from '@/components/icons/SublimeTextIcon.vue'
-import {loadGroups} from "@/plugins/PandaDB.js";
+import {loadGroups} from '@/plugins/PandaDB.js'
 // --- STATE ---
-const isVisible = ref(false);
-const x = ref(0);
-const y = ref(0);
-const menuRef = ref(null);
-const targetData = ref(null);
+const isVisible = ref(false)
+const x = ref(0)
+const y = ref(0)
+const menuRef = ref(null)
+const targetData = ref(null)
 const isActiveRepo = ref(false)
 const groups = ref([])
 
 // --- EMITS ---
 // Bắn sự kiện ra ngoài component cha khi chọn một hành động
-const emit = defineEmits(['action-click']);
+const emit = defineEmits(['action-click'])
 
 // --- METHODS ---
 
@@ -228,50 +287,50 @@ const emit = defineEmits(['action-click']);
  * @param {any} data - Dữ liệu của item (ví dụ: repo object)
  */
 const open = async (event, data = null) => {
-  event.preventDefault();
-  event.stopPropagation();
+  event.preventDefault()
+  event.stopPropagation()
 
-  targetData.value = data;
-  isVisible.value = true;
+  targetData.value = data
+  isVisible.value = true
 
   isActiveRepo.value = data?.active ?? false
 
   groups.value = await loadGroups()
 
   // Tính toán vị trí chuột
-  x.value = event.pageX;
-  y.value = event.pageY;
+  x.value = event.pageX
+  y.value = event.pageY
 
   // (Optional) Logic ngăn menu tràn ra khỏi màn hình
-  await nextTick();
+  await nextTick()
   if (menuRef.value) {
-    const { offsetWidth, offsetHeight } = menuRef.value;
-    const winWidth = window.innerWidth;
-    const winHeight = window.innerHeight;
+    const { offsetWidth, offsetHeight } = menuRef.value
+    const winWidth = window.innerWidth
+    const winHeight = window.innerHeight
 
     if (x.value + offsetWidth > winWidth) {
-      x.value = winWidth - offsetWidth - 10;
+      x.value = winWidth - offsetWidth - 10
     }
     if (y.value + offsetHeight > winHeight) {
-      y.value = winHeight - offsetHeight - 10;
+      y.value = winHeight - offsetHeight - 10
     }
   }
-};
+}
 
 /**
  * Đóng Context Menu
  */
 const close = () => {
-  isVisible.value = false;
-};
+  isVisible.value = false
+}
 
 /**
  * Xử lý khi click vào item trong menu
  */
 const handleAction = (actionName) => {
-  emit('action-click', { action: actionName, data: targetData.value });
-  close();
-};
+  emit('action-click', { action: actionName, data: targetData.value })
+  close()
+}
 
 // --- LIFECYCLE ---
 // Lắng nghe sự kiện click toàn cục để đóng menu khi click ra ngoài
@@ -279,27 +338,27 @@ const handleGlobalClick = () => {
   if (isVisible.value) {
     // Nếu click vào trong menu thì không đóng (trừ khi click vào item action đã xử lý ở trên)
     // Tuy nhiên logic menu chuẩn thường đóng luôn khi click bất kỳ đâu
-    close();
+    close()
   }
-};
+}
 
 onMounted(async () => {
-  window.addEventListener('click', handleGlobalClick);
-  window.addEventListener('resize', close);
-  window.addEventListener('scroll', close, true);
-});
+  window.addEventListener('click', handleGlobalClick)
+  window.addEventListener('resize', close)
+  window.addEventListener('scroll', close, true)
+})
 
 onUnmounted(() => {
-  window.removeEventListener('click', handleGlobalClick);
-  window.removeEventListener('resize', close);
-  window.removeEventListener('scroll', close, true);
-});
+  window.removeEventListener('click', handleGlobalClick)
+  window.removeEventListener('resize', close)
+  window.removeEventListener('scroll', close, true)
+})
 
 // Expose hàm open để component cha có thể gọi
 defineExpose({
   open,
   close
-});
+})
 </script>
 
 <style scoped>

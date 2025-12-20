@@ -4,7 +4,10 @@
     class="flex-shrink-0 bg-[var(--bg-side)] border-r border-[var(--border-color)] flex flex-col select-none z-10"
     :style="{ width: sidebarWidth + 'px' }"
   >
-    <div :style="{ height: paneHeight + 'px' }" class="overflow-hidden flex flex-col">
+    <div
+      :style="{ height: paneHeight + 'px' }"
+      class="overflow-hidden flex flex-col"
+    >
       <side-bar-repositories
         :groups="groups"
         :repositories="repositories"
@@ -45,9 +48,18 @@
     @mousedown.prevent="startColResize"
   />
 
-  <group-context-menu ref="groupContextMenuRef" @action-click="handleGroupAction" />
-  <repository-context-menu ref="repositoryContextMenuRef" @action-click="handleRepositoryAction" />
-  <branch-context-menu ref="branchContextMenuRef" @action-click="handleBranchAction" />
+  <group-context-menu
+    ref="groupContextMenuRef"
+    @action-click="handleGroupAction"
+  />
+  <repository-context-menu
+    ref="repositoryContextMenuRef"
+    @action-click="handleRepositoryAction"
+  />
+  <branch-context-menu
+    ref="branchContextMenuRef"
+    @action-click="handleBranchAction"
+  />
 
   <teleport-menu
     :is-open="isMenuOpen"
@@ -92,7 +104,7 @@ import {
   renameRepository
 } from '@/composables/repositories-manager.js'
 import notify from '@/plugins/notify.js'
-import {useRepositoryStore} from "@/stores/repositoryStore.js"
+import {useRepositoryStore} from '@/stores/repositoryStore.js'
 import BranchContextMenu from '@/components/repository-workspace/components/BranchContextMenu.vue'
 
 // --- 1. RESIZE LOGIC (Từ Composable) ---
@@ -314,17 +326,17 @@ const handleRepositoryAction = ({ action, data }) => {
 }
 
 async function handleRefreshRepository(repo) {
-  const loadingId = notify.loading("Refreshing...")
+  const loadingId = notify.loading('Refreshing...')
   const res = await selectRepo(repo)
 
   notify.remove(loadingId)
 
-  if (res.success) notify.success("Refresh successfully")
-  else notify.error("Refresh failed: " + res.error)
+  if (res.success) notify.success('Refresh successfully')
+  else notify.error('Refresh failed: ' + res.error)
 }
 
 async function handlePullRepository(repo) {
-  const loadingId = notify.loading("Pulling...")
+  const loadingId = notify.loading('Pulling...')
   try {
     const data = { repo_path: repo.path }
     await commonApi.pull(data)
@@ -339,13 +351,13 @@ async function handlePullRepository(repo) {
 }
 
 async function handleFetchRepository(repo) {
-  const loadingId = notify.loading("Fetching...")
+  const loadingId = notify.loading('Fetching...')
   try {
     const data = { repo_path: repo.path }
     await commonApi.fetch(data)
     await selectRepo(repo)
     notify.remove(loadingId)
-    notify.success("Fetch successfully")
+    notify.success('Fetch successfully')
   } catch (error) {
     notify.remove(loadingId)
     notify.error(`Fetch failed: ${error.message}`)
@@ -354,12 +366,12 @@ async function handleFetchRepository(repo) {
 }
 
 async function handleOpenRepository(repo) {
-  const loadingId = notify.loading("Opening...")
+  const loadingId = notify.loading('Opening...')
   const res = await selectRepo(repo)
 
   notify.remove(loadingId)
-  if (res.success) notify.success("Open successfully")
-  else notify.error("Open failed: " + res.error)
+  if (res.success) notify.success('Open successfully')
+  else notify.error('Open failed: ' + res.error)
 }
 
 
@@ -426,7 +438,7 @@ async function handleDeleteGroup(groupId) {
 }
 
 function splitMoveToGroup(str) {
-  const SEP = "-group-"
+  const SEP = '-group-'
   const idx = str.indexOf(SEP)
 
   if (idx === -1) {
@@ -440,12 +452,12 @@ function splitMoveToGroup(str) {
 }
 
 async function handleActiveRepository(repo) {
-  const loadingId = notify.loading("Active...")
+  const loadingId = notify.loading('Active...')
   const res = await selectRepo(repo)
 
   notify.remove(loadingId)
-  if (res.success) notify.success("Active successfully")
-  else notify.error("Active failed: " + res.error)
+  if (res.success) notify.success('Active successfully')
+  else notify.error('Active failed: ' + res.error)
 }
 
 // --- 6. LIFECYCLE ---
