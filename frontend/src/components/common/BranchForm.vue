@@ -15,21 +15,33 @@
           class="search-input w-full px-3 py-2 rounded border border-[var(--border-color)]"
           @keyup.enter="save"
           @keyup.esc="close"
+        >
+      </div>
+      <div class="flex gap-2 mb-4">
+        <panda-checkbox
+          v-model="isCheckout"
+          label="Checkout branch"
+          class="mb-3"
+        />
+        <panda-checkbox
+          v-model="isOverwrite"
+          label="Overwrite existing branch"
+          class="mb-3"
         />
       </div>
     </template>
     <template #footer>
       <button
-        class="btn btn-secondary"
-        @click="close"
-      >
-        <span>Close</span>
-      </button>
-      <button
         class="btn btn-primary"
         @click="save"
       >
         <span>Save</span>
+      </button>
+      <button
+        class="btn btn-secondary"
+        @click="close"
+      >
+        <span>Close</span>
       </button>
     </template>
   </base-form>
@@ -38,6 +50,7 @@
 <script setup>
 import {ref} from 'vue'
 import BaseForm from '@/components/common/BaseForm.vue'
+import PandaCheckbox from '@/components/common/PandaCheckbox.vue'
 
 defineProps({
   params: {
@@ -50,6 +63,9 @@ const visible = ref(false)
 const openForm = ref(null)
 const branchName = ref('')
 const isEdit = ref(false)
+// Tách state checkbox
+const isCheckout = ref(true)
+const isOverwrite = ref(false)
 
 const close = () => {
   openForm.value.close()
@@ -65,38 +81,7 @@ const branchInput = ref(null)
 const onOpened = () => {
   branchInput.value?.focus()
 }
-
 </script>
 
 <style scoped>
-.btn {
-  padding: 6px 16px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  border: 1px solid transparent;
-  transition: all 0.2s;
-}
-
-.btn-secondary {
-  background-color: transparent;
-  border-color: var(--p-text-muted);
-  color: var(--text-color);
-}
-
-.btn-secondary:hover {
-  background-color: var(--bg-side);
-}
-
-.btn-primary {
-  background-color: var(--accent-color);
-  color: #000;
-  font-weight: 600;
-}
-
-.btn-primary:hover {
-  filter: brightness(1.1);
-  box-shadow: 0 0 10px var(--p-selection);
-}
 </style>

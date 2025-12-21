@@ -4,10 +4,18 @@
     ref="overlay"
     class="modal-overlay"
   >
-    <div class="modal-window" :style="{ maxWidth: width }">
+    <div
+      class="modal-window"
+      :style="{ maxWidth: width }"
+    >
       <div class="modal-header">
-        <h3 class="font-bold text-sm text-[var(--text-color)]">{{ title }}</h3>
-        <i class="fa-solid fa-xmark cursor-pointer text-[var(--p-text-dim)] hover:text-[var(--text-color)]" @click="close"/>
+        <h3 class="font-bold text-sm text-[var(--text-color)]">
+          {{ title }}
+        </h3>
+        <i
+          class="fa-solid fa-xmark cursor-pointer text-[var(--p-text-dim)] hover:text-[var(--text-color)]"
+          @click="close"
+        />
       </div>
 
       <div class="modal-body">
@@ -18,7 +26,12 @@
 
       <div class="modal-footer">
         <slot name="footer">
-          <button class="btn btn-secondary" @click="close">Close</button>
+          <button
+            class="btn btn-secondary"
+            @click="close"
+          >
+            Close
+          </button>
         </slot>
       </div>
     </div>
@@ -135,25 +148,5 @@ defineExpose({ open, close })
   gap: 8px;
   background-color: var(--p-hover);
   border-radius: 0 0 8px 8px;
-}
-
-.btn {
-  padding: 6px 16px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  border: 1px solid transparent;
-  transition: all 0.2s;
-}
-
-.btn-secondary {
-  background-color: transparent;
-  border-color: var(--border-color);
-  color: var(--text-color);
-}
-
-.btn-secondary:hover {
-  background-color: var(--bg-side);
 }
 </style>

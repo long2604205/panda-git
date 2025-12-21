@@ -265,13 +265,12 @@ body.resizing-row {
 
 .btn-secondary {
   background-color: transparent;
-  border: 1px solid var(--border-color);
+  border-color: var(--p-text-muted);
   color: var(--text-color);
 }
 
 .btn-secondary:hover {
-  background-color: var(--p-hover);
-  border-color: var(--p-text-muted);
+  background-color: var(--bg-side);
 }
 
 .tree-checkbox {
