@@ -64,6 +64,7 @@
       <button
         class="toolbar-btn"
         title="Pull changes"
+        @click="pullRepository()"
       >
         <panda-icon
           name="arrow-down"
@@ -125,6 +126,7 @@ import { computed, defineAsyncComponent } from 'vue'
 import {useRepositoryStore} from '@/stores/repositoryStore.js'
 import { showPageInModal } from '@/services/modals.js'
 import PandaIcon from '@/components/icons/PandaIcon.vue'
+import { pullRepository } from '@/composables/repositories-manager.js'
 
 const conflictForm = defineAsyncComponent(() => import('@/components/common/DiffForm.vue'))
 const repositoryStore = useRepositoryStore()
