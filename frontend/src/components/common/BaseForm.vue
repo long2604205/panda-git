@@ -9,7 +9,10 @@
       :style="{ maxWidth: width }"
     >
       <div class="modal-header">
-        <h3 class="font-bold text-sm text-[var(--text-color)]">
+        <h3
+          class="font-bold text-sm text-[var(--text-color)]"
+          :class="{ 'is-uppercase': props.uppercase }"
+        >
           {{ title }}
         </h3>
         <i
@@ -46,6 +49,7 @@ const props = defineProps({
   modelValue: { type: Boolean, default: false },
   title: { type: String, default: 'Modal' },
   width: { type: String, default: '600px' },
+  uppercase: { type: Boolean, default: true },
 })
 
 const emit = defineEmits(['update:modelValue', 'close'])
@@ -132,7 +136,7 @@ defineExpose({ open, close })
   align-items: center;
 }
 
-.modal-header h3 {
+.is-uppercase {
   text-transform: uppercase;
 }
 
