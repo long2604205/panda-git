@@ -28,7 +28,7 @@
       >
         <div class="ctx-left">
           <i class="fa-regular fa-circle-check ctx-icon" />
-          <span :title="targetData">New branch form '{{ truncatedTargetData }}'...</span>
+          <span>New branch form '{{ truncatedTargetData }}'...</span>
         </div>
       </div>
 
@@ -45,7 +45,7 @@
       >
         <div class="ctx-left">
           <i class="fa-regular fa-circle-check ctx-icon" />
-          <span :title="targetData">Merge '{{ truncatedTargetData }}' into '{{ repositoryStore.branchName }}'</span>
+          <span>Merge '{{ truncatedTargetData }}' into '{{ truncatedIntoData(repositoryStore.branchName) }}'</span>
         </div>
       </div>
 
@@ -211,6 +211,33 @@ const truncatedTargetData = computed(() => {
 
   return `${front}...${back}`
 })
+
+function truncatedIntoData(targetData) {
+  // 1. Lấy dữ liệu và convert sang string
+  const text = targetData ? String(targetData) : ''
+
+  // 2. Cấu hình độ dài tối đa
+  const maxLength = 32
+
+  if (text.length <= maxLength) {
+    return text
+  }
+
+  // 3. Tính toán độ dài cắt
+  const availableChars = maxLength - 3
+  const frontLen = Math.ceil(availableChars * 0.7)
+  const backLen = Math.floor(availableChars * 0.3)
+
+  // 4. Cắt chuỗi
+  let front = text.slice(0, frontLen)
+  let back = text.slice(-backLen)
+
+  // 5. Loại bỏ _ và - ở vị trí cắt
+  front = front.replace(/[_-]+$/, '')
+  back = back.replace(/^[_-]+/, '')
+
+  return `${front}...${back}`
+}
 
 onMounted(() => {
   window.addEventListener('click', handleGlobalClick)
