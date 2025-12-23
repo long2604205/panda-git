@@ -129,7 +129,7 @@ defineExpose({ open, close })
 }
 
 .modal-header {
-  padding: 12px 16px;
+  padding: 10px 16px;
   border-bottom: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
@@ -145,7 +145,7 @@ defineExpose({ open, close })
 }
 
 .modal-footer {
-  padding: 12px 16px;
+  padding: 8px;
   border-top: 1px solid var(--border-color);
   display: flex;
   justify-content: flex-end;
