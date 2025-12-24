@@ -204,35 +204,35 @@ const descs = {
 const pullOptions = ref([
   {
     id: 'ffonly',
-    label: 'Merge only if fast-forward possible',
+    label: 'Merge only if it can be fast-forwarded',
     flag: '--ff-only',
     checked: false,
     disabled: false
   },
   {
     id: 'noff',
-    label: 'Always create merge commit',
+    label: 'Merge only if it can be fast-forwarded',
     flag: '--no-ff',
     checked: false,
     disabled: false
   },
   {
     id: 'squash',
-    label: 'Squash into one commit',
+    label: 'Create a single commit for all pulled changes',
     flag: '--squash',
     checked: false,
     disabled: false
   },
   {
     id: 'nocommit',
-    label: 'Merge without commit',
+    label: 'Merge, but do not commit the result',
     flag: '--no-commit',
     checked: false,
     disabled: false
   },
   {
     id: 'noverify',
-    label: 'Skip hooks verification',
+    label: 'Bypass the pre-merge and commit message hooks',
     flag: '--no-verify',
     checked: false,
     disabled: false
