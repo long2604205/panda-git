@@ -6,137 +6,151 @@
     @opened="onOpened"
   >
     <template #content>
-      <div class="flex">
-        <!-- LEFT COLUMN: MAIN CONFIG (55%) -->
-        <!-- GIẢM PADDING: p-5 -> p-4 -->
-        <div class="w-[55%] p-4 flex flex-col gap-5 border-r border-[var(--border-color)]">
-          <!-- Remote Selection -->
-          <div>
-            <label class="input-group-label">Remote</label>
-            <select class="custom-select w-full bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-color)] text-xs rounded px-3 py-1.5 outline-none focus:border-[var(--accent-color)] transition-colors">
-              <option value="origin">
-                origin
-              </option>
-              <option value="upstream">
-                upstream
-              </option>
-            </select>
-          </div>
-
-          <!-- Branch Selection -->
-          <div>
-            <label class="input-group-label">Branch to merge</label>
-            <select class="custom-select w-full bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-color)] text-xs rounded px-3 py-1.5 outline-none focus:border-[var(--accent-color)] transition-colors font-mono">
-              <option value="main">
-                main
-              </option>
-              <option value="develop">
-                develop
-              </option>
-              <option value="feature/new-ui">
-                feature/new-ui
-              </option>
-            </select>
-          </div>
-
-          <!-- Strategy: Segmented Control -->
-          <div>
-            <label class="input-group-label mb-2">Strategy</label>
-            <div class="segmented-control">
-              <label class="flex-1">
-                <input
-                  type="radio"
-                  name="strategy"
-                  value="merge"
-                  class="segmented-input hidden"
-                  checked
-                >
-                <div class="segmented-item">
-                  <i class="fa-solid fa-code-merge text-[10px]" /> Merge
-                </div>
-              </label>
-              <label class="flex-1">
-                <input
-                  type="radio"
-                  name="strategy"
-                  value="rebase"
-                  class="segmented-input hidden"
-                >
-                <div class="segmented-item">
-                  <i class="fa-solid fa-list-ol text-[10px]" /> Rebase
-                </div>
-              </label>
+      <div class="w-full p-4 flex flex-col gap-2">
+        <div>
+          <label class="input-group-label">Branch to merge</label>
+          <div class="flex gap-2">
+            <div class="w-[30%]">
+              <select class="custom-select w-full bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-color)] text-xs rounded px-3 py-1.5 outline-none focus:border-[var(--accent-color)] transition-colors">
+                <option value="origin">
+                  origin
+                </option>
+                <option value="upstream">
+                  upstream
+                </option>
+              </select>
             </div>
-            <p
-              id="strategy-desc"
-              class="text-[10px] text-[var(--p-text-dim)] mt-2 italic"
-            >
-              Create a merge commit to combine changes.
-            </p>
+
+            <div class="flex-1">
+              <select class="custom-select w-full bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-color)] text-xs rounded px-3 py-1.5 outline-none focus:border-[var(--accent-color)] transition-colors font-mono">
+                <option value="main">
+                  main
+                </option>
+                <option value="develop">
+                  develop
+                </option>
+                <option value="feature/new-ui">
+                  feature/new-ui
+                </option>
+              </select>
+            </div>
           </div>
         </div>
 
-        <!-- RIGHT COLUMN: OPTIONS (45%) -->
-        <!-- GIẢM PADDING: p-5 -> p-4 -->
-        <div class="w-[45%] bg-[var(--bg-side)] p-4 flex flex-col">
-          <label class="input-group-label mb-2">Options</label>
-
-          <div class="flex flex-col gap-0.5">
-            <label class="option-item">
+        <div>
+          <label class="input-group-label">Strategy</label>
+          <div class="segmented-control">
+            <label class="flex-1">
               <input
-                type="checkbox"
-                class="option-checkbox"
+                v-model="selectedStrategy"
+                type="radio"
+                name="strategy"
+                value="merge"
+                class="segmented-input hidden"
                 checked
               >
-              <div class="option-content">
-                <span class="option-text">Prune remote</span>
-                <span class="option-subtext">--prune</span>
+              <div class="segmented-item">
+                <i class="fa-solid fa-code-merge text-[10px]" /> Merge
               </div>
             </label>
-
-            <label class="option-item">
+            <label class="flex-1">
               <input
-                type="checkbox"
-                class="option-checkbox"
+                v-model="selectedStrategy"
+                type="radio"
+                name="strategy"
+                value="rebase"
+                class="segmented-input hidden"
               >
-              <div class="option-content">
-                <span class="option-text">Auto stash</span>
-                <span class="option-subtext">--auto stash</span>
+              <div class="segmented-item">
+                <i class="fa-solid fa-list-ol text-[10px]" /> Rebase
               </div>
             </label>
+          </div>
+          <p
+            id="strategy-desc"
+            class="text-[10px] text-[var(--p-text-dim)] mt-2 italic"
+          >
+            {{ descs[selectedStrategy] }}
+          </p>
+        </div>
 
-            <label class="option-item">
-              <input
-                type="checkbox"
-                class="option-checkbox"
-              >
-              <div class="option-content">
-                <span class="option-text">Fast-forward only</span>
-                <span class="option-subtext">--ff-only</span>
-              </div>
-            </label>
+        <div
+          v-if="hasCheckedOptions"
+          class="flex flex-wrap gap-2 animate-fade-in"
+        >
+          <div
+            v-for="opt in pullOptions"
+            v-show="opt.checked"
+            :key="'tag-' + opt.id"
+            class="tag-item"
+          >
+            <span class="tag-text">{{ opt.flag }}</span>
+            <button
+              class="tag-close-btn"
+              @click="opt.checked = false"
+            >
+              <i class="fa-solid fa-xmark" />
+            </button>
+          </div>
+        </div>
 
-            <label class="option-item">
-              <input
-                type="checkbox"
-                class="option-checkbox"
-              >
-              <div class="option-content">
-                <span class="option-text">Squash commits</span>
-                <span class="option-subtext">--squash</span>
-              </div>
-            </label>
+        <div
+          ref="dropdownContainer"
+          class="relative"
+        >
+          <button
+            class="flex items-center gap-1.5 text-[11px] font-medium text-[#e67e22] hover:text-[#d35400] transition-colors outline-none select-none"
+            @click.stop="toggleDropdown"
+          >
+            <i class="fa-regular fa-circle-question" />
+            Modify options
+            <i
+              class="fa-solid fa-chevron-down text-[9px] opacity-70 transition-transform duration-200"
+              :class="{'rotate-180': showOptions}"
+            />
+          </button>
 
-            <label class="option-item">
-              <input
-                type="checkbox"
-                class="option-checkbox"
+          <div
+            v-if="showOptions"
+            class="options-dropdown"
+          >
+            <div class="dropdown-header">
+              Add Pull Options
+            </div>
+
+            <div class="flex flex-col py-1">
+              <label
+                v-for="option in pullOptions"
+                :key="option.id"
+                class="dropdown-item"
+                :class="{ 'disabled-option': option.disabled }"
+                @click.stop
               >
-              <div class="option-content">
-                <span class="option-text">No commit</span>
-                <span class="option-subtext">--no-commit</span>
-              </div>
-            </label>
+                <input
+                  v-model="option.checked"
+                  type="checkbox"
+                  class="hidden"
+                  :disabled="option.disabled"
+                >
+                <div class="flex-1 flex justify-between items-center">
+                  <span
+                    class="text-[11px]"
+                    :class="option.checked ? 'text-[var(--accent-color)] font-medium' : 'text-[var(--text-color)]'"
+                  >
+                    {{ option.label }}
+                  </span>
+                  <span class="text-[10px] text-[var(--p-text-dim)] font-mono ml-3">
+                    {{ option.flag }}
+                  </span>
+                </div>
+                <div class="w-4 flex justify-end">
+                  <i
+                    v-if="option.checked"
+                    class="fa-solid fa-check text-[10px] text-[var(--accent-color)]"
+                  />
+                </div>
+              </label>
+            </div>
           </div>
         </div>
       </div>
@@ -159,7 +173,7 @@
 </template>
 
 <script setup>
-import {onMounted, ref} from 'vue'
+import {onMounted, onUnmounted, ref, watch, computed} from 'vue'
 import BaseForm from '@/components/common/BaseForm.vue'
 import mitter from '@/plugins/mitter.js'
 import {editGroup, findGroup} from '@/plugins/PandaDB.js'
@@ -171,182 +185,297 @@ const props = defineProps({
   }
 })
 
+// --- DATA ---
+const visible = ref(false)
+const openForm = ref(null)
+const groupName = ref('')
+const isEdit = ref(false)
+const groupInput = ref(null)
+const selectedStrategy = ref('merge')
+const showOptions = ref(false) // Toggle dropdown
+const dropdownContainer = ref(null)
+
+// --- OPTIONS CONFIG ---
+const descs = {
+  merge: 'Create a merge commit to combine changes.',
+  rebase: 'Replay local commits on top of incoming changes.'
+}
+
+const pullOptions = ref([
+  {
+    id: 'ffonly',
+    label: 'Merge only if fast-forward possible',
+    flag: '--ff-only',
+    checked: false,
+    disabled: false
+  },
+  {
+    id: 'noff',
+    label: 'Always create merge commit',
+    flag: '--no-ff',
+    checked: false,
+    disabled: false
+  },
+  {
+    id: 'squash',
+    label: 'Squash into one commit',
+    flag: '--squash',
+    checked: false,
+    disabled: false
+  },
+  {
+    id: 'nocommit',
+    label: 'Merge without commit',
+    flag: '--no-commit',
+    checked: false,
+    disabled: false
+  },
+  {
+    id: 'noverify',
+    label: 'Skip hooks verification',
+    flag: '--no-verify',
+    checked: false,
+    disabled: false
+  }
+])
+
+// --- COMPUTED ---
+const hasCheckedOptions = computed(() => {
+  return pullOptions.value.some(opt => opt.checked)
+})
+
+// --- METHODS ---
+
+// Xử lý đóng Dropdown khi click ra ngoài
+const handleClickOutside = (event) => {
+  if (dropdownContainer.value && !dropdownContainer.value.contains(event.target)) {
+    showOptions.value = false
+  }
+}
+
+const toggleDropdown = () => {
+  showOptions.value = !showOptions.value
+}
+
+const onOpened = () => {
+  groupInput.value?.focus()
+  // Reset trạng thái dropdown khi mở form
+  showOptions.value = false
+}
+
+const close = () => {
+  openForm.value.close()
+  groupName.value = ''
+  showOptions.value = false
+}
+
+// Logic Save/Pull (Mô phỏng)
+const save = async () => {
+  if (!groupName.value.trim() && isEdit.value) return // Check tạm
+
+  // Gom các flag đã chọn
+  const activeFlags = pullOptions.value
+      .filter(opt => opt.checked)
+      .map(opt => opt.flag)
+
+  console.log('Pulling with strategy:', selectedStrategy.value)
+  console.log('Options:', activeFlags)
+
+  // ... (Logic backend cũ của bạn) ...
+  if (isEdit.value) {
+    const group = await editGroup(props.params.id, {name: groupName.value})
+    mitter.emit('rename-group', { id: group.id, name: group.name, collapsed: group.collapsed })
+  } else {
+    mitter.emit('add-group', { id: `group-${Date.now()}`, name: groupName.value || 'New Group', collapsed: true })
+  }
+  close()
+}
+
+// --- LIFECYCLE ---
 onMounted(async () => {
   if (props.params.id) {
     isEdit.value = true
     const group = await findGroup(props.params.id)
     if (group) groupName.value = group.name
   }
+  // Lắng nghe click outside để đóng dropdown
+  document.addEventListener('click', handleClickOutside)
 })
 
-const visible = ref(false)
-const openForm = ref(null)
-const groupName = ref('')
-const isEdit = ref(false)
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 
-const close = () => {
-  openForm.value.close()
-  groupName.value = ''
-}
-
-const save = async () => {
-  if (!groupName.value.trim()) return
-
-  if (isEdit.value) {
-    const group = await editGroup(props.params.id, {name: groupName.value})
-    mitter.emit('rename-group', {
-      id: group.id,
-      name: group.name,
-      collapsed: group.collapsed,
+// --- WATCHERS ---
+// Logic Rebase vs Merge (Disable các options không tương thích)
+watch(selectedStrategy, (newStrategy) => {
+  if (newStrategy === 'rebase') {
+    pullOptions.value.forEach(opt => {
+      // Chỉ cho phép --no-verify khi rebase (theo logic cũ)
+      if (opt.id !== 'noverify') {
+        opt.disabled = true
+        opt.checked = false
+      }
+    })
+  } else {
+    pullOptions.value.forEach(opt => {
+      opt.disabled = false
     })
   }
-  else {
-    mitter.emit('add-group', {
-      id: `group-${Date.now()}`,
-      name: groupName.value,
-      collapsed: true,
-    })
-  }
-
-  close()
-}
-
-const groupInput = ref(null)
-
-const onOpened = () => {
-  groupInput.value?.focus()
-}
-
-const descs = ref({
-        merge: 'Create a merge commit to combine changes.',
-        rebase: 'Replay local commits on top of incoming changes.'
-    })
+})
 </script>
 
 <style scoped>
 :deep(.modal-body) {
   padding: 0 !important;
 }
-/* --- FORM ELEMENTS --- */
+
+/* --- FORM TEXT & INPUTS --- */
 .input-group-label {
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--p-text-dim);
-            margin-bottom: 6px;
-            display: block;
-        }
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--p-text-dim);
+    margin-bottom: 4px;
+    display: block;
+}
 
-        .custom-select {
-            appearance: none;
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 8px center;
-            background-size: 12px;
-        }
+.custom-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 12px;
+}
 
-        /* --- SEGMENTED CONTROL --- */
-        .segmented-control {
-            display: flex;
-            background-color: var(--input-bg);
-            padding: 3px;
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
-        }
+/* --- SEGMENTED CONTROL --- */
+.segmented-control {
+    display: flex;
+    background-color: var(--input-bg);
+    padding: 3px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
 
-        .segmented-item {
-            flex: 1;
-            text-align: center;
-            padding: 5px 0; /* Giảm padding */
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--p-text-muted);
-            cursor: pointer;
-            border-radius: 4px;
-            transition: all 0.2s;
-            user-select: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
+.segmented-item {
+    flex: 1;
+    text-align: center;
+    padding: 5px 0;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--p-text-muted);
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
 
-        .segmented-item:hover {
-            color: var(--text-color);
-        }
+.segmented-item:hover {
+    color: var(--text-color);
+}
 
-        .segmented-input:checked + .segmented-item {
-            background-color: var(--p-hover);
-            color: var(--accent-color);
-            font-weight: 600;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-        }
+.segmented-input:checked + .segmented-item {
+    background-color: var(--p-hover);
+    color: var(--accent-color);
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
 
-        /* --- CHECKBOXES --- */
-        .option-checkbox {
-            appearance: none;
-            width: 14px;
-            height: 14px;
-            border: 1px solid var(--p-text-dim);
-            border-radius: 3px;
-            background-color: var(--input-bg);
-            cursor: pointer;
-            position: relative;
-            flex-shrink: 0;
-            transition: all 0.2s;
-            margin-top: 0; /* Bỏ margin-top để căn giữa chuẩn hơn khi cùng dòng */
-        }
+/* --- TAGS (CHIPS) STYLE --- */
+.tag-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: var(--input-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-family: "JetBrains Mono", monospace;
+    user-select: none;
+    transition: all 0.2s;
+}
 
-        .option-checkbox:checked {
-            background-color: var(--accent-color);
-            border-color: var(--accent-color);
-        }
+.tag-item:hover {
+    border-color: var(--p-text-dim);
+}
 
-        .option-checkbox:checked::after {
-            content: '✓';
-            position: absolute;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            color: #000;
-            font-weight: bold;
-        }
+.tag-close-btn {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+    font-size: 10px;
+    color: var(--p-text-dim);
+    display: flex;
+    align-items: center;
+    transition: color 0.2s;
+}
 
-        .option-item {
-            display: flex;
-            align-items: center; /* Căn giữa theo chiều dọc */
-            gap: 10px;
-            padding: 6px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
+.tag-close-btn:hover {
+    color: #e74c3c; /* Màu đỏ khi hover nút xóa */
+}
 
-        .option-item:hover {
-            background-color: var(--p-hover);
-        }
+/* --- DROPDOWN MENU STYLE --- */
+.options-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 6px;
+    width: 300px; /* Rộng vừa phải */
+    background-color: var(--bg-side); /* Hoặc màu nền đậm #1e1e1e */
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    z-index: 50;
+    overflow: hidden;
+    animation: fadeIn 0.1s ease-out;
+}
 
-        .option-content {
-            display: flex;
-            flex-direction: row; /* Chuyển thành hàng ngang */
-            flex: 1; /* Lấp đầy khoảng trống còn lại */
-            justify-content: space-between; /* Đẩy Text sang trái, Flag sang phải */
-            align-items: baseline; /* Căn chân chữ cho đẹp */
-        }
+.dropdown-header {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--p-text-dim);
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-color);
+    background-color: rgba(0,0,0,0.1);
+}
 
-        .option-text {
-            font-size: 11px;
-            color: var(--p-text-muted);
-            line-height: 1.2;
-            white-space: nowrap; /* Đảm bảo không bị xuống dòng */
-        }
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+    user-select: none;
+}
 
-        .option-subtext {
-            font-size: 10px; /* Tăng nhẹ size lên chút cho dễ đọc */
-            color: var(--p-text-dim);
-            font-family: "JetBrains Mono", monospace;
-        }
+.dropdown-item:hover {
+    background-color: var(--p-hover);
+}
+
+.disabled-option {
+    opacity: 0.4;
+    pointer-events: none;
+    cursor: not-allowed;
+    background-color: transparent !important;
+}
+
+/* --- UTILS --- */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.2s ease-out;
+}
 </style>
