@@ -428,7 +428,7 @@ watch(selectedStrategy, (newStrategy) => {
     top: 100%;
     left: 0;
     margin-top: 6px;
-    width: 300px; /* Rộng vừa phải */
+    width: 400px; /* Rộng vừa phải */
     background-color: var(--bg-side); /* Hoặc màu nền đậm #1e1e1e */
     border: 1px solid var(--border-color);
     border-radius: 6px;
