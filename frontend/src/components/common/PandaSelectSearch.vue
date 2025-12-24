@@ -1,20 +1,25 @@
 <template>
-  <div class="custom-select-container" ref="containerRef">
+  <div
+    ref="containerRef"
+    class="custom-select-container"
+  >
     <div
       class="custom-select-trigger"
       :class="{ active: open }"
-      @click="toggle"
       :data-value="modelValue"
+      @click="toggle"
     >
       <span>{{ selectedLabel }}</span>
-      <i class="fa-solid fa-chevron-down"></i>
+      <i class="fa-solid fa-chevron-down" />
     </div>
 
-    <div class="custom-select-menu" :class="{ open: open }">
-
+    <div
+      class="custom-select-menu"
+      :class="{ open: open }"
+    >
       <div class="search-box">
         <div class="search-icon">
-          <i class="fa-solid fa-search"></i>
+          <i class="fa-solid fa-search" />
         </div>
         <input
           ref="searchInputRef"
@@ -22,7 +27,7 @@
           type="text"
           placeholder="Search..."
           @click.stop
-        />
+        >
       </div>
 
       <div class="options-wrapper">
@@ -37,7 +42,10 @@
           {{ item[text] }}
         </div>
 
-        <div v-if="filteredOptions.length === 0" class="empty-state">
+        <div
+          v-if="filteredOptions.length === 0"
+          class="empty-state"
+        >
           No results found
         </div>
       </div>
@@ -46,88 +54,90 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick, onMounted, onUnmounted } from "vue";
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps({
   modelValue: [String, Number, null],
   options: { type: Array, required: true },
-  value: { type: String, default: "value" },
-  text: { type: String, default: "text" },
+  value: { type: String, default: 'value' },
+  text: { type: String, default: 'text' },
   valueDefault: { type: [String, Number, null], default: null }
-});
+})
 
-const emit = defineEmits(["update:modelValue"]);
+const emit = defineEmits(['update:modelValue'])
 
-const open = ref(false);
-const searchQuery = ref("");
-const searchInputRef = ref(null);
-const containerRef = ref(null);
+const open = ref(false)
+const searchQuery = ref('')
+const searchInputRef = ref(null)
+const containerRef = ref(null)
 
 // -- LOGIC TOGGLE & FOCUS --
 const toggle = async () => {
-  open.value = !open.value;
+  open.value = !open.value
 
   if (open.value) {
     // Reset search khi mở lại
-    searchQuery.value = "";
+    searchQuery.value = ''
     // Đợi DOM render xong thì focus vào ô input
-    await nextTick();
-    searchInputRef.value?.focus();
+    await nextTick()
+    searchInputRef.value?.focus()
   }
-};
+}
 
 const choose = (item) => {
-  emit("update:modelValue", item[props.value]);
-  open.value = false;
-  searchQuery.value = "";
-};
+  emit('update:modelValue', item[props.value])
+  open.value = false
+  searchQuery.value = ''
+}
 
 // -- CLICK OUTSIDE (Để đóng menu khi click ra ngoài) --
 const handleClickOutside = (event) => {
   if (containerRef.value && !containerRef.value.contains(event.target)) {
-    open.value = false;
+    open.value = false
   }
-};
+}
 
-onMounted(() => { document.addEventListener('click', handleClickOutside); });
-onUnmounted(() => { document.removeEventListener('click', handleClickOutside); });
+onMounted(() => { document.addEventListener('click', handleClickOutside) })
+onUnmounted(() => { document.removeEventListener('click', handleClickOutside) })
 
 // -- AUTO DEFAULT VALUE --
 watch(
   () => props.options,
   () => {
     if (props.modelValue == null && props.valueDefault != null) {
-      emit("update:modelValue", props.valueDefault);
+      emit('update:modelValue', props.valueDefault)
     }
   },
   { immediate: true }
-);
+)
 
 // -- COMPUTED --
 const selectedLabel = computed(() => {
-  const found = props.options.find(o => o[props.value] === props.modelValue);
-  return found ? found[props.text] : "Select...";
-});
+  const found = props.options.find(o => o[props.value] === props.modelValue)
+  return found ? found[props.text] : 'Select...'
+})
 
 // Logic Search
 const filteredOptions = computed(() => {
-  if (!searchQuery.value) return props.options;
-  const query = searchQuery.value.toLowerCase();
+  if (!searchQuery.value) return props.options
+  const query = searchQuery.value.toLowerCase()
   return props.options.filter(item =>
     String(item[props.text]).toLowerCase().includes(query)
-  );
-});
+  )
+})
 </script>
 
 <style lang="scss" scoped>
-/* --- CONTAINER & TRIGGER (GIỮ NGUYÊN) --- */
+/* --- CONTAINER --- */
 .custom-select-container {
   position: relative;
+  /* width: 100% để nó luôn nằm gọn trong thẻ cha, không tự ý phình to */
+  width: 100%;
   min-width: 130px;
-  max-width: 100%;
   height: 26px;
 }
 
+/* --- TRIGGER (Dùng GRID để trị dứt điểm lỗi tràn text) --- */
 .custom-select-trigger {
   background-color: var(--input-bg);
   border: 1px solid var(--border-color);
@@ -137,12 +147,17 @@ const filteredOptions = computed(() => {
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
-  display: flex;
+
+  /* LAYOUT GRID: Cột 1 (text) co giãn - Cột 2 (icon) tự động */
+  display: grid;
+  grid-template-columns: 1fr auto;
   align-items: center;
-  justify-content: space-between;
-  user-select: none;
+  gap: 6px; /* Khoảng cách an toàn giữa text và icon */
+
+  width: 100%;
   height: 100%;
-  overflow: hidden;
+  box-sizing: border-box; /* Tính cả border vào width */
+  user-select: none;
 }
 
 .custom-select-trigger:hover {
@@ -156,37 +171,40 @@ const filteredOptions = computed(() => {
   color: var(--text-color);
 }
 
+/* --- TEXT LABEL --- */
 .custom-select-trigger span {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  flex: 1;
-  margin-right: 4px;
+
+  /* BẮT BUỘC: Để Grid hiểu là cột này có thể co nhỏ hơn nội dung của nó */
+  min-width: 0;
+  display: block; /* Đảm bảo hành vi block chuẩn */
 }
 
+/* --- ICON CHEVRON --- */
 .custom-select-trigger i {
   transition: transform 0.2s ease;
-  margin-left: 8px;
   font-size: 10px;
+  display: flex; /* Căn chỉnh icon chuẩn */
+  align-items: center;
 }
 
 .custom-select-trigger.active i {
   transform: rotate(180deg);
 }
 
-/* --- MENU STYLES (CẬP NHẬT CHO SEARCH) --- */
+/* --- MENU DROPDOWN --- */
 .custom-select-menu {
   position: absolute;
-  top: 100%; /* Sát đít trigger */
+  top: 100%;
   left: 0;
-  width: 100%;
+  width: 100%; /* Bằng với container */
 
-  /* Đổi sang Flex column để làm phần search cố định */
   display: flex;
   flex-direction: column;
 
-  max-height: 250px; /* Tổng chiều cao tối đa */
-  /* Bỏ overflow-y ở đây, chuyển vào options-wrapper */
+  max-height: 250px;
 
   background-color: var(--menu-bg);
   border: 1px solid var(--border-color);
@@ -209,22 +227,24 @@ const filteredOptions = computed(() => {
   pointer-events: auto;
 }
 
-/* --- SEARCH BOX STYLES --- */
+/* --- SEARCH BOX --- */
 .search-box {
   padding: 4px 6px;
   border-bottom: 1px solid var(--border-color);
-  background-color: var(--menu-bg); /* Cố định màu nền */
+  background-color: var(--menu-bg);
   position: sticky;
   top: 0;
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-shrink: 0; /* Không bị co lại */
+  flex-shrink: 0;
+  z-index: 10;
 }
 
 .search-icon {
   font-size: 10px;
   color: var(--p-text-muted);
+  display: flex; /* Căn giữa icon search */
 }
 
 .search-box input {
@@ -235,19 +255,19 @@ const filteredOptions = computed(() => {
   color: var(--text-color);
   font-size: 11px;
   padding: 2px 0;
+  min-width: 0; /* An toàn cho input flex */
 
   &::placeholder {
     color: var(--p-text-dim);
   }
 }
 
-/* --- OPTIONS WRAPPER (PHẦN CUỘN) --- */
+/* --- OPTIONS LIST --- */
 .options-wrapper {
-  overflow-y: auto; /* Scroll ở đây */
-  flex: 1; /* Chiếm phần còn lại */
+  overflow-y: auto;
+  flex: 1;
   padding: 4px 0;
 
-  /* Scrollbar custom cho đẹp */
   &::-webkit-scrollbar {
     width: 4px;
   }
@@ -257,7 +277,7 @@ const filteredOptions = computed(() => {
   }
 }
 
-/* --- OPTION ITEMS --- */
+/* --- OPTION ITEM --- */
 .custom-option {
   padding: 6px 12px;
   font-size: 11px;

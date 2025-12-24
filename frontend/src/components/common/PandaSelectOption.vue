@@ -1,14 +1,17 @@
 <template>
-  <div class="custom-select-container" ref="containerRef">
+  <div
+    ref="containerRef"
+    class="custom-select-container"
+  >
     <!-- Trigger -->
     <div
       class="custom-select-trigger"
       :class="{ active: open }"
-      @click="toggle"
       :data-value="modelValue"
+      @click="toggle"
     >
       <span>{{ selectedLabel }}</span>
-      <i class="fa-solid fa-chevron-down"></i>
+      <i class="fa-solid fa-chevron-down" />
     </div>
 
     <!-- Menu -->
@@ -31,59 +34,59 @@
 </template>
 
 <script setup>
-import {ref, computed, watch, onMounted, onUnmounted} from "vue";
+import {ref, computed, watch, onMounted, onUnmounted} from 'vue'
 
 const props = defineProps({
   modelValue: [String, Number, null],
   options: { type: Array, required: true },
   /** field name để lấy value */
-  value: { type: String, default: "value" },
+  value: { type: String, default: 'value' },
 
   /** field name để lấy label */
-  text: { type: String, default: "text" },
+  text: { type: String, default: 'text' },
 
   /** giá trị mặc định nếu chưa chọn */
   valueDefault: { type: [String, Number, null], default: null }
-});
+})
 // -- REF --
-const containerRef = ref(null);
+const containerRef = ref(null)
 
-const emit = defineEmits(["update:modelValue"]);
+const emit = defineEmits(['update:modelValue'])
 
-const open = ref(false);
+const open = ref(false)
 
-const toggle = () => (open.value = !open.value);
+const toggle = () => (open.value = !open.value)
 
 const choose = (item) => {
-  emit("update:modelValue", item[props.value]);
-  open.value = false;
-};
+  emit('update:modelValue', item[props.value])
+  open.value = false
+}
 
 // -- CLICK OUTSIDE (Để đóng menu khi click ra ngoài) --
 const handleClickOutside = (event) => {
   if (containerRef.value && !containerRef.value.contains(event.target)) {
-    open.value = false;
+    open.value = false
   }
-};
+}
 
-onMounted(() => { document.addEventListener('click', handleClickOutside); });
-onUnmounted(() => { document.removeEventListener('click', handleClickOutside); });
+onMounted(() => { document.addEventListener('click', handleClickOutside) })
+onUnmounted(() => { document.removeEventListener('click', handleClickOutside) })
 
 /** Tự gán valueDefault nếu modelValue chưa có */
 watch(
   () => props.options,
   () => {
     if (props.modelValue == null && props.valueDefault != null) {
-      emit("update:modelValue", props.valueDefault);
+      emit('update:modelValue', props.valueDefault)
     }
   },
   { immediate: true }
-);
+)
 
 const selectedLabel = computed(() => {
-  const found = props.options.find(o => o[props.value] === props.modelValue);
-  return found ? found[props.text] : "";
-});
+  const found = props.options.find(o => o[props.value] === props.modelValue)
+  return found ? found[props.text] : ''
+})
 </script>
 
 <style lang="scss" scoped>

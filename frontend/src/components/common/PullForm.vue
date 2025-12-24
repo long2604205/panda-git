@@ -11,28 +11,23 @@
           <label class="input-group-label">Branch to merge</label>
           <div class="flex gap-2">
             <div class="w-[30%]">
-              <select class="custom-select w-full bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-color)] text-xs rounded px-3 py-1.5 outline-none focus:border-[var(--accent-color)] transition-colors">
-                <option value="origin">
-                  origin
-                </option>
-                <option value="upstream">
-                  upstream
-                </option>
-              </select>
+              <input
+                disabled
+                value="origin"
+                type="text"
+                class="search-input w-full bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-color)] text-xs rounded px-3 py-1.5 outline-none focus:border-[var(--accent-color)] transition-colors disabled:opacity-70"
+              >
             </div>
 
             <div class="flex-1">
-              <select class="custom-select w-full bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-color)] text-xs rounded px-3 py-1.5 outline-none focus:border-[var(--accent-color)] transition-colors font-mono">
-                <option value="main">
-                  main
-                </option>
-                <option value="develop">
-                  develop
-                </option>
-                <option value="feature/new-ui">
-                  feature/new-ui
-                </option>
-              </select>
+              <panda-select-search
+                v-model="selectedBranch"
+                style="width: 100%; height: 100%"
+                :options="getLocalBranches(repositoryStore.localBranches)"
+                value="id"
+                text="label"
+                value-default="changes"
+              />
             </div>
           </div>
         </div>
@@ -67,10 +62,9 @@
             </label>
           </div>
           <p
-            id="strategy-desc"
             class="text-[10px] text-[var(--p-text-dim)] mt-2 italic"
           >
-            {{ descs[selectedStrategy] }}
+            {{ strategy[selectedStrategy] }}
           </p>
         </div>
 
@@ -93,7 +87,10 @@
             </button>
           </div>
         </div>
-
+      </div>
+    </template>
+    <template #footer>
+      <div class="flex w-full items-center justify-between">
         <div
           ref="dropdownContainer"
           class="relative"
@@ -153,21 +150,22 @@
             </div>
           </div>
         </div>
+
+        <div class="flex items-center gap-2">
+          <button
+            class="btn btn-primary"
+            @click="save"
+          >
+            Pull
+          </button>
+          <button
+            class="btn btn-secondary"
+            @click="close"
+          >
+            Cancel
+          </button>
+        </div>
       </div>
-    </template>
-    <template #footer>
-      <button
-        class="btn btn-primary"
-        @click="save"
-      >
-        Pull
-      </button>
-      <button
-        class="btn btn-secondary"
-        @click="close"
-      >
-        Cancel
-      </button>
     </template>
   </base-form>
 </template>
@@ -177,6 +175,8 @@ import {onMounted, onUnmounted, ref, watch, computed} from 'vue'
 import BaseForm from '@/components/common/BaseForm.vue'
 import mitter from '@/plugins/mitter.js'
 import {editGroup, findGroup} from '@/plugins/PandaDB.js'
+import PandaSelectSearch from '@/components/common/PandaSelectSearch.vue'
+import { useRepositoryStore } from '@/stores/repositoryStore.js'
 
 const props = defineProps({
   params: {
@@ -194,13 +194,13 @@ const groupInput = ref(null)
 const selectedStrategy = ref('merge')
 const showOptions = ref(false) // Toggle dropdown
 const dropdownContainer = ref(null)
-
+const repositoryStore = useRepositoryStore()
 // --- OPTIONS CONFIG ---
-const descs = {
+const strategy = {
   merge: 'Create a merge commit to combine changes.',
   rebase: 'Replay local commits on top of incoming changes.'
 }
-
+const selectedBranch = ref(repositoryStore.branchName)
 const pullOptions = ref([
   {
     id: 'ffonly',
@@ -245,6 +245,12 @@ const hasCheckedOptions = computed(() => {
 })
 
 // --- METHODS ---
+function getLocalBranches(arr) {
+  return arr.map(item => ({
+    id: item,
+    label: item
+  }))
+}
 
 // Xử lý đóng Dropdown khi click ra ngoài
 const handleClickOutside = (event) => {
