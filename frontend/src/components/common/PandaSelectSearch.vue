@@ -9,7 +9,7 @@
       :data-value="modelValue"
       @click="toggle"
     >
-      <span>{{ selectedLabel }}</span>
+      <span :title="selectedLabel">{{ selectedLabel }}</span>
       <i class="fa-solid fa-chevron-down" />
     </div>
 

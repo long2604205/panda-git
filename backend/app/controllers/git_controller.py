@@ -1,6 +1,9 @@
 from app.services.git_service import GitService
 from app.utils.response import JsonResponse
 
+from app.services.pull_service import PullService
+
+
 class GitController:
     def __init__(self):
         pass
@@ -94,7 +97,8 @@ class GitController:
         repo_path = data["repo_path"]
 
         try:
-            result = GitService.pull_changes(repo_path)
+            # result = GitService.pull_changes(repo_path)
+            result = PullService.pull(repo_path)
             return JsonResponse.success(result, message="All files are up to date")
         except Exception as e:
             return JsonResponse.error(str(e), status_code=500)
